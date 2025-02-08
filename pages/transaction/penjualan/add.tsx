@@ -745,8 +745,6 @@ const AddTransactionSale: React.FC = () => {
         setInitialTableData();
     }, []);
 
-
-    
     return (
         <DashboardLayout>
             <Breadcrumb
