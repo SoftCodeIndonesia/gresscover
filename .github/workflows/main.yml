@@ -1,0 +1,38 @@
+name: Deploy to FTP
+
+on:
+  push:
+    branches:
+      - main  # Adjust the branch name if needed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 20.18.1  # Use the desired Node.js version
+
+      - name: Install dependencies and build Next.js app
+        run: |
+          npm install
+          touch .env.local
+          echo NEXT_PUBLIC_BE=${{ secrets.BE_URI }} >> .env.local
+          echo NEXT_PUBLIC_API_URI=${{ secrets.API_URI }} >> .env.local
+          npm build
+
+      - name: Deploy via FTPS
+        uses: SamKirkland/FTP-Deploy-Action@4.3.3
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASS }}
+          local-dir: ./  # This points to the build output directory of your Next.js app
+          server-dir: /
+          protocol: ftps
+          timeout: 300000 
