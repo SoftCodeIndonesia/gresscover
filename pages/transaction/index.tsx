@@ -16,6 +16,7 @@ import { formatRupiah } from "@/utils/format_rupiah";
 import { Pagination } from "@/type/pagination";
 import { TransactionType } from "@/type/transcation";
 import { RequestParam } from "@/type/request_param";
+import { setCookie } from "cookies-next";
 
 
 const Transaction: React.FC = () => {
@@ -91,8 +92,8 @@ const Transaction: React.FC = () => {
             key: 'action',
             render: (_: any, item: TransactionType) => (
                 <>
-                  <EditButton label='Edit'  onClick={() => handleEdit(item)}/>
-                  <DeleteButton label='Hapus' onComfirm={() => handleDelete(item)} okText='Hapus' cancelText='Batal' />
+                  <EditButton disable={item.status != 'draft'} label='Edit' onClick={() => handleEdit(item)}/>
+                  <DeleteButton disable={item.status != 'draft'} label='Hapus' onComfirm={() => handleDelete(item)} okText='Hapus' cancelText='Batal' />
                 </>
               ),
         },
@@ -101,7 +102,8 @@ const Transaction: React.FC = () => {
     
     
     const handleEdit = (data: TransactionType) => {
-        
+         setCookie('tr_id', data.unique_id);
+         window.location.href = 'transaction/add';
     }
 
     const handleDelete = (data: TransactionType) => {

@@ -18,28 +18,10 @@ import { Pagination } from "@/type/pagination";
 import Column from "antd/es/table/Column";
 import { Tax } from "@/type/tax";
 import DashboardLayout from "../component/DashboardLayout";
+import TextArea from "antd/es/input/TextArea";
+import { getCookie } from "cookies-next";
+import { TransactionType } from "@/type/transcation";
 
-interface TableInventory {
-    key: React.Key, 
-    product_name: string|null, 
-    product_id: string|null, 
-    location_name: string|null, 
-    location_id: string|null, 
-    stok: number|null, 
-    quantity: number|null, 
-    sku: string|null, 
-    selling_price: number|null, 
-    selling_price_string: string|null, 
-    cost: number|null, 
-    cost_string: string|null, 
-    minimum: number|null,
-    checked: boolean,
-    unit_id: string|null,
-    unit_name: string|null,
-    type?: string|null,
-    inventory_id: string|null,
-    // children: TableInventory[],
-}
 
 const formItemLayout = {
     labelCol: {
@@ -64,21 +46,27 @@ const addTransaction = () => {
     const handleSubmit = async () => {
         setLoading(true);
         
+        const tr_id = getCookie('tr_id');
         
-
-        const data = {
-            
+        
+        var data = {
             'total_amount': form.getFieldValue('total_amount'),
             'status': form.getFieldValue('status'),
             'type': form.getFieldValue('type'),
+            'note': form.getFieldValue('note'),
         }
 
         console.log(data);
         try {
-            const response = await axiosInstance.post('/transaction', data);
+            const response = await axiosInstance.post('/transaction', tr_id == undefined ? data : {...data, unique_id: tr_id});
             if(response.status == 200){
                 message.success(`${response?.data?.message}`)
-                form.resetFields();
+
+                const tr_id = getCookie('tr_id');
+
+                if(tr_id == undefined){
+                    form.resetFields();
+                }
             }
         } catch (error: any) {
             message.error(`${error.response?.data?.message}`)
@@ -87,11 +75,46 @@ const addTransaction = () => {
         }
     }
 
-    
+    const getDetail = async() => {
+        const tr_id = getCookie('tr_id');
+        if(tr_id != undefined){
+            setLoading(true);
+            const request_param: RequestParam = {
+                table: 'transaction',
+                request_column: ['text', 'type', 'reference', 'reference_id','status', 'total_amount'],
+                request_column_relation: [],
+                where: [
+                    {
+                        unique_id: tr_id,
+                    }
+                ],
+                limit: 10,
+                page: 1,
+            };
+
+            try {
+                const response = await axiosInstance.post('/search', request_param);
+                if(response.status == 200){
+                    const transaksi: TransactionType = response.data.data.data[0];
+                    console.log(response.data.data);
+                    form.setFieldsValue({
+                        status: transaksi.status,
+                        type: transaksi.type,
+                        total_amount: transaksi.total_amount,
+                        note: transaksi.text,
+                    });
+                }
+            } catch (error: any) {
+                message.error(`${error.response?.data?.message ?? error}`);
+            } finally {
+                setLoading(false);
+            }
+        }
+    }
     
 
     useEffect(() => {
-       
+        getDetail();
     }, []);
 
 
@@ -149,7 +172,9 @@ const addTransaction = () => {
                     >
                     </Select>
                 </Form.Item>
-                
+                <Form.Item label="Note" name={"note"}>
+                    <TextArea rows={4} />
+                </Form.Item>
                 
                 <Form.Item className="mt-2">
                         <Button type="link" href="/transaction" loading={loading} >Batal</Button>

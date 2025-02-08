@@ -9,17 +9,18 @@ interface ButtonComponentProp {
     titleConfirm?: string,
     okText?: string,
     cancelText?: string,
+    disable?: boolean,
 }
 
-export const EditButton: React.FC<ButtonComponentProp> = ({onClick, label}) => {
+export const EditButton: React.FC<ButtonComponentProp> = ({onClick, label, disable}) => {
     return (
-        <Button icon={<EditFilled/>}  onClick={onClick} type="link" className='text-yellow-500' style={{ marginRight: 8 }}>
+        <Button icon={<EditFilled/>} disabled={disable}  onClick={onClick} type="link" className='text-yellow-500' style={{ marginRight: 8 }}>
             {label}
         </Button>
     );
 }
 
-export const DeleteButton: React.FC<ButtonComponentProp> = ({onComfirm, label, titleConfirm, okText, cancelText}) => {
+export const DeleteButton: React.FC<ButtonComponentProp> = ({onComfirm, label, titleConfirm, okText, cancelText, disable}) => {
     return (
         <Popconfirm
             title={titleConfirm ?? "Are you sure to delete this data?"}
@@ -27,7 +28,7 @@ export const DeleteButton: React.FC<ButtonComponentProp> = ({onComfirm, label, t
             okText={okText ?? "Yes"}
             cancelText={cancelText ?? "No"}
           >
-            <Button type="link" icon={<DeleteFilled/>} className='text-red-500'>{label}</Button>
+            <Button type="link" disabled={disable}  icon={<DeleteFilled/>} className='text-red-500'>{label}</Button>
         </Popconfirm>
     );
 }
