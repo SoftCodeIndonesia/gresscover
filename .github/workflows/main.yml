@@ -24,7 +24,7 @@ jobs:
           touch .env.local
           echo NEXT_PUBLIC_BE=${{ secrets.BE_URI }} >> .env.local
           echo NEXT_PUBLIC_API_URI=${{ secrets.API_URI }} >> .env.local
-          npm build
+          npm run build
 
       - name: Deploy via FTPS
         uses: SamKirkland/FTP-Deploy-Action@4.3.3
