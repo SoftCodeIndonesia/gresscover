@@ -2,10 +2,12 @@ import React, { createContext, useEffect, useState } from 'react';
 import {
   DatabaseOutlined,
   ExclamationCircleFilled,
+  FileDoneOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   PieChartOutlined,
+  ShoppingCartOutlined,
   UploadOutlined,
   UserOutlined,
   UserSwitchOutlined,
@@ -41,7 +43,6 @@ const DashboardLayout: React.FC<Props> = ({children}) => {
   
 
   useEffect(() => {
-    console.log(userCookie);
     setUser(JSON.parse(`${userCookie}`));
   }, []);
 
@@ -94,17 +95,34 @@ const DashboardLayout: React.FC<Props> = ({children}) => {
     {
       key: '10',
       icon: <PieChartOutlined />,
-      label: <Link href="/inventory">Inventory</Link>,
+      label: 'Inventory',
+      children: [
+        { key: '10.1', label: <Link href="/inventory">Semua Barang</Link>,  },
+        { key: '10.2', label: <Link href="/inventory/mutasi">Mutasi Barang</Link>,  },
+        { key: '10.3', label: <Link href="/inventory/out">Barang Keluar</Link>,  },
+        { key: '10.4', label: <Link href="/inventory/in">Barang Masuk</Link>,  },
+      ],
+    },
+    {
+      key: '7',
+      icon: <FileDoneOutlined />,
+      label: 'Transaksi',
+      children: [
+        { key: '7.1', label: <Link href="/transaction">Semua Transaksi</Link>,  },
+        { key: '7.2', label: <Link href="/transaction/penjualan">Transaksi Penjualan</Link>,  },
+        { key: '7.3', label: <Link href="/transaction/retur">Retur Barang</Link>,  },
+        { key: '7.4', label: <Link href="/transaction/change">Penukaran Barang</Link>,  },
+      ],
     },
     {
       key: '2',
       icon: <DatabaseOutlined />,
       label: 'Master',
       children: [
-        { key: '3', label: <Link href="/items">Item</Link>,  },
-        { key: '4', label: <Link href="/category">Kategori</Link>,  },
-        { key: '5', label: <Link href="/supplier">Daftar Pemasok</Link>,  },
-        { key: '9', label: <Link href="/warehouse">Daftar Gudang</Link>,  },
+        { key: '2.1', label: <Link href="/items">Item</Link>,  },
+        { key: '2.2', label: <Link href="/category">Kategori</Link>,  },
+        { key: '2.3', label: <Link href="/supplier">Daftar Pemasok</Link>,  },
+        { key: '3.4', label: <Link href="/warehouse">Daftar Gudang</Link>,  },
       ],
     },
     {
@@ -112,15 +130,15 @@ const DashboardLayout: React.FC<Props> = ({children}) => {
       icon: <UserSwitchOutlined />,
       label: 'Mejemen Staff',
       children: [
-        { key: '7', label: <Link href="/staff">Daftar Staff</Link>,  },
-        { key: '8', label: <Link href="/hak_akses">Hak Akses</Link>,  },
+        { key: '6.1', label: <Link href="/staff">Daftar Staff</Link>,  },
+        { key: '6.2', label: <Link href="/hak_akses">Hak Akses</Link>,  },
       ],
     },
   ]
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Sider trigger={null} collapsible collapsed={collapsed}>
+      <Sider trigger={null} collapsible collapsed={collapsed} width={'20%'}>
         <div className="demo-logo-vertical" />
         <Menu
           theme="dark"

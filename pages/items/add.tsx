@@ -1,4 +1,4 @@
-import { Button, Form, Input, Radio, Image, Space, Upload, UploadFile, GetProp, UploadProps, message, Select, Avatar, Spin, Divider, InputRef } from "antd";
+import { Button, Form, Input, Radio, Image, Space, Upload, UploadFile, GetProp, UploadProps, message, Select, Avatar, Spin, Divider, InputRef, AutoComplete, AutoCompleteProps } from "antd";
 import DashboardLayout from "../component/DashboardLayout";
 import Title from "antd/es/typography/Title";
 import { useEffect, useRef, useState } from "react";
@@ -8,6 +8,7 @@ import SomethingWrong from "../component/500";
 import axiosInstance from "@/utils/axiosInstance";
 import { deleteCookie, getCookie, setCookie } from "cookies-next";
 import { Item, ItemUnit } from "@/type/item";
+import { Location } from "@/type/location";
 
 type LayoutType = Parameters<typeof Form>[0]['layout'];
 
@@ -26,7 +27,7 @@ const AddItem = () => {
     const [loading, setLoading] = useState<boolean>(false);
     const [form] = Form.useForm();
     const [formLayout, setFormLayout] = useState<LayoutType>('vertical');
-
+    const [options, setOptions] = useState<AutoCompleteProps['options']>([]);
     const [fileList, setFileList] = useState<UploadFile[]>([]);
 
     const [categories, setCategories] = useState<Category[]>([]);
@@ -94,14 +95,16 @@ const AddItem = () => {
     const handleSubmit = async (values: any) => {
         var formData = new FormData();
         formData.append('name', values.name);
-        formData.append('barcode', values.barcode);
-        formData.append('category_id', values.category_id);
+        formData.append('barcode', values.barcode ?? null);
+        formData.append('category_id', values.category_id ?? null);
         formData.append('cost', values.cost);
+        formData.append('price', values.price);
         formData.append('sku', values.sku);
         formData.append('min_quantity', values.min_quantity);
         formData.append('unit_id', values.unit_id);
         formData.append('unit_name', units.filter((value: ItemUnit) =>value.type_id == values.unit_id)[0].name);
-        formData.append('quantity', "1");
+        formData.append('quantity', values.quantity);
+        formData.append('location', values.location);
         if(fileList.length > 0){
             formData.append('photo', fileList[0].originFileObj as Blob);
         }
@@ -204,6 +207,44 @@ const AddItem = () => {
 
     }
     
+    const fetchLocation = async (search: string,callback: (data: { value: string; label: string }[]) => void) => {
+        try {
+            const response = await axiosInstance.get(`/location?name=${search}`);
+            if(response.status == 200){
+                const locationResult: Location[] = response.data.data;
+                
+                if(locationResult.length > 0){
+                    const result = locationResult.map((location: Location) => {
+                        return {
+                            value: location.location_id,
+                            label: location.name,
+                            object: location,
+                        }
+                    })
+                    callback(result);
+                }else{
+                    callback([
+                        {
+                            value: `${search}`,
+                            label: `${search}`,
+                        }
+                    ]);
+                }
+
+            }
+        } catch (error) {
+            message.error(`${error}`);
+            
+        }
+    }
+
+    const onSelectLocation = (value: string, object: any) => {
+        console.log('value', value);
+        console.log('object', object);
+        form.setFieldsValue({
+            'location': value,
+        })
+    }
 
     useEffect(() => {
         if(item_id != null){
@@ -219,6 +260,7 @@ const AddItem = () => {
     useEffect(() => {
         var item_id = getCookie('item_id');
         setItemId(item_id);
+        form.setFieldValue('quantity', 1)
     },[])
 
 
@@ -232,7 +274,7 @@ const AddItem = () => {
                 layout={formLayout}
                 form={form}
                 initialValues={{ layout: formLayout }}
-                style={{ maxWidth: '100%' }}
+                style={{ maxWidth: '50%' }}
                 className="flex flex-col"
                 onFinish={handleSubmit}
                 disabled={loading}
@@ -268,11 +310,10 @@ const AddItem = () => {
 
                     </Form.Item>
                 </div>
-                <div className="flex gap-3">
                     <Form.Item className="flex-1" label="Nama Item" name='name' rules={[{ required: true, message: 'Bagian ini tidak boleh kosong!' }]} >
                         <Input placeholder="Masukan nama item" />
                     </Form.Item>
-                    <Form.Item className="flex-1" label="Kategori" name="category_id" rules={[{ required: true, message: 'Bagian ini tidak boleh kosong!' }]}>
+                    <Form.Item className="flex-1" label="Kategori" name="category_id">
                         <Select
                             showSearch
                             placeholder="Pilih Kategori"
@@ -300,18 +341,35 @@ const AddItem = () => {
                             options={categories.map((data) => ({value: data.category_id, label: data.name}))}
                         />
                     </Form.Item>
-                </div>
-                <div className="flex gap-3">
                     <Form.Item className="flex-1" label="SKU" name="sku" rules={[{ required: true, message: 'Bagian ini tidak boleh kosong!' }]}>
                         <Input placeholder="Masukan SKU" />
                     </Form.Item>
-                    <Form.Item className="flex-1" label="Barcode" name="barcode" rules={[{ required: true, message: 'Bagian ini tidak boleh kosong!' }]}>
+                    <Form.Item className="flex-1" label="Barcode" name="barcode">
                         <Input placeholder="Masukan Barcode" />
                     </Form.Item>
-                </div>
-                <div className="flex gap-3">
                     <Form.Item className="flex-1" label="Harga Beli" name="cost" rules={[{ required: true, message: 'Bagian ini tidak boleh kosong!' }]}>
-                        <Input placeholder="Masukan Harge Beli" type="number" />
+                        <Input placeholder="Masukan Harga Beli" type="number" min={1} />
+                    </Form.Item>
+                    <Form.Item className="flex-1" label="Harga Jual" name="price" rules={[{ required: true, message: 'Bagian ini tidak boleh kosong!' }]}>
+                        <Input placeholder="Masukan Harga Jual" type="number" />
+                    </Form.Item>
+                    <Form.Item className="flex-1" label="Gudang" name="location" rules={[{ required: true, message: 'Bagian ini tidak boleh kosong!' }]}>
+                        <Select
+                            showSearch
+                            className="w-full"
+                            placeholder={'Cari/Tambahkan Gudang Baru'}
+                            defaultActiveFirstOption={false}
+                            suffixIcon={null}
+                            filterOption={false}
+                            onSearch={(value) => fetchLocation(value,setOptions)}
+                            notFoundContent={null}
+                            options={options}
+                            onSelect={onSelectLocation}
+                        />
+                        
+                    </Form.Item>
+                    <Form.Item className="flex-1" label="Quantity" name="quantity" rules={[{ required: true, message: 'Bagian ini tidak boleh kosong!' }]}>
+                        <Input placeholder="Masukan Quantity" type="number" />
                     </Form.Item>
                     <Form.Item className="flex-1" label="Minimum Quantity" name="min_quantity" rules={[{ required: true, message: 'Bagian ini tidak boleh kosong!' }]}>
                         <Input placeholder="Masukan Minimum Quantity" type="number" />
@@ -345,7 +403,7 @@ const AddItem = () => {
                             options={units.map((data) => ({value: data.type_id, label: data.name}))}
                         />
                     </Form.Item>
-                </div>
+                
                 
                 <Form.Item>
                         <Button type="link" href="/items" loading={loading} >Batal</Button>

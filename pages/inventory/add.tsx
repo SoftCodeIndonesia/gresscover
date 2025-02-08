@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { Item } from "@/type/item";
+import { Item, ItemUnit } from "@/type/item";
 import { Location } from "@/type/location";
 import DashboardLayout from "../component/DashboardLayout";
 import axiosInstance from "@/utils/axiosInstance";
-import { Image,Button, Divider, Form, Input, message, Select, Space, Table, Modal, Checkbox, AutoComplete, AutoCompleteProps } from "antd";
+import { Image,Button, Divider, Form, Input, message, Select, Space, Table, Modal, Checkbox, AutoComplete, AutoCompleteProps, TableColumnsType } from "antd";
 import { LayoutType } from "@/type/form.layout";
 
 import { CloseCircleOutlined, PlusOutlined } from '@ant-design/icons';
@@ -11,122 +11,273 @@ import { formatRupiah } from "@/utils/format_rupiah";
 import { CheckboxChangeEvent } from "antd/es/checkbox";
 import { Inventory } from "@/type/inventory";
 import Title from "antd/es/typography/Title";
+import { TableRowSelection } from "antd/es/table/interface";
+import { object } from "zod";
+import { handlePriceChange } from "@/utils/validate_price_change";
+import { RequestParam } from "@/type/request_param";
+import { Pagination } from "@/type/pagination";
 
 interface TableInventory {
-    key: string, 
+    key: React.Key, 
     product_name: string|null, 
     product_id: string|null, 
+    location_name: string|null, 
+    location_id: string|null, 
     stok: number|null, 
     sku: string|null, 
     selling_price: number|null, 
+    selling_price_string: string|null, 
     cost: number|null, 
+    cost_string: string|null, 
     minimum: number|null,
+    checked: boolean,
+    unit_id: string|null,
+    unit_name: string|null,
+    type?: string|null,
+    // children: TableInventory[],
 }
 
 
 const addInventory = () => {
-    const [items, setItems] = useState<Item[]>([]);
     const [itemsSelected, setItemSelected] = useState<Inventory[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
-    const [modal, setModal] = useState<boolean>(false);
     const [formLayout, setFormLayout] = useState<LayoutType>('vertical');
-    const [locations, setLocations] = useState<Location[]>([]);
-    const [location, setLocationName] = useState('');
     const [price, setPrice] = useState<number>(0);
     const [stok, setStok] = useState<number>(0);
-    const [initialTable, setInitialTable] = useState<TableInventory[]>(Array.from({ length: 4 }, (_, index) => ({
-        key: `parent_${index}`, 
-        product_name: null, 
-        product_id: null, 
-        stok: 0.0, 
-        sku: null, 
-        selling_price: 0.0, 
-        cost: 0.0, minimum: 1,
-    })));
+    const [initialTable, setInitialTable] = useState<TableInventory[]>([]);
 
-    const [options, setOptions] = useState<AutoCompleteProps['options']>([]);
+    const [optionUnit, setOptionUnit] = useState<AutoCompleteProps['options']>([]);
+    const [optionsLocation, setOptionsLocation] = useState<AutoCompleteProps['options']>([]);
+    const [optionItem, setOptionsItem] = useState<AutoCompleteProps['options']>([]);
+    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
 
     const [minimum, setMinimum] = useState<number>(0);
 
     const [form] = Form.useForm();
-     
 
-    const columns = [
+    const onChecked = (e: CheckboxChangeEvent, indexTable: number) => {
+        setInitialTable((prevData) =>
+            prevData.map((item, index) =>
+                index == indexTable ? { ...item, checked: true } : item
+            )
+        );
+    }
+
+    const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
+        console.log('selectedRowKeys changed: ', newSelectedRowKeys);
+        setSelectedRowKeys(newSelectedRowKeys);
+    };
+
+    const rowSelection: TableRowSelection<TableInventory> = {
+        selectedRowKeys,
+        onChange: onSelectChange,
+    };
+
+    const hasSelected = selectedRowKeys.length > 0;
+
+    const onSelectItem = (value: string, option: any, index: number) => {
+        console.log(option);
+        if(option.object == undefined){
+
+            const newData = [...initialTable];
+            newData[index].product_name = value;
+            setInitialTable(newData);
+
+        }else{
+            const item: Item = option.object;
+            const newData = [...initialTable];
+
+            newData[index].product_name = item.name;
+            newData[index].product_id = item.product_id;
+            newData[index].sku = item.sku;
+            newData[index].stok = item.stock_quantity;
+            newData[index].cost = parseInt(item.cost);
+            newData[index].selling_price = parseInt(item.price);
+            newData[index].minimum = item.min_stock_quantity;
+            newData[index].unit_id = item.unit?.type_id ?? '',
+            newData[index].unit_name = item.unit?.name ?? '';
+
+            // if(item.unit?.max_value != null && item.unit?.max_value > 0){
+            //     newData[index].children = Array.from({ length: item.unit?.max_value }, (_, index) => ({
+            //         key: index, 
+            //         product_name: null, 
+            //         product_id: null, 
+            //         stok: 0.0, 
+            //         sku: "", 
+            //         selling_price: 0.0, 
+            //         cost: 0.0, 
+            //         minimum: 1,
+            //         checked: false,
+            //         location_id: '',
+            //         location_name: '',
+            //         cost_string: '0.0',
+            //         selling_price_string: '0.0',
+            //         unit_id: '',
+            //         unit_name: '',
+            //         children: [],
+            //     }))
+            // }
+
+            console.log(newData[index]);
+
+            setInitialTable(newData);
+
+        }
+    }
+    const onSelectItemUOM = (value: string, option: any, index: number) => {
+        console.log(option);
+        if(option.object == undefined){
+
+            const newData = [...initialTable];
+            newData[index].unit_name = value;
+            setInitialTable(newData);
+
+        }else{
+            const item: ItemUnit = option.object;
+            const newData = [...initialTable];
+
+            newData[index].unit_id = item.type_id ?? '',
+            newData[index].unit_name = item.name ?? '';
+
+            // if(item.unit?.max_value != null && item.unit?.max_value > 0){
+            //     newData[index].children = Array.from({ length: item.unit?.max_value }, (_, index) => ({
+            //         key: index, 
+            //         product_name: null, 
+            //         product_id: null, 
+            //         stok: 0.0, 
+            //         sku: "", 
+            //         selling_price: 0.0, 
+            //         cost: 0.0, 
+            //         minimum: 1,
+            //         checked: false,
+            //         location_id: '',
+            //         location_name: '',
+            //         cost_string: '0.0',
+            //         selling_price_string: '0.0',
+            //         unit_id: '',
+            //         unit_name: '',
+            //         children: [],
+            //     }))
+            // }
+
+            console.log(newData[index]);
+
+            setInitialTable(newData);
+
+        }
+    }
+
+    
+
+    const columns: TableColumnsType<TableInventory> = [
         {
             title: "Nama",
             dataIndex: "nama",
+            fixed: 'left',
             render: (_: any, record: TableInventory, index: number) => (
-                <Form.Item
-                    name={["data", index, "nama"]}
-                    rules={[{ required: true, message: "Product tidak boleh kosong" }]}
-                    style={{ margin: 0 }}
-                    >
-                    <Input placeholder="Cari/Masukan Product" />
-                </Form.Item>
+                <AutoComplete
+                        options={optionItem}
+                        filterOption={false}
+                        style={{ width: 200 }}
+                        onSelect={(value, option) => onSelectItem(value, option, index)}
+                        onSearch={fetchItems}
+                        placeholder="Cari/Pilih Product"
+                    />
             ),
         },
         {
             title: "SKU",
+            fixed: 'left',
             dataIndex: "sku",
             render: (_: any, record: TableInventory, index: number) => (
-                <Form.Item
-                    name={["data", index, "sku"]}
-                    rules={[{ required: true, message: "SKU tidak boleh kosong" }]}
-                    style={{ margin: 0 }}
-                    >
-                    <Input placeholder="Masukan SKU Product" />
-                </Form.Item>
+                <Input placeholder="Masukan SKU Product" value={record.sku ?? ''} onChange={(e) => {
+                    const newData = [...initialTable];
+                    newData[index].sku = e.target.value;
+                    setInitialTable(newData);
+
+                }} />
             ),
         },
+        {
+            title: "Gudang",
+            dataIndex: "location",
+            render: (_: any, record: TableInventory, index: number) => (
+                <AutoComplete
+                        showSearch
+                        placeholder={'Cari/Tambahkan Gudang Baru'}
+                        style={{ width: 200 }}
+                        defaultActiveFirstOption={false}
+                        suffixIcon={null}
+                        filterOption={false}
+                        onSearch={(value) => fetchLocation(value)}
+                        onSelect={(value, option) => onSelect(value, option, index)}
+                        notFoundContent={null}
+                        options={optionsLocation}
+                    />
+            ),
+        },
+        
         {
             title: "STOK",
             dataIndex: "stok",
             render: (_: any, record: TableInventory, index: number) => (
-                <Form.Item
-                    name={["data", index, "stok"]}
-                    rules={[{ required: true, message: "Stok tidak boleh kosong",min: 1 }]}
-                    style={{ margin: 0 }}
-                    >
-                    <Input placeholder="Masukan stok" />
-                </Form.Item>
+                <Input placeholder="Masukan stok"  min={1}  onChange={(e) => {
+                    const newData = [...initialTable];
+                    newData[index].stok = parseInt(e.target.value);
+                    setInitialTable(newData);
+
+                }} />
+            ),
+        },
+        {
+            title: "UOM",
+            dataIndex: "unit",
+            render: (_: any, record: TableInventory, index: number) => (
+                <AutoComplete
+                        value={record.unit_name}
+                        options={optionUnit}
+                        filterOption={false}
+                        style={{ width: 100 }}
+                        onSelect={(value, option) => onSelectItemUOM(value, option, index)}
+                        onSearch={fetchUOM}
+                        placeholder="Cari/Pilih Product"
+                    />
             ),
         },
         {
             title: "COST",
             dataIndex: "cost",
             render: (_: any, record: TableInventory, index: number) => (
-                <Form.Item
-                    name={["data", index, "cost"]}
-                    style={{ margin: 0 }}
-                    >
-                    <Input placeholder="Masukan COST" />
-                </Form.Item>
+                <Input placeholder="Masukan COST" value={formatRupiah(record.cost ?? 0.0)} onChange={(e) => {
+                    const newData = [...initialTable];
+                    newData[index].cost = parseInt(handlePriceChange(e.target.value));
+                    setInitialTable(newData);
+
+                }} />
             ),
         },
         {
             title: "Harga Jual",
             dataIndex: "selling_price",
             render: (_: any, record: TableInventory, index: number) => (
-                <Form.Item
-                    name={["data", index, "selling_price"]}
-                    rules={[{ required: true, message: "Harga Jual tidak boleh kosong" }]}
-                    style={{ margin: 0 }}
-                    >
-                    <Input placeholder="Masukan Harga Jual" />
-                </Form.Item>
+                <Input placeholder="Masukan Harga Jual" value={formatRupiah(record.selling_price ?? 0.0)} onChange={(e) => {
+                    const newData = [...initialTable];
+                    newData[index].selling_price = parseInt(handlePriceChange(e.target.value));
+                    setInitialTable(newData);
+
+                }} />
             ),
         },
         {
             title: "Minimum Stok",
             dataIndex: "minimum",
             render: (_: any, record: TableInventory, index: number) => (
-                <Form.Item
-                    name={["data", index, "minimum"]}
-                    rules={[{ min: 1,}]}
-                    style={{ margin: 0 }}
-                    >
-                    <Input placeholder="Minimum" />
-                </Form.Item>
+                <Input placeholder="Masukan Minimum Stok" value={record.minimum ?? 0.0} onChange={(e) => {
+                    const newData = [...initialTable];
+                    newData[index].minimum = parseInt(e.target.value);
+                    setInitialTable(newData);
+
+                }} />
             ),
         },
     ];
@@ -152,42 +303,6 @@ const addInventory = () => {
 
         setItemSelected(data);
     }
-
-    const columnsListItem = [
-       
-        {
-            title: 'Photo',
-            dataIndex:'photo', 
-            key: 'photo',
-            render: (_: any, record: Item) => record.photo != null ? <Image
-                width={40}
-                src={`${process.env.NEXT_PUBLIC_BE}/storage/${record.photo}`}
-                fallback="data:image/png;base64,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"
-            /> : '',
-        },
-        {
-            title: 'Nama item',
-            dataIndex:'name', 
-            key: 'name',
-        },
-        {
-            title: 'SKU',
-            dataIndex: 'sku',
-            key: 'sku',
-        },
-        {
-            title: 'Harga Beli',
-            dataIndex: 'cost',
-            key: 'cost',
-            render: (_:any, record: Item) => formatRupiah(parseFloat(record.cost)),
-        },
-        {
-            title: 'Pilih',
-            dataIndex: '',
-            key: '',
-            render: (_:any, record: Item) => <Checkbox value={record} checked={checkOnSelected(record)} onChange={handleCheckboxChange}/>
-        },
-    ];
 
     const checkOnSelected = (item: Item) => {
         for (let index = 0; index < itemsSelected.length; index++) {
@@ -240,23 +355,97 @@ const addInventory = () => {
         
       };
 
-    const fetchItems = async () => {
-        setLoading(true);
+    const fetchItems = async (query: string) => {
+       
         try {
-            const response = await axiosInstance.get('/items');
+            const querySearch: RequestParam = {
+                limit: 100,
+                page: 1,
+                table: 'product',
+                search: {
+                    column: [
+                        'name',
+                        'sku',
+                    ],
+                    value: query,
+                },
+                request_column: ["name", "sku", "stock_quantity", "cost", "min_stock_quantity", "price", "unit_id", "product_id"],
+                request_column_relation: ["unit"]
+            }
+            const response = await axiosInstance.post(`/search`, querySearch);
             if(response.status == 200){
-                setItems(response.data.data);
+                const items: Pagination<Item> = response.data.data;
+                
+                if(items.data.length > 0){
+                    const result = items.data?.map((data: Item) => {
+                        return {
+                            value: `${data.name}-${data.sku}`,
+                            label: `${data.name}-${data.sku}`,
+                            object: data,
+                        }
+                    })
+                    setOptionsItem(result);
+                }else{
+                    setOptionsItem([
+                        {
+                            value: `${query}`,
+                            label: `Tambahkan ${query}`,
+                        }
+                    ]);
+                }
             }else{
                 message.error(response.data.message);
             }
         } catch (error) {
             message.error(`${error}`);
-        } finally {
-            setLoading(false);
         }
     }
 
-    const fetchLocation = async (search: string) => {
+    const fetchUOM = async (query: string) => {
+       
+        try {
+            const querySearch: RequestParam = {
+                limit: 100,
+                page: 1,
+                table: 'unit',
+                search: {
+                    column: [
+                        'name',
+                    ],
+                    value: query,
+                },
+                request_column_relation: []
+            }
+            const response = await axiosInstance.post(`/search`, querySearch);
+            if(response.status == 200){
+                const items: Pagination<ItemUnit> = response.data.data;
+                
+                if(items.data.length > 0){
+                    const result = items.data.map((data: ItemUnit) => {
+                        return {
+                            value: `${data.type_id}`,
+                            label: `${data.name}`,
+                            object: data,
+                        }
+                    })
+                    setOptionUnit(result);
+                }else{
+                    setOptionUnit([
+                        {
+                            value: `${query}`,
+                            label: `Tambahkan ${query}`,
+                        }
+                    ]);
+                }
+            }else{
+                message.error(response.data.message);
+            }
+        } catch (error) {
+            message.error(`${error}`);
+        }
+    }
+
+    const fetchLocation = async (search: string,) => {
         try {
             const response = await axiosInstance.get(`/location?name=${search}`);
             if(response.status == 200){
@@ -265,16 +454,18 @@ const addInventory = () => {
                 if(locationResult.length > 0){
                     const result = locationResult.map((data: Location) => {
                         return {
-                            value: data.location_id,
+                            value: data.name,
                             label: data.name,
+                            object: data,
+
                         }
                     })
-                    setOptions(result);
+                    setOptionsLocation(result);
                 }else{
-                    setOptions([
+                    setOptionsLocation([
                         {
-                            value: '1',
-                            label: (<Button type="text">{`Tambahkan ${search}`}</Button>),
+                            value: `${search}`,
+                            label: `Tambahkan ${search}`,
                         }
                     ]);
                 }
@@ -286,19 +477,28 @@ const addInventory = () => {
         }
     }
     
-    const addLocation = async () => {
-        try {
-            const response = await axiosInstance.post('/location', {'name': location});
-            if(response.status == 200){
-                form.setFieldValue('location_id', response.data.data.location_id);
-            }
-        } catch (error) {
-            message.error(`${error}`);
-        }
-    }
 
     const handleSubmit = async () => {
-        console.log(itemsSelected);
+        setLoading(true);
+        const dataInitital: any[] | undefined = [];
+        
+        initialTable.forEach(element => {
+            if(element.product_name != null){
+                dataInitital.push({...element, type: 'in'});
+            }
+        });
+
+        try {
+            const response = await axiosInstance.post('/inventory', {'type': 'in', 'data': dataInitital });
+            if(response.status == 200){
+                message.success(`${response?.data?.message}`)
+                setInitialTableData();
+            }
+        } catch (error: any) {
+            message.error(`${error.response?.data?.message}`)
+        } finally {
+            setLoading(false);
+        }
     }
 
     const applyBulkChange = async () => {
@@ -309,16 +509,74 @@ const addInventory = () => {
     }
 
 
-    const onSelect = (value: string) => {
-        console.log('onSelect', value);
+    const onSelect = (value: string, option: any, index: number) => {
+        console.log(option);
+            if(option.object == undefined){
+    
+                const newData = [...initialTable];
+                newData[index].location_id = value;
+                newData[index].location_name = value;
+                setInitialTable(newData);
+    
+            }else{
+                const item: Location = option.object;
+                const newData = [...initialTable];
+    
+                newData[index].location_id = item.location_id;
+                newData[index].location_name = item.name;
+    
+                // if(item.unit?.max_value != null && item.unit?.max_value > 0){
+                //     newData[index].children = Array.from({ length: item.unit?.max_value }, (_, index) => ({
+                //         key: index, 
+                //         product_name: null, 
+                //         product_id: null, 
+                //         stok: 0.0, 
+                //         sku: "", 
+                //         selling_price: 0.0, 
+                //         cost: 0.0, 
+                //         minimum: 1,
+                //         checked: false,
+                //         location_id: '',
+                //         location_name: '',
+                //         cost_string: '0.0',
+                //         selling_price_string: '0.0',
+                //         unit_id: '',
+                //         unit_name: '',
+                //         children: [],
+                //     }))
+                // }
+    
+                console.log(newData[index]);
+    
+                setInitialTable(newData);
+    
+            }
     };
     
-
+    const setInitialTableData = () => {
+        setInitialTable(Array.from({ length: 4 }, (_, index) => ({
+            key: index, 
+            product_name: null, 
+            product_id: null, 
+            stok: 0.0, 
+            sku: "", 
+            selling_price: 0.0, 
+            cost: 0.0, 
+            minimum: 1,
+            checked: false,
+            location_id: '',
+            location_name: '',
+            cost_string: '0.0',
+            selling_price_string: '0.0',
+            unit_id: '',
+            unit_name: '',
+            // children: [],
+        })));
+    }
     
 
     useEffect(() => {
-        fetchItems();
-        
+        setInitialTableData();
     }, []);
 
 
@@ -334,49 +592,34 @@ const addInventory = () => {
                 disabled={loading}
             >
 
-                <Form.Item name="location_name" className="w-full" label="Tambahkan Lokasi">
-                    <AutoComplete
-                        options={options}
-                        style={{ width: 200 }}
-                        onSelect={onSelect}
-                        onSearch={fetchLocation}
-                        placeholder="Cari/Pilih Gudang"
-                    />
-                </Form.Item>
+
+                
+                {( selectedRowKeys.length > 0 && <div className="flex py-3 justify-between items-center">
+                    <Space className="flex justify-end">
+                        <p className="text-sm">Atur Sekaligus</p>
+                        <Input placeholder="Harga" onChange={(e) => setPrice(parseInt(e.target.value))}></Input>
+                        <Input placeholder="Stok" onChange={(e) => setStok(parseInt(e.target.value))}></Input>
+                        <Input placeholder="Minimum" onChange={(e) => setMinimum(parseInt(e.target.value))}></Input>
+                        <Button type="primary" onClick={applyBulkChange}>Terapkan</Button>
+                    </Space>
+                </div> )}
+                
                 <Table 
                     columns={columns} 
                     loading={loading} 
                     rowKey={(record) => record.key ?? ''} 
+                    rowSelection={rowSelection}
                     pagination={false} 
                     dataSource={initialTable} 
+                    scroll={{ x: 'max-content' }}
                 />
-            </Form>
-            
-            
-            <div className="flex py-3 justify-between items-center">
-                <div className="flex gap-3">
-                    <Button type="primary" onClick={() => setModal(true)}>Pilih Item</Button>
-                    <Button type="primary" className="bg-green-600 hover:bg-green-600" onClick={handleSubmit}>Simpan</Button>
-                </div>
-                <Space className="flex justify-end">
-                    <p className="text-sm">Atur Sekaligus</p>
-                    <Input placeholder="Harga" onChange={(e) => setPrice(parseInt(e.target.value))}></Input>
-                    <Input placeholder="Stok" onChange={(e) => setStok(parseInt(e.target.value))}></Input>
-                    <Input placeholder="Minimum" onChange={(e) => setMinimum(parseInt(e.target.value))}></Input>
-                    <Button type="primary" onClick={applyBulkChange}>Terapkan</Button>
-                </Space>
-            </div>
-            
-            
 
-            <Modal
-                title="Tambah Inventory"
-                visible={modal}
-                onCancel={(e) => setModal(false)}
-                footer={null}
-            >
-                <Table columns={columnsListItem} rowKey={(record) => record.product_id} dataSource={items} />
-            </Modal>    
+                <Form.Item className="mt-2">
+                        <Button type="link" href="/inventory" loading={loading} >Batal</Button>
+                        <Button type="primary" htmlType="submit" loading={loading}>Kirim</Button>
+                </Form.Item>
+            </Form>
+              
         </DashboardLayout>
     );
 }

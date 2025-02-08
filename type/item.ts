@@ -18,10 +18,15 @@ export type Item = {
     created_at: string;
     updated_at: string;
     category: Category;
+    unit: ItemUnit|null,
+    parent_id: string|null,
+    parent: Item|null,
+    children: Item[],
 };
 
 export type ItemUnit = {
     type_id: string,
     slug: string,
     name: string,
+    max_value: number|null,
 }
