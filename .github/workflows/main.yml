@@ -34,10 +34,6 @@ jobs:
           password: ${{ secrets.FTP_PASS }}
           local-dir: ./  # This points to the build output directory of your Next.js app
           server-dir: /
-          protocol: ftps
+          protocol: ftp
           timeout: 300000 
-          passive: true
-          exclude: |
-            **/.git*
-            **/node_modules/**
-            **/.env.local**
+          
