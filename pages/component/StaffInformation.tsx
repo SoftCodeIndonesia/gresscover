@@ -37,7 +37,7 @@ const StaffInformation: React.FC<StaffDetailProps> =  ({data}) => {
             
             
             values.id = staff?.user.id;
-            var response = await axiosInstance.put('/staff', values, {
+            const response = await axiosInstance.put('/staff', values, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -62,7 +62,7 @@ const StaffInformation: React.FC<StaffDetailProps> =  ({data}) => {
         setLoading(true);
       
         try {
-            var response = await axiosInstance.get(`/staff/${slug}`);
+            const response = await axiosInstance.get(`/staff/${slug}`);
             if(response.status == 200){
                 setStaff(response.data.data);
                 form.setFieldsValue({
@@ -96,7 +96,7 @@ const StaffInformation: React.FC<StaffDetailProps> =  ({data}) => {
     
     
     return (
-        <Form form={form} {...layout} className="w-full flex flex-col gap-3" onFinish={handleSubmit} layout="horizontal">
+        <Form form={form} {...layout} className="w-full flex flex-col gap-3" onFinish={(values) => handleSubmit(values)} layout="horizontal">
             <Form.Item
                 
                 label="Name"

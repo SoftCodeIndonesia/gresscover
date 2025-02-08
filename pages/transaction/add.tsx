@@ -34,7 +34,7 @@ const formItemLayout = {
     },
 };
 
-const addTransaction = () => {
+const AddTransaction: React.FC = () => {
     
     const [loading, setLoading] = useState<boolean>(false);
     const [formLayout, setFormLayout] = useState<LayoutType>('horizontal');
@@ -49,7 +49,7 @@ const addTransaction = () => {
         const tr_id = getCookie('tr_id');
         
         
-        var data = {
+        const data = {
             'total_amount': form.getFieldValue('total_amount'),
             'status': form.getFieldValue('status'),
             'type': form.getFieldValue('type'),
@@ -186,4 +186,4 @@ const addTransaction = () => {
 }
 
 
-export default addTransaction;
+export default AddTransaction;

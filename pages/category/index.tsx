@@ -30,12 +30,12 @@ const CategoryPage = () => {
         setSearchText(value.toLowerCase());
     };
 
-    var column = [
+    const column = [
         {
             title: 'No',
             dataIndex: '',
             key: '',
-            render: (_: any, record: Category, index: number) => index + 1,
+            render: (_: unknown, record: Category, index: number) => index + 1,
         },
         {
             title: 'Name',
@@ -51,7 +51,7 @@ const CategoryPage = () => {
             title: 'Aksi',
             dataIndex: '',
             key: '',
-            render: (_: any, record: Category, index: number) => <div className='flex gap-3 items-center'>
+            render: (_: unknown, record: Category, index: number) => <div className='flex gap-3 items-center'>
                 <Button type='link' className="text-yellow-500" onClick={() => handleEdit(record)}>Edit</Button>
                 <Popconfirm title="Hapus Item" cancelText="Batal" onConfirm={() => handleDelete(record.category_id)} okText="Hapus" description={`Anda Yakin Ingin Menghapus Item Ini?`}>
 
@@ -75,7 +75,7 @@ const CategoryPage = () => {
     const handleDelete = async (id: string) => {
         isLoading(true);
         try {
-            var response = await axiosInstance.delete(`/category/${id}`);
+            const response = await axiosInstance.delete(`/category/${id}`);
             if(response.status == 200){
                 fetchCategories();
             }else{
@@ -91,7 +91,7 @@ const CategoryPage = () => {
     const fetchCategories = async () => {
         isLoading(true);
         try {
-            var response = await axiosInstance.get("/category");
+            const response = await axiosInstance.get("/category");
             if(response.status == 200){
                 setCategories(response.data.data);
             }else{
@@ -126,7 +126,7 @@ const CategoryPage = () => {
             }
 
 
-            var response = await axiosInstance.post('/category', data);
+            const response = await axiosInstance.post('/category', data);
             if(response.status == 200){
                 fetchCategories();
                 

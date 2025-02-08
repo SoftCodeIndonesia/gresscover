@@ -32,10 +32,10 @@ const Account = () => {
         
         setLoading(true);
 
-        var dataUser = JSON.parse(`${userCookie}`);
+        const dataUser = JSON.parse(`${userCookie}`);
       
         try {
-            var response = await axiosInstance.get(`/profile/${dataUser?.id}`);
+            const response = await axiosInstance.get(`/profile/${dataUser?.id}`);
             if(response.status == 200){
                 const user = response.data.data;
                 console.log(user);

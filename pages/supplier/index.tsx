@@ -53,7 +53,7 @@ const SupplierPage = () => {
       } 
 
       
-     var response = await axiosInstance.post('/supplier', values);
+     const response = await axiosInstance.post('/supplier', values);
 
 
       if(response.status === 200){

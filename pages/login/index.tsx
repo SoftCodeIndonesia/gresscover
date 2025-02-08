@@ -30,10 +30,10 @@ const LoginPage = () => {
     const onFinish = async (values: FieldLoginType) => {
         setLoading(true);
         try {
-            var response = await axiosInstance.post(`/login`, {'email': values.email, 'password': values.password});
+            const response = await axiosInstance.post(`/login`, {'email': values.email, 'password': values.password});
             if(response.status == 200){
 
-                var data = response.data as AuthResponse;
+                const data = response.data as AuthResponse;
                 
                 setCookie('token', data.access_token);
                 setCookie('user', JSON.stringify(data.user));

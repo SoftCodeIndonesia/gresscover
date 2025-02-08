@@ -73,7 +73,7 @@ const LocationsPage = () => {
   const getLocations = async () => {
     setLoading(true);
     try {
-      var response = await axiosInstance.get('/location');
+      const response = await axiosInstance.get('/location');
       setLocations(response.data.data);
     } catch (error: any) {
       message.error(`${error.response.data.message}`);

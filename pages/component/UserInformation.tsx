@@ -53,7 +53,7 @@ const UserInformation: React.FC<UserInformationProp> =  ({data}) => {
             
             values.id = user?.id;
 
-            var formData = new FormData();
+            const formData = new FormData();
 
             formData.append('name', values.name);
             formData.append('email', values.email);
@@ -65,7 +65,7 @@ const UserInformation: React.FC<UserInformationProp> =  ({data}) => {
 
             
 
-            var response = await axiosInstance.post(`/user/${values.id}`, formData, {
+            const response = await axiosInstance.post(`/user/${values.id}`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data',
@@ -95,7 +95,7 @@ const UserInformation: React.FC<UserInformationProp> =  ({data}) => {
         setLoading(true);
       
         try {
-            var response = await axiosInstance.get(`/user/${data?.id}`);
+            const response = await axiosInstance.get(`/user/${data?.id}`);
             if(response.status == 200){
                 setUser(response.data.data);
                 form.setFieldsValue({
@@ -152,7 +152,7 @@ const UserInformation: React.FC<UserInformationProp> =  ({data}) => {
     };
 
     const handleChange: UploadProps['onChange'] = ({ fileList: newFileList }) => {
-        var data = newFileList[newFileList.length - 1];
+        const data = newFileList[newFileList.length - 1];
         setFileList([data]);
     };
     

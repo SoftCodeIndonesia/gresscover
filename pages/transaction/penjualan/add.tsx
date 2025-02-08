@@ -52,7 +52,7 @@ const formItemLayout = {
     },
 };
 
-const addTransactionSale = () => {
+const AddTransactionSale: React.FC = () => {
     const [itemsSelected, setItemSelected] = useState<Inventory[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [modalPotongan, setModalPotongan] = useState<boolean>(false);
@@ -162,7 +162,7 @@ const addTransactionSale = () => {
     }
 
     const sumSubtotal = (data: TableInventory[]) => {
-        var subtotal = 0;
+        let subtotal = 0;
 
         data.forEach((value) => {
             if(value.product_id != null){
@@ -330,7 +330,7 @@ const addTransactionSale = () => {
     ];
 
     const onChangeValue = (key: string, value: any, item: Inventory) => {
-        var data = itemsSelected;
+        const data = itemsSelected;
 
         data.forEach(element => {
             if(element.item?.product_id == item.item?.product_id){
@@ -365,7 +365,7 @@ const addTransactionSale = () => {
     }
 
     const handleCheckboxChange = (e: CheckboxChangeEvent) => {
-        var item = e.target.value as Item;
+        const item = e.target.value as Item;
         if (e.target.checked) {
             // Tambahkan ke list jika di-check
             setItemSelected((inv) => [...inv, {
@@ -538,7 +538,7 @@ const addTransactionSale = () => {
     const countTotalWithTax = (taxes: Tax[]) => {
         const total_amount = subtotal;
 
-        var total_tax_tax = 0;
+        let total_tax_tax = 0;
 
         taxes.forEach(element => {
             if(element.unit_value == 'percent' && element.value != 0){
@@ -935,4 +935,4 @@ const addTransactionSale = () => {
 }
 
 
-export default addTransactionSale;
+export default AddTransactionSale;

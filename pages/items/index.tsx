@@ -99,7 +99,7 @@ const Items = () => {
     const handleDelete = async (id: string) => {
         setLoading(true);
         try {
-            var response = await axiosInstance.delete(`/items/${id}`);
+            const response = await axiosInstance.delete(`/items/${id}`);
             if(response.status == 200){
                 message.success('Item Telah Dihapus!');
                 fetchItems();
@@ -116,7 +116,7 @@ const Items = () => {
     const fetchItems = async () => {
         setLoading(true);
         try {
-            var response = await axiosInstance.get('/items');
+            const response = await axiosInstance.get('/items');
             if(response.status == 200){
                 setItems(response.data.data);
             }else{

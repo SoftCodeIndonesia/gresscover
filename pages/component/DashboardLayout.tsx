@@ -50,9 +50,9 @@ const DashboardLayout: React.FC<Props> = ({children}) => {
     {
       key: '1',
       label: (
-        <a href="/account">
+        <Link href="/account">
           Account
-        </a>
+        </Link>
       ),
       icon: <UserOutlined />,
     },
@@ -68,7 +68,7 @@ const DashboardLayout: React.FC<Props> = ({children}) => {
     },
   ];
 
-  const loggedOut = (e: any) => {
+  const loggedOut = (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
     e.preventDefault();
     confirm({
       title: 'Keluar',

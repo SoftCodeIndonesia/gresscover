@@ -5,7 +5,7 @@ import { Staff, StaffList } from '@/type/staff';
 import { getCookie } from 'cookies-next';
 import axiosInstance from '@/utils/axiosInstance';
 import DashboardLayout from '../component/DashboardLayout';
-import { render } from 'react-dom';
+
 import { formatDate } from '@/utils/date_utils';
 import Link from 'next/link';
 import { useForm } from 'antd/es/form/Form';

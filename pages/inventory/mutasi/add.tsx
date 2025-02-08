@@ -534,7 +534,7 @@ const MutasiBarang = () => {
     ];
 
     const onChangeValue = (key: string, value: any, item: Inventory) => {
-        var data = itemsSelected;
+        const data = itemsSelected;
 
         data.forEach(element => {
             if(element.item?.product_id == item.item?.product_id){
@@ -569,7 +569,7 @@ const MutasiBarang = () => {
     }
 
     const handleCheckboxChange = (e: CheckboxChangeEvent) => {
-        var item = e.target.value as Item;
+        const item = e.target.value as Item;
         if (e.target.checked) {
             // Tambahkan ke list jika di-check
             setItemSelected((inv) => [...inv, {
@@ -937,7 +937,7 @@ const MutasiBarang = () => {
 
     const handleSubmit = async () => {
         // setLoading(true);
-        var dataInitital: any[] | undefined = [];
+        let dataInitital: any[] | undefined = [];
         
         initialTable.forEach(element => {
             if(element.product_id != null){
@@ -965,7 +965,7 @@ const MutasiBarang = () => {
 
     const applyBulkChange = async () => {
 
-        var newData = itemsSelected.map((obj) => {return { ...obj, minimum_stock: minimum, price: price, quantity: stok }})
+        const newData = itemsSelected.map((obj) => {return { ...obj, minimum_stock: minimum, price: price, quantity: stok }})
         console.log(newData);
         setItemSelected(newData);
     }

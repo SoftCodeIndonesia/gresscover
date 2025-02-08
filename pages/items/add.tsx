@@ -56,7 +56,7 @@ const AddItem = () => {
     };
 
     const handleChange: UploadProps['onChange'] = ({ fileList: newFileList }) => {
-        var data = newFileList[newFileList.length - 1];
+        const data = newFileList[newFileList.length - 1];
         setFileList([data]);
     };
 
@@ -70,7 +70,7 @@ const AddItem = () => {
     const fetchCategories = async() => {
         setLoading(true);
         try {
-            var response = await axiosInstance.get('/category');
+            const response = await axiosInstance.get('/category');
             setCategories(response.data.data);
         } catch (error) {
             setError(true);
@@ -82,7 +82,7 @@ const AddItem = () => {
     const fetchUnits = async() => {
         setLoading(true);
         try {
-            var response = await axiosInstance.get('/units');
+            const response = await axiosInstance.get('/units');
             setUnits(response.data.data);
         } catch (error) {
             setError(true);
@@ -93,7 +93,7 @@ const AddItem = () => {
     }
 
     const handleSubmit = async (values: any) => {
-        var formData = new FormData();
+        const formData = new FormData();
         formData.append('name', values.name);
         formData.append('barcode', values.barcode ?? null);
         formData.append('category_id', values.category_id ?? null);
@@ -116,7 +116,7 @@ const AddItem = () => {
         setLoading(true)
         try {
             
-            var response = await axiosInstance.post("/items", formData, {
+            const response = await axiosInstance.post("/items", formData, {
                 headers: {
                     "Content-Type": 'multipart/form-data',
                 }
@@ -141,9 +141,9 @@ const AddItem = () => {
     const fetchItemEdit = async () => {
         setLoading(true);
         try {
-            var response = await axiosInstance.get(`/items/${item_id}`);
+            const response = await axiosInstance.get(`/items/${item_id}`);
             if(response.status == 200){
-                var data = response.data.data as Item;
+                const data = response.data.data as Item;
                 form.setFieldsValue({
                     'name': data.name,
                     'barcode': data.barcode,
@@ -169,7 +169,7 @@ const AddItem = () => {
 
 
         try {
-            var response = await axiosInstance.post('/category', {name: categoryNewName});
+            const response = await axiosInstance.post('/category', {name: categoryNewName});
             if(response.status == 200){
                 message.success("Berhasil!");
                 setName('');
@@ -191,7 +191,7 @@ const AddItem = () => {
 
 
         try {
-            var response = await axiosInstance.post('/units', {name: unit_name});
+            const response = await axiosInstance.post('/units', {name: unit_name});
             if(response.status == 200){
                 message.success("Berhasil!");
                 setUnitname('');
@@ -258,7 +258,7 @@ const AddItem = () => {
     }, [])
 
     useEffect(() => {
-        var item_id = getCookie('item_id');
+        const item_id = getCookie('item_id');
         setItemId(item_id);
         form.setFieldValue('quantity', 1)
     },[])

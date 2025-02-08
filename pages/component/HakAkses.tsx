@@ -19,7 +19,7 @@ const HakAkses: React.FC<HakAksesProps> = ({id, permissions}) => {
     const [data_permissions, setPermissions] = useState<Permission[]>([]);
     const [loading, isLoading] = useState<boolean>(false);
     const [searchText, setSearchText] = useState('');
-    const [tmp_permission, givePermission] = useState<String[]>([]);
+    const [tmp_permission, givePermission] = useState<string[]>([]);
     const [slug, setSlug] = useState<string | undefined>(undefined);
     
 
@@ -40,7 +40,7 @@ const HakAkses: React.FC<HakAksesProps> = ({id, permissions}) => {
             title: 'No',
             dataIndex: 'no',
             key: 'no',
-            render: (_: any, record: any, index: number) => index + 1,
+            render: (_: unknown, record: unknown, index: number) => index + 1,
         },
         {
             title: 'Hak Akses',
@@ -56,7 +56,7 @@ const HakAkses: React.FC<HakAksesProps> = ({id, permissions}) => {
             title: 'Aksi',
             dataIndex: '',
             key: '',
-            render: (_: any, record: Permission) => <Checkbox value={record.name} checked={tmp_permission.includes(record.name)} onChange={changeCheckbox}/>
+            render: (_: unknown, record: Permission) => <Checkbox value={record.name} checked={tmp_permission.includes(record.name)} onChange={changeCheckbox}/>
         },
     ]
 
@@ -75,7 +75,7 @@ const HakAkses: React.FC<HakAksesProps> = ({id, permissions}) => {
     const submitPermission = async () => {
         isLoading(true);
         try {
-            var response = await axiosInstance.post(`permission/${id}/give-permissions`, {'permissions': tmp_permission});
+            const response = await axiosInstance.post(`permission/${id}/give-permissions`, {'permissions': tmp_permission});
             
             if(response.status == 200){
                 message.success('Berhasil Memperbarui Hak Akses!');
@@ -94,7 +94,7 @@ const HakAkses: React.FC<HakAksesProps> = ({id, permissions}) => {
     const fetchPermissions = async () => {
         isLoading(true);
         try {
-            var response = await axiosInstance.get('/permission');
+            const response = await axiosInstance.get('/permission');
             if(response.status == 200){
                 setPermissions(response.data.data);
             }else{

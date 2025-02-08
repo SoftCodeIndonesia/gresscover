@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Item, ItemUnit } from "@/type/item";
 import { Location } from "@/type/location";
 import DashboardLayout from "../component/DashboardLayout";
@@ -38,7 +38,7 @@ interface TableInventory {
 }
 
 
-const addInventory = () => {
+const AddInventory: React.FC = () => {
     const [itemsSelected, setItemSelected] = useState<Inventory[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [formLayout, setFormLayout] = useState<LayoutType>('vertical');
@@ -283,7 +283,7 @@ const addInventory = () => {
     ];
 
     const onChangeValue = (key: string, value: any, item: Inventory) => {
-        var data = itemsSelected;
+        const data = itemsSelected;
 
         data.forEach(element => {
             if(element.item?.product_id == item.item?.product_id){
@@ -318,7 +318,7 @@ const addInventory = () => {
     }
 
     const handleCheckboxChange = (e: CheckboxChangeEvent) => {
-        var item = e.target.value as Item;
+        const item = e.target.value as Item;
         if (e.target.checked) {
             // Tambahkan ke list jika di-check
             setItemSelected((inv) => [...inv, {
@@ -503,7 +503,7 @@ const addInventory = () => {
 
     const applyBulkChange = async () => {
 
-        var newData = itemsSelected.map((obj) => {return { ...obj, minimum_stock: minimum, price: price, quantity: stok }})
+        const newData = itemsSelected.map((obj) => {return { ...obj, minimum_stock: minimum, price: price, quantity: stok }})
         console.log(newData);
         setItemSelected(newData);
     }
@@ -625,4 +625,4 @@ const addInventory = () => {
 }
 
 
-export default addInventory;
+export default AddInventory;

@@ -83,7 +83,7 @@ const HakAksesMenu = () => {
     const handleDelete = async (id: number) => {
         setLoading(true);
         try {
-            var response = await axiosInstance.delete(`/permission/${id}`);
+            const response = await axiosInstance.delete(`/permission/${id}`);
             if(response.status == 200){
                 message.success("Data Berhasil Dihapus!");
                 fetchPermissions();
@@ -123,7 +123,7 @@ const HakAksesMenu = () => {
                 values = {...values, id: permission.id};
             }
 
-            var response = await axiosInstance.post('/permission', values);
+            const response = await axiosInstance.post('/permission', values);
 
             if(response.status == 200){
                 message.success("Berhasil");
@@ -143,7 +143,7 @@ const HakAksesMenu = () => {
     const fetchPermissions = async () => {
         setLoading(true);
         try {
-            var response = await axiosInstance.get('/permission');
+            const response = await axiosInstance.get('/permission');
             if(response.status == 200){
                 setPermissions(response.data.data);
             }else{
@@ -159,7 +159,7 @@ const HakAksesMenu = () => {
     const handleDeleteBulk = async () => {
         setLoading(true);
         try {
-            var response = await axiosInstance.post(`/permission_bulk`, {"ids": ids});
+            const response = await axiosInstance.post(`/permission_bulk`, {"ids": ids});
             if(response.status == 200){
                 message.success("Data Berhasil Dihapus!");
                 fetchPermissions();

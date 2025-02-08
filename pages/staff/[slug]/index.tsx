@@ -43,7 +43,7 @@ const DetailStaff = () => {
         setLoading(true);
       
         try {
-            var response = await axiosInstance.get(`/staff/${slug}`);
+            const response = await axiosInstance.get(`/staff/${slug}`);
             if(response.status == 200){
                 const staffData = response.data.data;
                 setStaff(staffData);
