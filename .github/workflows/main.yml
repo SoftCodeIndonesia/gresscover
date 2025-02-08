@@ -36,3 +36,9 @@ jobs:
           server-dir: /
           protocol: ftps
           timeout: 300000 
+          passive: true
+          exclude: |
+          **/.git*
+          **/node_modules/**
+          **/.next/**
+          **/.env.local
