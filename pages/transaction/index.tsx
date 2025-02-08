@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { Layout, Table, message, Image, Button, Modal, Form, Input, Space, Tag, Typography } from "antd";
 import axiosInstance from "@/utils/axiosInstance";
 import { Inventory } from "@/type/inventory";
-import { DeleteButton, EditButton } from "../component/ButtonComponent";
+import EditButton from '../component/EditButton';
+import DeleteButton from '../component/DeleteButton';
 import DashboardLayout from "../component/DashboardLayout";
 
 import {

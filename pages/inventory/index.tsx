@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Layout, Table, message, Image, Button, Modal, Form, Input, Space, Tag } from "antd";
 import axiosInstance from "@/utils/axiosInstance";
 import { Inventory } from "@/type/inventory";
-import { DeleteButton, EditButton } from "../component/ButtonComponent";
+
 import DashboardLayout from "../component/DashboardLayout";
 
 import {
@@ -14,6 +14,8 @@ import { FormLayout } from "antd/es/form/Form";
 import TextArea from "antd/es/input/TextArea";
 import { formatRupiah } from "@/utils/format_rupiah";
 import { Item } from "@/type/item";
+import EditButton from "../component/EditButton";
+import DeleteButton from "../component/DeleteButton";
 
 const { Content } = Layout;
 

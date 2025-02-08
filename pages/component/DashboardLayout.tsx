@@ -1,4 +1,4 @@
-import React, { createContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   DatabaseOutlined,
   ExclamationCircleFilled,
@@ -7,11 +7,8 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   PieChartOutlined,
-  ShoppingCartOutlined,
-  UploadOutlined,
   UserOutlined,
   UserSwitchOutlined,
-  VideoCameraOutlined,
 } from '@ant-design/icons';
 import { Avatar, Button, Dropdown, Layout, Menu, MenuProps, Modal, Spin, theme } from 'antd';
 import Link from 'antd/es/typography/Link';

@@ -12,7 +12,7 @@ interface ButtonComponentProp {
     disable?: boolean,
 }
 
-export const EditButton: React.FC<ButtonComponentProp> = ({onClick, label, disable}) => {
+const EditButton: React.FC<ButtonComponentProp> = ({onClick, label, disable}) => {
     return (
         <Button icon={<EditFilled/>} disabled={disable}  onClick={onClick} type="link" className='text-yellow-500' style={{ marginRight: 8 }}>
             {label}
@@ -20,15 +20,4 @@ export const EditButton: React.FC<ButtonComponentProp> = ({onClick, label, disab
     );
 }
 
-export const DeleteButton: React.FC<ButtonComponentProp> = ({onComfirm, label, titleConfirm, okText, cancelText, disable}) => {
-    return (
-        <Popconfirm
-            title={titleConfirm ?? "Are you sure to delete this data?"}
-            onConfirm={onComfirm}
-            okText={okText ?? "Yes"}
-            cancelText={cancelText ?? "No"}
-          >
-            <Button type="link" disabled={disable}  icon={<DeleteFilled/>} className='text-red-500'>{label}</Button>
-        </Popconfirm>
-    );
-}
+export default EditButton;

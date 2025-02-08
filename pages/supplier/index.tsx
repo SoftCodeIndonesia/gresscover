@@ -7,7 +7,9 @@ import DashboardLayout from '../component/DashboardLayout';
 import axiosInstance from '@/utils/axiosInstance';
 import { FormLayout } from 'antd/es/form/Form';
 import TextArea from 'antd/es/input/TextArea';
-import { DeleteButton, EditButton } from '../component/ButtonComponent';
+import EditButton from '../component/EditButton';
+import DeleteButton from '../component/DeleteButton';
+
 
 const SupplierPage = () => {
   // State untuk daftar supplier dan untuk modal form

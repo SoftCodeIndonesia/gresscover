@@ -5,10 +5,8 @@ import LocationForm from './location_form';
 import axiosInstance from '../../utils/axiosInstance';
 import { Location } from '@/type/location';
 import Title from 'antd/es/typography/Title';
-import axios from 'axios';
-import { getCookie } from 'cookies-next';
-import cookie from 'cookie';
-import { DeleteButton, EditButton } from '../component/ButtonComponent';
+import EditButton from '../component/EditButton';
+import DeleteButton from '../component/DeleteButton';
 
 interface LocationsPageProps {
   initialLocations: Location[];
