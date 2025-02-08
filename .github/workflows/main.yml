@@ -38,7 +38,7 @@ jobs:
           timeout: 300000 
           passive: true
           exclude: |
-          **/.git*
-          **/node_modules/**
-          **/.next/**
-          **/.env.local
+            **/.git*
+            **/node_modules/**
+            **/.next/**
+            **/.env.local
