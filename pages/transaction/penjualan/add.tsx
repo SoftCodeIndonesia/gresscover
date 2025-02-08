@@ -6,7 +6,7 @@ import axiosInstance from "@/utils/axiosInstance";
 import { Image,Button, Divider, Form, Input, message, Select, Space, Table, Modal, Checkbox, AutoComplete, AutoCompleteProps, TableColumnsType, Breadcrumb, DatePicker, Collapse } from "antd";
 import { LayoutType } from "@/type/form.layout";
 
-import { CloseCircleOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import { CloseCircleOutlined, DeleteOutlined, MinusCircleOutlined, PlusCircleOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import { formatRupiah } from "@/utils/format_rupiah";
 import { CheckboxChangeEvent } from "antd/es/checkbox";
 import { Inventory } from "@/type/inventory";
@@ -18,6 +18,7 @@ import { RequestParam } from "@/type/request_param";
 import { Pagination } from "@/type/pagination";
 import Column from "antd/es/table/Column";
 import { Tax } from "@/type/tax";
+import { toFormatLaravel } from "@/utils/date_utils";
 
 interface TableInventory {
     key: React.Key, 
@@ -28,6 +29,7 @@ interface TableInventory {
     stok: number|null, 
     quantity: number|null, 
     sku: string|null, 
+    price: number|null;
     selling_price: number|null, 
     selling_price_string: string|null, 
     cost: number|null, 
@@ -127,7 +129,8 @@ const AddTransactionSale: React.FC = () => {
             newData[index].sku = item.item.sku;
             newData[index].stok = item.quantity;
             newData[index].cost = parseInt(item.item?.cost);
-            newData[index].selling_price = item.price;
+            newData[index].price = item.price;
+            newData[index].selling_price = item.price * 1;
             newData[index].quantity = 1;
             newData[index].inventory_id = item.inventory_id;
 
@@ -243,19 +246,64 @@ const AddTransactionSale: React.FC = () => {
             dataIndex: "stok",
             width: 150,
             render: (_: any, record: TableInventory, index: number) => (
-                <Input addonAfter={`/${record.stok}`} placeholder="Masukan stok" min={1}  onChange={(e) => {
+                // <Input addonAfter={`/${record.stok}`} placeholder="Masukan stok" readOnly type="number" min={record.stok ?? 1}  onChange={(e) => {
                     
-                    const newData = [...initialTable];
-                    newData[index].quantity = parseInt(e.target.value == '' ? '0' : e.target.value);
+                //     console.log(e.target.value);
+                //     if(parseInt(handlePriceChange(e.target.value)) > record.stok!){
+                        
+                //         message.error(`Stok Di Gudang ${record.stok}`);
+                //     }
 
-                    const selling_price = newData[index].quantity > 0 ? newData[index].quantity * (newData[index].selling_price ?? 0) : newData[index].selling_price;
-                    console.log(selling_price);
 
-                    newData[index].selling_price = selling_price;
-                    setInitialTable(newData);
-                    sumSubtotal(newData);
+                //     const input = parseInt(handlePriceChange(e.target.value)) > record.stok! ? record.stok! : parseInt(handlePriceChange(e.target.value));
 
-                }} />
+                //     console.log(input);
+
+                //     if(input > 0){
+                //         const newData = [...initialTable];
+                //         newData[index].quantity = input;
+
+                //         const selling_price = input * newData[index].selling_price!;
+                        
+
+                //         newData[index].selling_price = selling_price;
+                //         setInitialTable(newData);
+                //         sumSubtotal(newData);
+                //     }
+                   
+
+                // }} />
+                <div className="flex items-center gap-3">
+                    <Button type="primary" shape="circle" icon={<MinusCircleOutlined />} onClick={() => {
+                        const plus = Number(record.quantity!) - Number(1);
+                        if(plus > 0){
+                            const newData = [...initialTable];
+                            newData[index].quantity = plus;
+
+                            const selling_price = plus * newData[index].price!;
+                            
+
+                            newData[index].selling_price = selling_price;
+                            setInitialTable(newData);
+                            sumSubtotal(newData);
+                        }
+                    }} />
+                    <p>{record.quantity}</p>
+                    <Button type="primary" shape="circle" icon={<PlusCircleOutlined />} onClick={() => {
+                        const plus = Number(record.quantity!) + Number(1);
+                        if(plus <= record.stok!){
+                            const newData = [...initialTable];
+                            newData[index].quantity = plus;
+
+                            const selling_price = plus * newData[index].price!;
+                            
+
+                            newData[index].selling_price = selling_price;
+                            setInitialTable(newData);
+                            sumSubtotal(newData);
+                        }
+                    }} />
+                </div>
             ),
         },
         {
@@ -426,7 +474,11 @@ const AddTransactionSale: React.FC = () => {
                         value: query
                     }
                 },
-                
+                where: [
+                    {
+                        quantity: [">", 0]
+                    }
+                ],
                 request_column: [],
                
             }
@@ -557,9 +609,6 @@ const AddTransactionSale: React.FC = () => {
     const handleSubmit = async () => {
         setLoading(true);
         
-        const dateTime = new Date(form.getFieldValue('sale_date'));
-
-        
 
         const items :{ inventory_id: string; quantity: number } [] = [];
         initialTable.forEach(element => {
@@ -572,7 +621,7 @@ const AddTransactionSale: React.FC = () => {
         });
 
         const data = {
-            'sale_date': dateTime.getTime(),
+            'sale_date': toFormatLaravel(form.getFieldValue('sale_date')),
             'total_amount': total,
             'payment_method': null,
             'order_number': form.getFieldValue('order_number'),
@@ -596,6 +645,16 @@ const AddTransactionSale: React.FC = () => {
             if(response.status == 200){
                 message.success(`${response?.data?.message}`)
                 setInitialTableData();
+                setInitialTableTax([{
+                    name: 'Admin',
+                    max_value: 0,
+                    tax_id: null,
+                    unit_value: 'percent',
+                    value: 0,
+                }]);
+                setTotal(0);
+                setSubtotal(0);
+                form.resetFields();
             }
         } catch (error: any) {
             message.error(`${error.response?.data?.message}`)
@@ -675,6 +734,7 @@ const AddTransactionSale: React.FC = () => {
             unit_name: '',
             quantity: 0,
             inventory_id: '0',
+            price: 0,
             // children: [],
         })));
     }
@@ -698,7 +758,7 @@ const AddTransactionSale: React.FC = () => {
                     },
                     {
                         title: 'Daftar Penjualan',
-                        href: '/inventory/mutasi',
+                        href: '/transaction/penjualan',
                     },
                     {
                         title: `Tambah Penjualan`,
@@ -797,7 +857,7 @@ const AddTransactionSale: React.FC = () => {
                         <Column title="" dataIndex="qty" key="qty" width={150} />
                         <Column title="" dataIndex="item" key="item" align="right" render={(_:any, record: Tax) => (<p>{'Subtotal'}</p>)} />
                         <Column title="" dataIndex="no" key="no" width={200} render={(_: any, record: any) => (
-                            <Input placeholder="Masukan stok"  min={1} value={subtotal} readOnly/>
+                            <Input placeholder="Masukan stok"  min={1} value={formatRupiah(subtotal)} readOnly/>
                         )} />
                     </Table>
                     <Table 
@@ -847,7 +907,7 @@ const AddTransactionSale: React.FC = () => {
                         <Column title="" dataIndex="qty" key="qty" width={150} />
                         <Column title="" dataIndex="item" key="item" align="right" render={(_:any, record: Tax) => (<p className="font-bold">{'Total'}</p>)} />
                         <Column title="" dataIndex="no" key="no" width={200} render={(_: any, record: any) => (
-                            <Input placeholder="Masukan stok"  min={1} value={total} readOnly />
+                            <Input placeholder="Masukan stok"  min={1} value={formatRupiah(total)} readOnly />
                         )} />
                     </Table>
                     <div className="flex justify-end">
