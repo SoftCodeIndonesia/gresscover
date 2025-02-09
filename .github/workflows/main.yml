@@ -18,6 +18,8 @@ jobs:
         with:
           node-version: 20.18.1  # Use the desired Node.js version
       - name: Install dependencies and build Next.js app
+        env:
+            NEXT_LEGACY: true
         run: |
           npm install
           touch .env.local
@@ -32,7 +34,6 @@ jobs:
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASS }}
           local-dir: "./"
-          server-dir: "/public_html/pos-fanatik/"
           exclude: |
             **/.git*
             **/node_modules/**
