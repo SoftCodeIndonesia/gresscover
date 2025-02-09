@@ -17,8 +17,6 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: 20.18.1  # Use the desired Node.js version
-      - name: Remove Next.js Cache
-        run: rm -rf .next/cache
       - name: Install dependencies and build Next.js app
         run: |
           npm install
@@ -26,12 +24,17 @@ jobs:
           echo NEXT_PUBLIC_BE=${{ secrets.BE_URI }} >> .env.local
           echo NEXT_PUBLIC_API_URI=${{ secrets.API_URI }} >> .env.local
           npm run build
-
+      
       - name: Deploy via FTPS
         uses: SamKirkland/FTP-Deploy-Action@4.3.3
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASS }}
-          source: ".next/ !.next/cache/ public next.config.js package.json"
+          local-dir: "./"
+          server-dir: "/public_html/pos-fanatik"
+          exclude: |
+            **/.git*
+            **/node_modules/**
+            **/.next/cache/**
         
