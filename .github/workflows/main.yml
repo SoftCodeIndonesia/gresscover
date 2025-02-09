@@ -18,7 +18,7 @@ jobs:
         with:
           node-version: 20.18.1  # Use the desired Node.js version
       - name: Remove Next.js Cache
-          run: rm -rf .next/cache
+        run: rm -rf .next/cache
       - name: Install dependencies and build Next.js app
         run: |
           npm install
