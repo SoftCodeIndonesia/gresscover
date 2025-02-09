@@ -18,14 +18,15 @@ jobs:
         with:
           node-version: 20.18.1  # Use the desired Node.js version
       - name: Install dependencies and build Next.js app
-        env:
-            NEXT_LEGACY: true
+       
         run: |
           npm install
           touch .env.local
           echo NEXT_PUBLIC_BE=${{ secrets.BE_URI }} >> .env.local
           echo NEXT_PUBLIC_API_URI=${{ secrets.API_URI }} >> .env.local
-          npm run build
+          export NEXT_LEGACY=true
+          export NEXT_DISABLE_TURBOPACK=1
+          npm run build --no-turbo
       
       - name: Deploy via FTPS
         uses: SamKirkland/FTP-Deploy-Action@4.3.3

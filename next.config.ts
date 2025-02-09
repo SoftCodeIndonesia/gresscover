@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   /* config options here */
   distDir: '.next',
   reactStrictMode: true,
+
   transpilePackages:  [
     "@ant-design",
     "antd",
