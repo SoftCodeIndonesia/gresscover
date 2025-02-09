@@ -32,6 +32,4 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASS }}
-          local-dir: ./  # This points to the build output directory of your Next.js app
-          server-dir: /
-          protocol: ftp
+        
