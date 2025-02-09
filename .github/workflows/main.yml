@@ -35,10 +35,3 @@ jobs:
           local-dir: ./  # This points to the build output directory of your Next.js app
           server-dir: /
           protocol: ftps
-          timeout: 300000 
-          passive: true
-          exclude: |
-            **/.git*
-            **/node_modules/**
-            **/.next/**
-            **/.env.local**

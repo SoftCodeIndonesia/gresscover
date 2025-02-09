@@ -738,7 +738,6 @@ const AddTransactionSale: React.FC = () => {
             // children: [],
         })));
     }
-    
 
     useEffect(() => {
         setModalItem(true);
