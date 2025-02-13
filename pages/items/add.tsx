@@ -108,9 +108,9 @@ const AddItem = () => {
         if(fileList.length > 0){
             formData.append('photo', fileList[0].originFileObj as Blob);
         }
-
-        if(item_id != null){
-            formData.append('item_id', item_id);
+        const id = getCookie('item_id');
+        if(id != null){
+            formData.append('item_id', id);
         }
 
         setLoading(true)
