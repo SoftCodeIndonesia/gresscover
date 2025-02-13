@@ -491,17 +491,17 @@ const AddInventory: React.FC = () => {
 
         console.log(dataInitital);
 
-        // try {
-        //     const response = await axiosInstance.post('/inventory', {'type': 'in', 'data': dataInitital });
-        //     if(response.status == 200){
-        //         message.success(`${response?.data?.message}`)
-        //         setInitialTableData();
-        //     }
-        // } catch (error: any) {
-        //     message.error(`${error.response?.data?.message}`)
-        // } finally {
-        //     setLoading(false);
-        // }
+        try {
+            const response = await axiosInstance.post('/inventory', {'type': 'in', 'data': dataInitital });
+            if(response.status == 200){
+                message.success(`${response?.data?.message}`)
+                setInitialTableData();
+            }
+        } catch (error: any) {
+            message.error(`${error.response?.data?.message}`)
+        } finally {
+            setLoading(false);
+        }
     }
 
     const applyBulkChange = async () => {
