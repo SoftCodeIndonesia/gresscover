@@ -251,7 +251,7 @@ const AddItem = () => {
         if(id != null){
             fetchItemEdit();
         }
-    })
+    }, [])
 
     useEffect(() => {
         fetchUnits();
