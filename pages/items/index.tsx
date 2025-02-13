@@ -62,7 +62,7 @@ const Items = () => {
             title: 'Stok',
             dataIndex: 'stock_quantity',
             key: 'stock_quantity',
-            render: (_:any, record: Item) => <p>{`${record.min_stock_quantity} ${record.unit_name}`}</p>,
+            render: (_:any, record: Item) => <p>{`${record.stock_quantity} ${record.unit_name}`}</p>,
         },
         
         {
