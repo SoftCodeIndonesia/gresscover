@@ -30,6 +30,10 @@ const Items = () => {
         setCookie('item_id', id);
         window.location.href = '/items/add';
     }
+    const newItem = () => {
+        setCookie('item_id', null);
+        window.location.href = '/items/add';
+    }
 
     const columns = [
         {
@@ -139,7 +143,7 @@ const Items = () => {
                 <Title level={2}>Daftar Items</Title>
                 <Space style={{ marginBottom: 16 }} className="items-center w-full">
                     <Input prefix={<SearchOutlined />} placeholder="Cari Berdasarkan Nama, SKU, atau Barcode" className="w-full" onChange={(e) => handleSearch(e.target.value)}/>
-                    <Button type="link" href="/items/add" className="bg-green-600 hover:bg-green-600 text-white">
+                    <Button type="primary" onClick={newItem}>
                         Buat Item Baru
                     </Button>
                     <Button type="primary" onClick={fetchItems} icon={<ReloadOutlined/>} className="bg-blue-400 hover:bg-blue-400 text-white">
