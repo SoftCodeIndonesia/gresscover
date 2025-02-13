@@ -247,7 +247,7 @@ const AddItem = () => {
     }
 
     useEffect(() => {
-        if(item_id != null|| item_id != undefined){
+        if(item_id != null && item_id != undefined){
             fetchItemEdit();
         }
     }, [item_id])
@@ -259,7 +259,7 @@ const AddItem = () => {
 
     useEffect(() => {
         const item_id = getCookie('item_id');
-        if(item_id != null || item_id != undefined){
+        if(item_id != null && item_id != undefined){
             setItemId(item_id);
             form.setFieldValue('quantity', 1)
         }
