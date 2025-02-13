@@ -247,10 +247,11 @@ const AddItem = () => {
     }
 
     useEffect(() => {
-        if(item_id != null){
+        const id = getCookie('item_id');
+        if(id != null){
             fetchItemEdit();
         }
-    }, [item_id])
+    })
 
     useEffect(() => {
         fetchUnits();
