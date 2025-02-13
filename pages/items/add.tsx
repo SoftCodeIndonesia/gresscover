@@ -138,10 +138,10 @@ const AddItem = () => {
 
     }
 
-    const fetchItemEdit = async () => {
+    const fetchItemEdit = async (id: string) => {
         setLoading(true);
         try {
-            const response = await axiosInstance.get(`/items/${item_id}`);
+            const response = await axiosInstance.get(`/items/${id}`);
             if(response.status == 200){
                 const data = response.data.data as Item;
                 form.setFieldsValue({
@@ -249,7 +249,7 @@ const AddItem = () => {
     useEffect(() => {
         const id = getCookie('item_id');
         if(id != null){
-            fetchItemEdit();
+            fetchItemEdit(id);
         }
     }, [])
 
