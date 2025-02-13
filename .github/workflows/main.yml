@@ -17,16 +17,19 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: 20.18.1  # Use the desired Node.js version
+      - name: Clear Next.js Cache
+        run: |
+          rm -rf .next/cache
+          rm -rf node_modules/.cach
       - name: Install dependencies and build Next.js app
-       
         run: |
           npm install
           touch .env.local
           echo NEXT_PUBLIC_BE=${{ secrets.BE_URI }} >> .env.local
           echo NEXT_PUBLIC_API_URI=${{ secrets.API_URI }} >> .env.local
-          export NEXT_LEGACY=true
           export NEXT_DISABLE_TURBOPACK=1
-          npm run build --no-turbo
+          export NEXT_LEGACY=true
+          npm run build
       
       - name: Deploy via FTPS
         uses: SamKirkland/FTP-Deploy-Action@4.3.3

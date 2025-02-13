@@ -223,14 +223,14 @@ const AddInventory: React.FC = () => {
             render: (_: any, record: TableInventory, index: number) => (
                 <Input placeholder="Masukan stok"  min={1}  onChange={(e) => {
                     const newData = [...initialTable];
-                    newData[index].stok = parseInt(e.target.value);
+                    newData[index].stok = parseInt(handlePriceChange(e.target.value));
                     setInitialTable(newData);
 
                 }} />
             ),
         },
         {
-            title: "UOM",
+            title: "Satuan",
             dataIndex: "unit",
             render: (_: any, record: TableInventory, index: number) => (
                 <AutoComplete
@@ -238,6 +238,7 @@ const AddInventory: React.FC = () => {
                         options={optionUnit}
                         filterOption={false}
                         style={{ width: 100 }}
+                        onChange={(value) => onSelectItemUOM(value, {}, index)}
                         onSelect={(value, option) => onSelectItemUOM(value, option, index)}
                         onSearch={fetchUOM}
                         placeholder="Cari/Pilih Product"
@@ -479,7 +480,7 @@ const AddInventory: React.FC = () => {
     
 
     const handleSubmit = async () => {
-        setLoading(true);
+        // setLoading(true);
         const dataInitital: any[] | undefined = [];
         
         initialTable.forEach(element => {
@@ -488,17 +489,19 @@ const AddInventory: React.FC = () => {
             }
         });
 
-        try {
-            const response = await axiosInstance.post('/inventory', {'type': 'in', 'data': dataInitital });
-            if(response.status == 200){
-                message.success(`${response?.data?.message}`)
-                setInitialTableData();
-            }
-        } catch (error: any) {
-            message.error(`${error.response?.data?.message}`)
-        } finally {
-            setLoading(false);
-        }
+        console.log(dataInitital);
+
+        // try {
+        //     const response = await axiosInstance.post('/inventory', {'type': 'in', 'data': dataInitital });
+        //     if(response.status == 200){
+        //         message.success(`${response?.data?.message}`)
+        //         setInitialTableData();
+        //     }
+        // } catch (error: any) {
+        //     message.error(`${error.response?.data?.message}`)
+        // } finally {
+        //     setLoading(false);
+        // }
     }
 
     const applyBulkChange = async () => {

@@ -1,5 +1,5 @@
 import DashboardLayout from "@/pages/component/DashboardLayout";
-import { Button, Card, message, Skeleton, Space, Table, Tag,DatePicker, TimeRangePickerProps } from "antd";
+import { Button, Card, message, Skeleton, Space, Table, Tag,DatePicker, TimeRangePickerProps, Typography } from "antd";
 import {
     ReloadOutlined,
     PlusOutlined,
@@ -41,17 +41,18 @@ const Transaction: React.FC = () => {
             key: '',
             render: (_: any, record: Sale, index: number) => index + 1,
         },
+        
+        {
+            title: 'No Transaksi',
+            dataIndex: 'order_number',
+            key: 'order_number',
+            render: (_: any, record: Sale, index: number) => <Typography.Link href={`/transaction/penjualan/${record.sale_id}`}>{record.order_number}</Typography.Link>,
+        },
         {
             title: 'Tanggal',
             dataIndex: 'sale_date',
             key: 'sale_date',
             render: (_: any, record: Sale, index: number) => <p><CalendarOutlined /> {formatDate(record.sale_date!)}</p>,
-        },
-        {
-            title: 'No Transaksi',
-            dataIndex: 'order_number',
-            key: 'order_number',
-            render: (_: any, record: Sale, index: number) => <p>{record.order_number}</p>,
         },
         {
             title: 'No Pengiriman',
@@ -69,7 +70,7 @@ const Transaction: React.FC = () => {
             title: 'Status',
             dataIndex:'status', 
             key: 'status',
-            render: (_: any, record: Sale, index: number) => <Tag color="default">{record.status?.toUpperCase()}</Tag>,
+            render: (_: any, record: Sale, index: number) => (getStatus(record.status!)),
         },
         {
             title: 'Platform',
@@ -82,8 +83,7 @@ const Transaction: React.FC = () => {
             key: 'action',
             render: (_: any, item: Sale) => (
                 <>
-                  <EditButton label='' onClick={() => handleEdit(item)}/>
-                  <DeleteButton label='' onComfirm={() => handleDelete(item)} okText='Hapus' cancelText='Batal' />
+                  <DeleteButton label='' onComfirm={() => handleDelete([item.sale_id!])} okText='Hapus' cancelText='Batal' />
                 </>
               ),
         },
@@ -96,8 +96,30 @@ const Transaction: React.FC = () => {
          window.location.href = 'transaction/add';
     }
 
-    const handleDelete = (data: Sale) => {
+    const handleDelete = async (sale: string[]) => {
+        setLoading(true);
+        try {
 
+            const data = {
+                "data": sale,
+            }
+
+            console.log(data);
+            
+            const response = await axiosInstance.post(`/sales/del`, data);
+
+            if(response.status == 200){
+                message.success('Berhasil Hapus Data!');
+                getSales();
+            }else{
+                message.error(response.statusText);
+            }
+
+        } catch (error: any) {
+            message.error(error);
+        } finally {
+            setLoading(false);
+        }
     }
 
     const getSales = async () => {
@@ -153,6 +175,18 @@ const Transaction: React.FC = () => {
         }
     }
 
+    const getStatus = (status: string) => {
+        if(status == 'sedang dikemas'){
+            return <Tag color="default">{status.toUpperCase()}</Tag>
+        }else if(status == 'dalam pengiriman'){
+            return <Tag color="blue">{status.toUpperCase()}</Tag>
+        }else if(status == 'pesanan terkirim'){
+            return <Tag color="green">{status.toUpperCase()}</Tag>
+        }else if(status == 'retur'){
+            return <Tag color="red">{status.toUpperCase()}</Tag>
+        }
+    }
+
     const rangePresets: TimeRangePickerProps['presets'] = [
         { label: 'Last 7 Days', value: [dayjs().add(-7, 'd'), dayjs()] },
         { label: 'Last 14 Days', value: [dayjs().add(-14, 'd'), dayjs()] },
@@ -170,7 +204,7 @@ const Transaction: React.FC = () => {
         <DashboardLayout>
             <Space className="gap-3 mt-3">
                 <Button icon={<PlusOutlined/>} type="primary" href="penjualan/add" >Tambah</Button>
-                <Button icon={<ReloadOutlined/>} type="default" onClick={() => {}} >Reload</Button>
+                <Button icon={<ReloadOutlined/>} type="default" onClick={getSales} >Reload</Button>
                 <RangePicker 
                     presets={[
                         {

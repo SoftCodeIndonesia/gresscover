@@ -19,6 +19,9 @@ import { Pagination } from "@/type/pagination";
 import Column from "antd/es/table/Column";
 import { Tax } from "@/type/tax";
 import { toFormatLaravel } from "@/utils/date_utils";
+import { title } from "process";
+import dayjs from "dayjs";
+
 
 interface TableInventory {
     key: React.Key, 
@@ -492,6 +495,7 @@ const AddTransactionSale: React.FC = () => {
                             value: `${data.item?.parent != null ? data.item?.parent?.name + '->' : ''}${data.item.name}->${data.location?.name}`,
                             label: `${data.item?.parent != null ? data.item?.parent?.name + '->' : ''}${data.item.name}->${data.location?.name}`,
                             object: data,
+                            
                         }
                     })
                     setOptionsItem(result);
@@ -499,7 +503,8 @@ const AddTransactionSale: React.FC = () => {
                     setOptionsItem([
                         {
                             value: `${query}`,
-                            label: `Tambahkan ${query}`,
+                            label: `${query}`,
+                            title: `Tambahkan ${query}`,
                         }
                     ]);
                 }
@@ -655,6 +660,11 @@ const AddTransactionSale: React.FC = () => {
                 setTotal(0);
                 setSubtotal(0);
                 form.resetFields();
+                form.setFieldsValue({
+                    sale_date: dayjs(),
+                    status: 'sedang dikemas',
+                    platform: 'shopee'
+                })
             }
         } catch (error: any) {
             message.error(`${error.response?.data?.message}`)
@@ -742,6 +752,11 @@ const AddTransactionSale: React.FC = () => {
     useEffect(() => {
         setModalItem(true);
         setInitialTableData();
+        form.setFieldsValue({
+            sale_date: dayjs(),
+            status: 'sedang dikemas',
+            platform: 'shopee'
+        })
     }, []);
 
     return (
@@ -778,7 +793,7 @@ const AddTransactionSale: React.FC = () => {
                     rules={[{ required: true, message: 'Please input tanggal penjualan' }]}
                     style={{width: '100%'}}
                 >
-                    <DatePicker width={`100%`} />
+                    <DatePicker defaultValue={dayjs()} width={`100%`} />
                 </Form.Item>
                 <div className="flex gap-4">
                     <div className="flex flex-col flex-1">
@@ -793,6 +808,7 @@ const AddTransactionSale: React.FC = () => {
                     <div className="flex flex-col flex-1">
                         <Form.Item name="status" label="Status Pesanan" rules={[{ required: true , message: 'Please input status pesanan!'}]}>
                             <Select
+                                defaultValue={'sedang dikemas'}
                                 placeholder="Status Pesanan"
                                 options={[
                                     {label: 'Sedang Dikemas', value: 'sedang dikemas'},
@@ -808,6 +824,7 @@ const AddTransactionSale: React.FC = () => {
 
                         <Form.Item name="platform" label="Platform" rules={[{ required: true , message: 'Please input platform!'}]}>
                             <Select
+                                defaultValue={'shopee'}
                                 placeholder="platform penjualan"
                                 options={[
                                     {label: 'Shopee', value: 'shopee'},
@@ -827,7 +844,7 @@ const AddTransactionSale: React.FC = () => {
                         
                     </div>
                 </div>
-                <Button type="primary" icon={<PlusOutlined/>} className="my-3">Tambah item</Button>
+                
                 <div>
                     <Table 
                             columns={columns} 

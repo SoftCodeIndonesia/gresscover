@@ -1,3 +1,5 @@
+import { InventoryMovement } from "./inventory_movement";
+
 export type Sale = {
     sale_id: string|null;
     sale_date: string|null;
@@ -10,4 +12,15 @@ export type Sale = {
     delivery_number: string|null;
     status: string|null;
     platform: string|null;
+    items: InventoryMovement[],
+    taxes: SaleTax[],
+}
+
+export type SaleTax = {
+    sale_tax_id: string,
+    tax_id: string,
+    sale_id: string,
+    name: string|null,
+    value: number,
+    unit_value: string|null,
 }

@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { Layout, Table, message, Image, Button, Modal, Form, Input, Space, Tag, Typography } from "antd";
+import { Layout, Table, message, Image, Button, Modal, Form, Input, Space, Tag, Typography, Pagination as AntPagination } from "antd";
 import axiosInstance from "@/utils/axiosInstance";
 import { Inventory } from "@/type/inventory";
 import EditButton from '../component/EditButton';
@@ -24,7 +24,7 @@ const Transaction: React.FC = () => {
     const [transaction, setTransaction] = useState<Pagination<TransactionType>>();
     const [requestParam, setRequestParam] = useState<RequestParam>({
         table: 'transaction',
-        request_column: ['unique_id', 'type', 'reference', 'reference_id','status', 'total_amount'],
+        request_column: ['unique_id', 'type', 'reference','reference_id','status', 'total_amount'],
         request_column_relation: [],
         limit: 10,
         page: 1,
@@ -50,6 +50,8 @@ const Transaction: React.FC = () => {
         console.log(record);
         if(record.reference == 'sales'){
             return <Typography.Link href={`/penjualan/detail/${record.reference_id}`}>Penjualan</Typography.Link>
+        }else if(record.reference == 'retur'){
+            return <Typography.Link href={`/retur/detail/${record.reference_id}`}>Retur</Typography.Link>
         }else{
             return <p>-</p>
         }
@@ -58,6 +60,12 @@ const Transaction: React.FC = () => {
     }
 
     const columns = [
+        {
+            title: 'No',
+            dataIndex: '',
+            key: '',
+            render: (_: any, record: TransactionType, index: number) => <p>{index + 1}</p>,
+        },
         {
             title: 'No Transaction',
             dataIndex: 'unique_id',
@@ -117,17 +125,9 @@ const Transaction: React.FC = () => {
 
     }
 
-    const getTransactions = async () => {
+    const getTransactions = async (request: RequestParam) => {
         setLoading(true);
         try {
-            const request: RequestParam = {
-                table: 'transaction',
-                request_column: ['unique_id', 'type', 'reference','reference_id','status', 'total_amount'],
-                request_column_relation: [],
-                limit: 10,
-                page: 1,
-        
-            };
             const response = await axiosInstance.post('/search', request);
 
             if(response.status == 200){
@@ -143,9 +143,22 @@ const Transaction: React.FC = () => {
         }
     }
 
+    const onChangePagination = (page: number) => {
+        const request = {
+            table: 'transaction',
+            request_column: ['unique_id', 'type', 'reference', 'reference_id','status', 'total_amount'],
+            request_column_relation: [],
+            limit: 10,
+            page: page,
+    
+        };
+        setRequestParam(request);
+
+        getTransactions(request);
+    }
 
     useEffect(() => {
-        getTransactions();
+        getTransactions(requestParam);
     }, []);
     
 
@@ -153,9 +166,12 @@ const Transaction: React.FC = () => {
         <DashboardLayout>
             <Space className="gap-3">
             <Button icon={<PlusOutlined/>} type="primary" href="transaction/add" className="my-3 bg-blue-600 text-white" >Tambah</Button>
-            <Button icon={<ReloadOutlined/>} type="default" onClick={getTransactions} className="my-3" >Reload</Button>
+            <Button icon={<ReloadOutlined/>} type="default" onClick={() => getTransactions(requestParam)} className="my-3" >Reload</Button>
             </Space>
-            <Table columns={columns} loading={loading} dataSource={transaction?.data ?? []} rowKey={(record) => record.unique_id} />
+            <Table columns={columns} loading={loading} pagination={false} dataSource={transaction?.data ?? []} rowKey={(record) => record.unique_id} />
+            <div className="flex my-3 justify-end">
+            <AntPagination onChange={onChangePagination} defaultCurrent={transaction?.current_page} total={transaction?.total} />
+            </div>
         </DashboardLayout>
     );
 };

@@ -16,6 +16,7 @@ import { object, record } from "zod";
 import { handlePriceChange } from "@/utils/validate_price_change";
 import { RequestParam } from "@/type/request_param";
 import { Pagination } from "@/type/pagination";
+import { DefaultOptionType } from "antd/es/select";
 
 interface TableInventory {
     key: React.Key, 
@@ -46,13 +47,14 @@ const MutasiBarang = () => {
     const [itemsSelected, setItemSelected] = useState<Inventory[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [modal, setModalDetail] = useState<boolean>(false);
+    const [showTable, setShowTabel] = useState<boolean>(false);
     const [parent_active, setParentActive] = useState<TableInventory|null>(null);
     const [formLayout, setFormLayout] = useState<LayoutType>('vertical');
     const [price, setPrice] = useState<number>(0);
     const [stok, setStok] = useState<number>(0);
     const [initialTable, setInitialTable] = useState<TableInventory[]>([]);
     const [initialTableVarian, setInitialTableVarian] = useState<TableInventory[]>([]);
-
+    const [locations, setLocations] = useState<Location[]>([]);
     const [optionUnit, setOptionUnit] = useState<AutoCompleteProps['options']>([]);
     const [optionsLocation, setOptionsLocation] = useState<AutoCompleteProps['options']>([]);
     const [optionItem, setOptionsItem] = useState<AutoCompleteProps['options']>([]);
@@ -180,8 +182,9 @@ const MutasiBarang = () => {
         }
     }
 
-    const onSelectItem = (value: string, option: any, index: number, is_varian?: boolean) => {
+    const onSelectItem = (value: string, option: DefaultOptionType, index: number, is_varian?: boolean) => {
         console.log(option);
+        
         if(is_varian){
             if(option.object == undefined){
 
@@ -398,7 +401,7 @@ const MutasiBarang = () => {
                 ),
             },
             {
-                title: "UOM",
+                title: "Satuan",
                 dataIndex: "unit",
                 width: 150,
                 render: (_: any, record: TableInventory, index: number) => (
@@ -454,13 +457,13 @@ const MutasiBarang = () => {
                         style={{ width: 200 }}
                         onChange={(value) => onSelectItem(value, {}, index)}
                         onSelect={(value, option) => onSelectItem(value, option, index)}
-                        onSearch={fetchItems}
+                        onSearch={(value) => fetchItems(value,false, record)}
                         placeholder="Cari/Pilih Product"
                     />
                 ),
             },
             {
-                title: "Gudang",
+                title: "Gudang Tujuan",
                 dataIndex: "location",
                 width: 150,
                 render: (_: any, record: TableInventory, index: number) => (
@@ -491,7 +494,7 @@ const MutasiBarang = () => {
                         newData[index].sku = e.target.value;
                         setInitialTable(newData);
     
-                    }} readOnly />
+                    }} />
                 ),
             },
             
@@ -504,20 +507,29 @@ const MutasiBarang = () => {
                     
                     return (
                         <Input placeholder="Masukan stok" type="number"  max={record.stok ?? 1} value={record.quantity ?? ''} onChange={(e) => {
-                            const newData = [...initialTable];
-                            newData[index].quantity = parseInt(e.target.value);
-                            setInitialTable(newData);
+                            const input = parseInt(handlePriceChange(e.target.value));
+                            if(input < record.stok!){
+                                const newData = [...initialTable];
+                                newData[index].quantity = parseInt(e.target.value);
+                                setInitialTable(newData);
+                            }else{
+                                const newData = [...initialTable];
+                                newData[index].quantity = record.stok;
+                                setInitialTable(newData);
+                            }
+                            
         
                         }} />
                     );
                 },
             },
+
             {
-                title: "UOM",
+                title: "Satuan",
                 dataIndex: "unit",
                 width: 150,
                 render: (_: any, record: TableInventory, index: number) => (
-                    <Input placeholder="UOM"  max={record.stok ?? 1} value={record.unit_name ?? ''} readOnly/>
+                    <Input placeholder="UOM"  max={record.stok ?? 1} value={record.unit_name ?? ''} readOnly />
                 ),
             },
             {
@@ -606,7 +618,20 @@ const MutasiBarang = () => {
         
       };
 
-    const fetchItems = async (query: string, is_varian?: boolean, record?: TableInventory) => {
+    // const insertNewItem = async (value: string, index: number) => {
+    //     try {
+    //         const response = await axiosInstance.post('/items', {'name': value, 'location': form.getFieldValue('reference_id')});
+    //         if(response.status == 200){
+    //             const newData = [...initialTable];
+    //             newData[index].location_id = form.getFieldValue('reference_id');
+    //             newData[index].product_id = 
+    //         }
+    //     } catch (error: any) {
+    //         message.error(`${error.response?.data?.message}`);
+    //     }
+    // }  
+
+    const fetchItems = async (query: string, is_varian?: boolean, record?: TableInventory, index?: number) => {
         
         try {
             const querySearch: RequestParam = is_varian ? {
@@ -692,12 +717,13 @@ const MutasiBarang = () => {
                         })
                         setOptionsItem(result);
                     }else{
-                        setOptionsItem([
-                            {
-                                value: `${query}`,
-                                label: `${query}`,
-                            }
-                        ]);
+                        // setOptionsItem([
+                        //     {
+                        //         value: `${query}`,
+                        //         label: <Button type="link" onClick={() => console.log('hallo')}>Tambahkan {query}</Button>,
+                        //         title: `Tambahkan ${query}`,
+                        //     }
+                        // ]);
                     }
                 }
             }else{
@@ -940,7 +966,7 @@ const MutasiBarang = () => {
         let dataInitital: any[] | undefined = [];
         
         initialTable.forEach(element => {
-            if(element.product_id != null){
+            if(element.product_name != null){
                 if(element.items.length > 0){
                     dataInitital = dataInitital?.concat(element.items);
                 }
@@ -1076,11 +1102,30 @@ const MutasiBarang = () => {
             items: [],
         })));
     }
+
+    const fetchInitialLocation =  async () => {
+        setLoading(true);
+        try {
+            const request_param: RequestParam = {
+                table: 'location',
+                limit: 10,
+                page: 1,
+                request_column_relation: []
+            }
+            const response = await axiosInstance.post('/search', request_param);
+            setLocations(response.data.data.data);
+        } catch (error: any) {
+            message.error(`${error.response?.data?.message}`);
+        } finally {
+            setLoading(false);
+        }
+    }
     
 
     useEffect(() => {
         setInitialTableData();
         initialTableVarianData();
+        fetchInitialLocation();
     }, []);
 
 
@@ -1096,8 +1141,39 @@ const MutasiBarang = () => {
                 onFinish={handleSubmit}
                 disabled={loading}
             >
-                <Form.Item className="flex-1" label="Lokasi Gudang" name='reference_name' rules={[{ required: true, message: 'Bagian ini tidak boleh kosong!' }]} >
-                    <AutoComplete
+                <Form.Item className="flex-1" label="Lokasi Awal Gudang" name='reference_name' rules={[{ required: true, message: 'Bagian ini tidak boleh kosong!' }]} >
+                    <Select 
+                        placeholder="Pilih Lokasi Awal Gudang"
+                        options={locations.map((value) => {
+                            return {
+                                value: value.location_id,
+                                label: value.name,
+                                object: value,
+    
+                            }
+                        })}
+                        onSelect={(value, option) => {
+                            
+                            if(option.object == undefined){
+                                form.setFieldsValue({
+                                    reference_id: value,
+                                    reference: 'gudang',
+                                    reference_name: value,
+                                })
+                            }else{
+                                const location: Location = option.object;
+                                form.setFieldsValue({
+                                    reference_id: location.location_id,
+                                    reference: 'gudang',
+                                    reference_name: location.name,
+                                })
+                            }
+
+                            setShowTabel(true);
+                        }}
+                    ></Select>
+                    
+                    {/* <AutoComplete
                             showSearch
                             className="w-full"
                             placeholder={'Cari/Tambahkan Gudang Baru'}
@@ -1124,7 +1200,7 @@ const MutasiBarang = () => {
                                     })
                                 }
                             }}
-                    />
+                    /> */}
                 </Form.Item>
 
                 {( selectedRowKeys.length > 0 && <div className="flex py-3 justify-between items-center">
@@ -1137,7 +1213,7 @@ const MutasiBarang = () => {
                     </Space>
                 </div> )}
                 
-                <Table 
+                {showTable && <Table 
                     columns={columns} 
                     loading={loading} 
                     rowKey={(record) => record.key ?? ''} 
@@ -1145,7 +1221,7 @@ const MutasiBarang = () => {
                     pagination={false} 
                     dataSource={initialTable} 
                     scroll={{ x: 'max-content' }}
-                />
+                />}
                 
                 <Form.Item className="mt-3">
                         <Button type="link" href="/items" loading={loading} >Batal</Button>
