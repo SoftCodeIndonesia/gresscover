@@ -151,8 +151,8 @@ const AddTransaction: React.FC = () => {
                 
                 <Form.Item label="Jenis Transaksi" name="type">
                     <Radio.Group>
-                        <Radio value="income"> Pengeluaran </Radio>
-                        <Radio value="expense"> Pemasukan </Radio>
+                        <Radio value="expense"> Pengeluaran </Radio>
+                        <Radio value="income"> Pemasukan </Radio>
                     </Radio.Group>
                 </Form.Item>
                 <Form.Item label="Jumlah" name="total_amount" rules={[{ required: true, message: 'Please input nomor pesanan!' }]}>
