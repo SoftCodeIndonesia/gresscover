@@ -87,7 +87,7 @@ const DashboardLayout: React.FC<Props> = ({children}) => {
     {
       key: '1',
       icon: <PieChartOutlined />,
-      label: 'Dashboard',
+      label: <Link href="/dashboard">Dashboard</Link>,
     },
     {
       key: '10',
