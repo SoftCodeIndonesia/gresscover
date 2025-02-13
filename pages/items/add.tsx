@@ -248,8 +248,9 @@ const AddItem = () => {
 
     useEffect(() => {
         const id = getCookie('item_id');
-        if(id != null){
-            fetchItemEdit(id);
+        console.log(id);
+        if(id != 'null'){
+            fetchItemEdit(id as string);
         }
     }, [])
 
@@ -260,7 +261,7 @@ const AddItem = () => {
 
     useEffect(() => {
         const item_id = getCookie('item_id');
-        if(item_id != null){
+        if(item_id != 'null'){
             setItemId(item_id);
             form.setFieldValue('quantity', 1)
         }
