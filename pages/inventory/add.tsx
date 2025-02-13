@@ -23,7 +23,7 @@ interface TableInventory {
     product_id: string|null, 
     location_name: string|null, 
     location_id: string|null, 
-    stok: number|null, 
+    quantity: number|null, 
     sku: string|null, 
     selling_price: number|null, 
     selling_price_string: string|null, 
@@ -90,7 +90,7 @@ const AddInventory: React.FC = () => {
             newData[index].product_name = item.name;
             newData[index].product_id = item.product_id;
             newData[index].sku = item.sku;
-            newData[index].stok = item.stock_quantity;
+            newData[index].quantity = item.stock_quantity;
             newData[index].cost = parseInt(item.cost);
             newData[index].selling_price = parseInt(item.price);
             newData[index].minimum = item.min_stock_quantity;
@@ -223,7 +223,7 @@ const AddInventory: React.FC = () => {
             render: (_: any, record: TableInventory, index: number) => (
                 <Input placeholder="Masukan stok"  min={1}  onChange={(e) => {
                     const newData = [...initialTable];
-                    newData[index].stok = parseInt(handlePriceChange(e.target.value));
+                    newData[index].quantity = parseInt(handlePriceChange(e.target.value));
                     setInitialTable(newData);
 
                 }} />
@@ -561,7 +561,7 @@ const AddInventory: React.FC = () => {
             key: index, 
             product_name: null, 
             product_id: null, 
-            stok: 0.0, 
+            quantity: 0.0, 
             sku: "", 
             selling_price: 0.0, 
             cost: 0.0, 
