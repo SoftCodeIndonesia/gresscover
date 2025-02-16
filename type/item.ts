@@ -21,6 +21,7 @@ export type Item = {
     unit: ItemUnit|null,
     parent_id: string|null,
     parent: Item|null,
+    overall_quantity?: number,
     children: Item[],
 };
 

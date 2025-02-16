@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
+  DashboardOutlined,
   DatabaseOutlined,
   ExclamationCircleFilled,
   FileDoneOutlined,
@@ -11,9 +12,11 @@ import {
   UserSwitchOutlined,
 } from '@ant-design/icons';
 import { Avatar, Button, Dropdown, Layout, Menu, MenuProps, Modal, Spin, theme } from 'antd';
-import Link from 'antd/es/typography/Link';
+
 import { User } from '@/type/user';
 import { deleteCookie, getCookie } from 'cookies-next';
+import { useRouter } from 'next/router';
+import Link from 'next/link';
 
 const { Header, Sider, Content } = Layout;
 
@@ -28,18 +31,25 @@ const { confirm } = Modal;
 
 const DashboardLayout: React.FC<Props> = ({children}) => {
     const [collapsed, setCollapsed] = useState(false);
-  const {
-    token: { colorBgContainer, borderRadiusLG },
-  } = theme.useToken();
+    const {
+      token: { colorBgContainer, borderRadiusLG },
+    } = theme.useToken();
 
   const [user, setUser] = useState<User | null>(null);
+  const [currentKey, setCurrentKey] = useState<string>();
   const userCookie = getCookie('user');
-
+  const router = useRouter();
   const [modal, contextHolder] = Modal.useModal();
 
-  
+  const navigateTo = (path: string, key: string) => {
+    setCurrentKey(key);
+    console.log(key)
+    router.push(path);
+  }
 
   useEffect(() => {
+    console.log(currentKey)
+    console.log(router);
     setUser(JSON.parse(`${userCookie}`));
   }, []);
 
@@ -86,18 +96,19 @@ const DashboardLayout: React.FC<Props> = ({children}) => {
   const menus: MenuItem[] = [
     {
       key: '1',
-      icon: <PieChartOutlined />,
+      icon: <DashboardOutlined />,
       label: <Link href="/dashboard">Dashboard</Link>,
     },
     {
       key: '10',
       icon: <PieChartOutlined />,
       label: 'Inventory',
+      
       children: [
         { key: '10.1', label: <Link href="/inventory">Semua Barang</Link>,  },
-        { key: '10.2', label: <Link href="/inventory/mutasi">Mutasi Barang</Link>,  },
-        { key: '10.3', label: <Link href="/inventory/out">Barang Keluar</Link>,  },
-        { key: '10.4', label: <Link href="/inventory/in">Barang Masuk</Link>,  },
+        { key: '10.2', label: <Link href="/inventory/mutasi">Mutasi</Link>,  },
+        { key: '10.3', label: <Link href="/inventory/in">Barang Masuk</Link>,  },
+        { key: '10.4', label: <Link href="/inventory/out">Barang Keluar</Link>,  },
       ],
     },
     {
@@ -105,10 +116,10 @@ const DashboardLayout: React.FC<Props> = ({children}) => {
       icon: <FileDoneOutlined />,
       label: 'Transaksi',
       children: [
-        { key: '7.1', label: <Link href="/transaction">Semua Transaksi</Link>,  },
-        { key: '7.2', label: <Link href="/transaction/penjualan">Transaksi Penjualan</Link>,  },
-        { key: '7.3', label: <Link href="/transaction/retur">Retur Barang</Link>,  },
-        { key: '7.4', label: <Link href="/transaction/change">Penukaran Barang</Link>,  },
+        { key: '7.1', label:<Link href="/transaction">Semua Transaksi</Link>},
+        { key: '7.2', label:<Link href="/transaction/penjualan">Transaksi Penjualan</Link>},
+        { key: '7.3', label:<Link href="/transaction/retur">Transaksi Retur</Link>},
+        { key: '7.4', label:<Link href="/transaction/change">Penukaran Barang</Link>},
       ],
     },
     {
@@ -116,19 +127,18 @@ const DashboardLayout: React.FC<Props> = ({children}) => {
       icon: <DatabaseOutlined />,
       label: 'Master',
       children: [
-        { key: '2.1', label: <Link href="/items">Item</Link>,  },
-        { key: '2.2', label: <Link href="/category">Kategori</Link>,  },
-        { key: '2.3', label: <Link href="/supplier">Daftar Pemasok</Link>,  },
-        { key: '3.4', label: <Link href="/warehouse">Daftar Gudang</Link>,  },
+        { key: '2.1', label: <Link href="/items">Semua Item</Link> },
+        { key: '2.2', label: <Link href="/category">Kategori</Link> },
+        { key: '3.4', label: <Link href="/warehouse">Gudang</Link> },
       ],
     },
     {
       key: '6',
       icon: <UserSwitchOutlined />,
-      label: 'Mejemen Staff',
+      label: 'Mejemen User',
       children: [
-        { key: '6.1', label: <Link href="/staff">Daftar Staff</Link>,  },
-        { key: '6.2', label: <Link href="/hak_akses">Hak Akses</Link>,  },
+        { key: '6.1', label: <Link href="/staff">User</Link>},
+        { key: '6.2', label: <Link href="/hak_akses">Managemen Hak Akses</Link>},
       ],
     },
   ]
@@ -140,7 +150,7 @@ const DashboardLayout: React.FC<Props> = ({children}) => {
         <Menu
           theme="dark"
           mode="inline"
-          defaultSelectedKeys={['1']}
+          defaultSelectedKeys={[currentKey!]}
           items={menus}
         />
       </Sider>

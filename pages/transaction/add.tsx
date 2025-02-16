@@ -39,8 +39,6 @@ const AddTransaction: React.FC = () => {
     const [loading, setLoading] = useState<boolean>(false);
     const [formLayout, setFormLayout] = useState<LayoutType>('horizontal');
     
-
-    
     const [form] = Form.useForm();
 
     const handleSubmit = async () => {

@@ -10,6 +10,7 @@ import {
 import { RequestParam } from "@/type/request_param";
 import axiosInstance from "@/utils/axiosInstance";
 import Title from "antd/es/typography/Title";
+import { useRouter } from "next/router";
 const MutasiBarang: React.FC = () => {
 
     const [outs, setData] = useState<Pagination<InventoryMovement>>({
@@ -31,6 +32,8 @@ const MutasiBarang: React.FC = () => {
         request_column_relation: ['inventory', 'inventory.item'],
         group: "inventory_id",
     });
+
+    const router = useRouter();
 
     const column = [
         {
@@ -104,7 +107,7 @@ const MutasiBarang: React.FC = () => {
             <Title level={2}>Daftar Mutasi</Title>
             <Space className="gap-2">
                 <Button icon={<ReloadOutlined/>} type="default" onClick={fetch} className="my-3" >Reload</Button>
-                <Button icon={<PlusOutlined/>} href="mutasi/add" type="primary" className="my-3" >Buat Mutasi</Button>
+                <Button icon={<PlusOutlined/>} onClick={() => router.push('mutasi/add')} type="primary" className="my-3" >Buat Mutasi</Button>
             </Space>
             <Table columns={column} dataSource={outs!.data} pagination={false} rowKey={(record) => record.id} loading={loading} />
         </DashboardLayout>

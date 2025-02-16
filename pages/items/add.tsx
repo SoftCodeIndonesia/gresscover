@@ -109,8 +109,8 @@ const AddItem = () => {
             formData.append('photo', fileList[0].originFileObj as Blob);
         }
         const id = getCookie('item_id');
-        if(id != null){
-            formData.append('item_id', id);
+        if(id != 'null'){
+            formData.append('item_id', id as string);
         }
 
         setLoading(true)
@@ -147,8 +147,9 @@ const AddItem = () => {
                 form.setFieldsValue({
                     'name': data.name,
                     'barcode': data.barcode,
-                    'category_id': data.category_id,
+                    'category_id': data.category_id != "null" ? data.category_id : '',
                     'cost': parseInt(data.cost),
+                    'price': parseInt(data.price),
                     'sku': data.sku,
                     'min_quantity': data.min_stock_quantity,
                     'photo': data.photo,

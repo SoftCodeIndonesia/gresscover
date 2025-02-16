@@ -1,6 +1,6 @@
 import { Item } from "@/type/item"
 import { formatRupiah } from "@/utils/format_rupiah";
-import { Image, Button, Input, message, Space, Table, Typography, Popconfirm } from "antd";
+import { Image, Button, Input, message, Space, Table, Typography, Popconfirm, TableProps } from "antd";
 import { useEffect, useState } from "react"
 import DashboardLayout from "../component/DashboardLayout";
 import Title from "antd/es/typography/Title";
@@ -10,17 +10,19 @@ import {
 } from '@ant-design/icons';
 import axiosInstance from "@/utils/axiosInstance";
 import { setCookie } from "cookies-next";
-
+import { Pagination } from "@/type/pagination";
+import { RequestParam } from "@/type/request_param";
+import Link from "next/link";
+type TableRowSelection<T extends object = object> = TableProps<T>['rowSelection'];
 const Items = () => {
-    const [items, setItems] = useState<Item[]>([]);
+    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+    const [items, setItems] = useState<Pagination<Item>>();
     const [loading, setLoading] = useState<boolean>(false);
     const [searchText, setSearchText] = useState('');
-
-    const filteredData = items.filter((data) =>
-        data.name.toLowerCase().includes(searchText) ||
-        data.sku.toLowerCase().includes(searchText) ||
-        data.barcode.toLowerCase().includes(searchText)
-    );
+    const [requestParam, setParamRequst] = useState<{limit: number, page: number}>({
+        limit: 10,
+        page: 1,
+    });
 
     const handleSearch = (value: string) => {
         setSearchText(value.toLowerCase());
@@ -34,6 +36,16 @@ const Items = () => {
         setCookie('item_id', null);
         window.location.href = '/items/add';
     }
+
+    const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
+        console.log('selectedRowKeys changed: ', newSelectedRowKeys);
+        setSelectedRowKeys(newSelectedRowKeys);
+    };
+
+    const rowSelection: TableRowSelection<Item> = {
+        selectedRowKeys,
+        onChange: onSelectChange,
+    };
 
     const columns = [
         {
@@ -63,10 +75,10 @@ const Items = () => {
             key: 'sku',
         },
         {
-            title: 'Stok',
-            dataIndex: 'stock_quantity',
-            key: 'stock_quantity',
-            render: (_:any, record: Item) => <p>{`${record.stock_quantity} ${record.unit_name}`}</p>,
+            title: 'Semua Stok',
+            dataIndex: 'quantity',
+            key: 'quantity',
+            render: (_:any, record: Item) => <p>{`${record.overall_quantity} pieces`}</p>,
         },
         
         {
@@ -85,11 +97,11 @@ const Items = () => {
             key: 'action',
             render: (text: any, record: Item) => (
                 <div className='flex gap-3 items-center'>
-                    <Typography.Link href={`/staff/${record.product_id}`}>
+                    <Link passHref href={`items/${record.product_id}`}>
                         Detail
-                    </Typography.Link>
+                    </Link>
                     <Button type='link' className="text-yellow-500" onClick={() => handleEdit(record.product_id)}>Edit</Button>
-                    <Popconfirm title="Hapus Item" cancelText="Batal" onConfirm={() => handleDelete(record.product_id)} okText="Hapus" description={`Anda Yakin Ingin Menghapus Item Ini?`}>
+                    <Popconfirm title="Hapus Item" cancelText="Batal" onConfirm={() => handleDelete([record.product_id!])} okText="Hapus" description={`Anda Yakin Ingin Menghapus Item Ini?`}>
 
                         <Button type='link' danger>Delete</Button>
 
@@ -100,14 +112,15 @@ const Items = () => {
     ];
     
 
-    const handleDelete = async (id: string) => {
+    const handleDelete = async (ids: String[]) => {
         setLoading(true);
         try {
-            const response = await axiosInstance.delete(`/items/${id}`);
+            const response = await axiosInstance.post(`/search_del`, {"table": 'product', "data": ids});
             if(response.status == 200){
                 message.success('Item Telah Dihapus!');
                 fetchItems();
             }else{
+                setSelectedRowKeys([]);
                 message.error('Gagal Telah Dihapus!');
             }
         } catch (error) {
@@ -120,7 +133,7 @@ const Items = () => {
     const fetchItems = async () => {
         setLoading(true);
         try {
-            const response = await axiosInstance.get('/items');
+            const response = await axiosInstance.post('/items_search', requestParam);
             if(response.status == 200){
                 setItems(response.data.data);
             }else{
@@ -146,11 +159,21 @@ const Items = () => {
                     <Button type="primary" onClick={newItem}>
                         Buat Item Baru
                     </Button>
-                    <Button type="primary" onClick={fetchItems} icon={<ReloadOutlined/>} className="bg-blue-400 hover:bg-blue-400 text-white">
+                    <Button type="primary" onClick={fetchItems} icon={<ReloadOutlined/>}>
                         Reload
                     </Button>
+                    {selectedRowKeys.length > 0 && <Popconfirm
+                        title="Yakin Ingin Menghapus Data Product?"
+                        description="Data yang sudah dihapus tidak akan bisa di kembalikan!"
+                        onConfirm={() => handleDelete(selectedRowKeys as String[])}
+                        onCancel={() => {}}
+                        okText="Yes"
+                        cancelText="No"
+                    >
+                        <Button type="primary" danger>Hapus</Button>
+                    </Popconfirm>}
                 </Space>
-                <Table dataSource={filteredData} columns={columns} loading={loading} rowKey={(record) => record.product_id} />
+                <Table dataSource={items?.data} rowSelection={rowSelection} columns={columns} loading={loading} rowKey={(record) => record.product_id} />
             </div>
         </DashboardLayout>
     )

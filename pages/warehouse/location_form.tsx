@@ -61,7 +61,7 @@ const LocationForm: React.FC<LocationFormProps> = ({ onSuccess, data, onReload }
     axiosInstance
       .post('/location', inputData)
       .then((response) => {
-        message.success('Gudang berhasil ditambahkan!');
+        message.success('berhasil ditambahkan!');
         onSuccess(response.data.data);
         form.resetFields();
         getDataParents();

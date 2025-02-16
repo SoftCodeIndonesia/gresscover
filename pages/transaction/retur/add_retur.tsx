@@ -7,8 +7,6 @@ import { Button, Form, Input, message, Select, Table, Modal, AutoComplete, AutoC
 import { LayoutType } from "@/type/form.layout";
 
 import { MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons';
-import { formatRupiah } from "@/utils/format_rupiah";
-import { Inventory } from "@/type/inventory";
 import { handlePriceChange } from "@/utils/validate_price_change";
 import { RequestParam } from "@/type/request_param";
 import { Pagination } from "@/type/pagination";

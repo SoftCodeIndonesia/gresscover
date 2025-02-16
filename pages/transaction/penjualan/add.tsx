@@ -415,43 +415,7 @@ const AddTransactionSale: React.FC = () => {
         return false;
     }
 
-    const handleCheckboxChange = (e: CheckboxChangeEvent) => {
-        const item = e.target.value as Item;
-        if (e.target.checked) {
-            // Tambahkan ke list jika di-check
-            setItemSelected((inv) => [...inv, {
-                inventory_id: '',
-                item: item,
-                location_id: '',
-                location: null,
-                quantity: 0,
-                minimum_stock: 0,
-                price: 0,
-                created_at: '',
-                upadated_at: '',
-                created_by: null,
-            }]);
-
-            // form.setFieldsValue({"item_" + item.product_id: ''})
-          
-            // console.log(result);
-        } else {
-          // Hapus dari list jika di-uncheck
-          setItemSelected((prev) =>
-            prev.filter((inv) => inv.item?.product_id !== item.product_id)
-          );
-        }
-
-        
-
-        
-
-
-        // form.setFieldsValue(result);
-
-
-        
-      };
+   
 
     const fetchItems = async (query: string, index: number) => {
        

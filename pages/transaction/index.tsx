@@ -31,7 +31,7 @@ const Transaction: React.FC = () => {
 
     });
     const [loading, setLoading] = useState<boolean>(false);
-
+    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const showStatus = (_: any, record: TransactionType, index: number) => {
         if(record.status == 'draft'){
             return <Tag color="default">DRAFT</Tag>;
@@ -102,7 +102,7 @@ const Transaction: React.FC = () => {
             render: (_: any, item: TransactionType) => (
                 <>
                   <EditButton disable={item.status != 'draft'} label='Edit' onClick={() => handleEdit(item)}/>
-                  <DeleteButton disable={item.status != 'draft'} label='Hapus' onComfirm={() => handleDelete(item)} okText='Hapus' cancelText='Batal' />
+                  <DeleteButton label='Hapus' onComfirm={() => handleDelete([item.unique_id])} okText='Hapus' cancelText='Batal' />
                 </>
               ),
         },
@@ -115,8 +115,27 @@ const Transaction: React.FC = () => {
          window.location.href = 'transaction/add';
     }
 
-    const handleDelete = (data: TransactionType) => {
+    const handleDelete = async (ids: string[]) => {
+        if(ids.length <= 0){
+            message.error('Pilih Data Untuk di Hapus!');
+            return;
+        }
 
+        setLoading(true);
+        try {
+            const response = await axiosInstance.post(`/search_del`, {"table": 'transaction', "data": ids});
+            if(response.status == 200){
+                message.success('Item Telah Dihapus!');
+                getTransactions(requestParam);
+                setSelectedRowKeys([]);
+            }else{
+                message.error('Gagal Telah Dihapus!');
+            }
+        } catch (error) {
+            message.error('Gagal Hapus Item!');
+        } finally {
+            setLoading(false);
+        }
     }
 
     
