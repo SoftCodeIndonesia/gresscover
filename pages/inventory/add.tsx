@@ -654,7 +654,7 @@ const AddInventory: React.FC = () => {
                     return {
                         key: index, 
                         movement_id: value.movements[0].id,
-                        product_name: value.product_name, 
+                        product_name: value.product_name ?? '', 
                         product_id: value.movements[0].product_id, 
                         quantity: value.movements[0].quantity, 
                         before_stok: value.movements[0].before_stok,
