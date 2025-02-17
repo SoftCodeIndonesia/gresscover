@@ -57,16 +57,10 @@ const MutasiBarang: React.FC = () => {
             </p>
         },
         {
-            title: 'Item',
-            dataIndex: '',
-            key: 'item',
-            render: (_: any, record: InventoryMovement, index: number) => <p>{record.inventory.item.name}</p>
-        },
-        {
             title: 'Quantity',
             dataIndex: '',
             key: 'item',
-            render: (_: any, record: InventoryMovement, index: number) => <p>{record.quantity} {record.inventory.item?.unit_name}</p>
+            render: (_: any, record: InventoryMovement, index: number) => <p>{record.quantity} {record.inventory?.item?.unit_name ?? ''}</p>
         },
         
         {

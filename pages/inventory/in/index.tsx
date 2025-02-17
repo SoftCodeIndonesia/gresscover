@@ -77,7 +77,7 @@ const BarangMasuk: React.FC = () => {
             title: 'Gudang',
             dataIndex: '',
             key: 'gudang',
-            render: (_: any, record: InventoryMovement, index: number) => <p>{record.inventory.location?.name}</p>
+            render: (_: any, record: InventoryMovement, index: number) => <p>{record.inventory?.location?.name ?? ''}</p>
         },
         {
             title: 'Tanggal',
