@@ -24,4 +24,5 @@ export type InventoryMovement = {
     inventory: Inventory;
     item: Item;
     mutation_history: InventoryMovement[],
+    cost: number|null,
 }

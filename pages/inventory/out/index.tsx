@@ -31,9 +31,20 @@ const BarangKeluar: React.FC = () => {
         table: 'inventory_movements',
         limit: 10,
         page: 1,
-        where: [{
-            type: 'out',
-        }],
+        where: [
+            {
+                type: ['=', 'out'],
+            },
+            {
+                type: ['=', 'mutation'],
+            },
+            {
+                type: ['=', 'sales'],
+            },
+            {
+                type: ['=', 'exchange'],
+            },
+        ],
         request_column_relation: ['inventory', 'item', 'item.parent', 'inventory.location']
     });
 
@@ -48,7 +59,7 @@ const BarangKeluar: React.FC = () => {
             title: 'Item',
             dataIndex: '',
             key: 'item',
-            render: (_: any, record: InventoryMovement, index: number) => <Link href={`/items/${record.product_id}`} passHref>{record.item.sku}</Link>
+            render: (_: any, record: InventoryMovement, index: number) => <Link href={`/items/${record.product_id}`} passHref>{record.inventory.product_name}</Link>
         },
         {
             title: 'Quantity',
@@ -73,15 +84,15 @@ const BarangKeluar: React.FC = () => {
             key: 'action',
             render: (text: any, record: InventoryMovement) => (
                 <Space className="gap-3">
-                    <Link href={`/staff/${record.product_id}`}>
-                        <EyeFilled className="text-blue-500"/>
-                    </Link>
                     <Link href={`out/add`} className="text-yellow-500" onClick={(e) => {
                         setCookie('movement', record);
                     }} >
                             <EditFilled/>
                     </Link>
-                    <Link href={`/staff/${record.product_id}`} className="text-red-500">
+                    <Link href={`/inventory/out/${record.id}`}>
+                        <EyeFilled className="text-blue-500"/>
+                    </Link>
+                    <Link href={`/inventory/${record.product_id}`} className="text-red-500">
                             <DeleteFilled/>
                     </Link>
                 </Space>

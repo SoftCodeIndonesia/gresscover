@@ -44,8 +44,12 @@ interface TableInventory {
     // children: TableInventory[],
 }
 
+interface AddInventoryParam {
+    breadcrumb: JSX.Element,
+}
 
-const AddInventory: React.FC = () => {
+
+const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
     const [itemsSelected, setItemSelected] = useState<Inventory[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [formLayout, setFormLayout] = useState<LayoutType>('vertical');
@@ -699,24 +703,8 @@ const AddInventory: React.FC = () => {
 
     
     return (
-        <DashboardLayout>
-            <Breadcrumb
-                separator=">"
-                className="mb-12"
-                items={[
-                    {
-                        title: 'Home',
-                    },
-                    {
-                        title: 'Daftar Inventory',
-                        href: '/inventory',
-                        
-                    },
-                    {
-                        title: `Tambah Inventory`,
-                    }
-                ]}
-            />
+        <>
+            {breadcrumb},
             <Form
                 layout={formLayout}
                 form={form}
@@ -755,7 +743,7 @@ const AddInventory: React.FC = () => {
                 </Form.Item>
             </Form>
               
-        </DashboardLayout>
+        </>
     );
 }
 

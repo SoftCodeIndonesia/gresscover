@@ -101,7 +101,7 @@ const DetailMutation: React.FC = () => {
                 dataSource={mutation?.mutation_history}
                 renderItem={(item) => (
                     <List.Item>
-                    <Typography.Text mark>[{item?.quantity} {item?.unit_name}]</Typography.Text> <Tag color="#108ee9">{item?.inventory?.item?.name}</Tag> Keluar Ke {item?.inventory?.location?.name} </List.Item>
+                    <Typography.Text mark>[{item?.quantity} {item?.unit_name}]</Typography.Text> <Tag color="#108ee9">{item?.inventory?.item?.name}</Tag> Keluar Ke {item?.inventory?.location?.name} ({formatDate(item.created_at)}) </List.Item>
                 )}
             />
         </DashboardLayout>

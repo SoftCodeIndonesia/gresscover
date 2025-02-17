@@ -475,11 +475,11 @@ const InventoryOut: React.FC = () => {
                         title: 'Home',
                     },
                     {
-                        title: 'Daftar Inventory',
-                        href: '/inventory',
+                        title: 'Daftar Barang Keluar',
+                        href: '/inventory/in',
                     },
                     {
-                        title: `Tambah Inventory`,
+                        title: `Tambah Barang Keluar`,
                     }
                 ]}
             />

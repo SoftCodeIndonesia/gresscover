@@ -11,6 +11,7 @@ import { RequestParam } from "@/type/request_param";
 import axiosInstance from "@/utils/axiosInstance";
 import Title from "antd/es/typography/Title";
 import { useRouter } from "next/router";
+import { formatDate } from "@/utils/date_utils";
 const MutasiBarang: React.FC = () => {
 
     const [outs, setData] = useState<Pagination<InventoryMovement>>({
@@ -28,9 +29,9 @@ const MutasiBarang: React.FC = () => {
         where: [{
             type: 'mutation',
         }],
-        request_column: ["id","inventory_id","SUM(quantity) as quantity"],
+        request_column: ["id","inventory_id","quantity", "created_at"],
         request_column_relation: ['inventory', 'inventory.item'],
-        group: "inventory_id",
+        group: "id",
     });
 
     const router = useRouter();
@@ -43,10 +44,10 @@ const MutasiBarang: React.FC = () => {
             render: (_: any, record: any, index: number) => index + 1,
         },
         {
-            title: 'Item',
+            title: 'Nama Produk',
             dataIndex: '',
             key: '',
-            render: (_: any, record: InventoryMovement, index: number) => <Typography.Link href={'/'}>{record.inventory?.item.name ?? ''}</Typography.Link>
+            render: (_: any, record: InventoryMovement, index: number) => <Typography.Link href={'/inventory/mutasi/${record.id}'}>{record.inventory?.item.name ?? ''}</Typography.Link>
         },
         {
             title: 'SKU',
@@ -56,11 +57,18 @@ const MutasiBarang: React.FC = () => {
                 <Typography.Link href={'/'}>{record.inventory?.item.sku ?? ''}</Typography.Link>
             </p>
         },
+        
         {
             title: 'Quantity',
             dataIndex: '',
             key: 'item',
             render: (_: any, record: InventoryMovement, index: number) => <p>{record.quantity} {record.inventory?.item?.unit_name ?? ''}</p>
+        },
+        {
+            title: 'Tanggal',
+            dataIndex: 'created_at',
+            key: 'created_at',
+            render: (_: any, record: InventoryMovement, index: number) => <p>{formatDate(record.created_at)}</p>
         },
         
         {
@@ -74,6 +82,7 @@ const MutasiBarang: React.FC = () => {
         },
     ]
 
+    
     const fetch = async () => {
         setLoading(true);
         try {

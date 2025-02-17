@@ -16,6 +16,7 @@ import EditButton from "@/pages/component/EditButton";
 import ViewButton from "@/pages/component/ViewButton";
 import DeleteButton from "@/pages/component/DeleteButton";
 import { setCookie } from "cookies-next";
+import { TableRowSelection } from "antd/es/table/interface";
 const BarangMasuk: React.FC = () => {
     const router = useRouter();
     const [outs, setData] = useState<Pagination<InventoryMovement>>({
@@ -24,15 +25,20 @@ const BarangMasuk: React.FC = () => {
         last_page: 1,
         total: 0,
     });
-    
+    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [requestParam, setParamRequst] = useState<RequestParam>({
         table: 'inventory_movements',
         limit: 10,
         page: 1,
-        where: [{
-            type: ['in','adjustment'],
-        }],
+        where: [
+            {
+                type: ['=', 'in'],
+            },
+            {
+                type: ['=', 'adjustment'],
+            },
+        ],
         request_column_relation: ['inventory','inventory.location']
     });
 
@@ -68,6 +74,12 @@ const BarangMasuk: React.FC = () => {
             render: (_: any, record: InventoryMovement, index: number) => <p>{record.product_name}</p>
         },
         {
+            title: 'Sumber',
+            dataIndex: '',
+            key: '',
+            render: (_: any, record: InventoryMovement, index: number) => checkSource(record),
+        },
+        {
             title: 'Quantity',
             dataIndex: '',
             key: 'quantity',
@@ -90,41 +102,56 @@ const BarangMasuk: React.FC = () => {
             key: 'action',
             render: (text: any, record: InventoryMovement) => (
                 <>
-                    <EditButton label=''  onClick={() => handleEdit([record.inventory_id])}/>
-                    <ViewButton label=''  href={`/inventory/${record.inventory_id}`} />
-                    <DeleteButton label='' onComfirm={() => handleDelete([record.inventory_id])} okText='Hapus' cancelText='Batal' />
+                    <EditButton label='' href="in/add" onClick={() => setCookie('movement_id', [record.id])}/>
+                    <ViewButton label=''  href={`/inventory/in/${record.id}`} />
+                    <DeleteButton label='' onComfirm={() => handleDelete([record.id])} okText='Hapus' cancelText='Batal' />
                 </>
             ),
         },
     ]
 
+    const checkSource = (source: InventoryMovement) => {
+        
+        switch (source.reference) {
+            case 'inventory':
+                return <p>Mutasi</p>
+            case 'retur':
+                return <p>Retur</p>
+            case 'exchange':
+                return <p>Penukaran barang</p>
+            default:
+                return <p>-</p>
+        }
+        
+    }
+
     const handleEdit = (ids: String[]) => {
-        const inventory_id = setCookie('inventory_id', ids);
-        router.push('/inventory/add');
+        const inventory_id = setCookie('movement_id', ids);
+        // router.push('/inventory/add');
     }
 
     const handleDelete = async (ids: String[]) => {
 
-        // if(ids.length <= 0){
-        //     message.error('Pilih Data Untuk di Hapus!');
-        //     return;
-        // }
+        if(ids.length <= 0){
+            message.error('Pilih Data Untuk di Hapus!');
+            return;
+        }
 
-        // setLoading(true);
-        // try {
-        //     const response = await axiosInstance.post(`/search_del`, {"table": 'inventory', "data": ids});
-        //     if(response.status == 200){
-        //         message.success('Item Telah Dihapus!');
-        //         getInventories();
-        //         setSelectedRowKeys([]);
-        //     }else{
-        //         message.error('Gagal Telah Dihapus!');
-        //     }
-        // } catch (error) {
-        //     message.error('Gagal Hapus Item!');
-        // } finally {
-        //     setLoading(false);
-        // }
+        setLoading(true);
+        try {
+            const response = await axiosInstance.post(`/movement_del`, {"data": ids});
+            if(response.status == 200){
+                message.success('Item Telah Dihapus!');
+                fetch(requestParam);
+                setSelectedRowKeys([]);
+            }else{
+                message.error('Gagal Telah Dihapus!');
+            }
+        } catch (error) {
+            message.error('Gagal Hapus Item!');
+        } finally {
+            setLoading(false);
+        }
     }
 
     const fetch = async (request: RequestParam) => {
@@ -149,6 +176,15 @@ const BarangMasuk: React.FC = () => {
         fetch(request);
     }
 
+    const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
+        console.log('selectedRowKeys changed: ', newSelectedRowKeys);
+        setSelectedRowKeys(newSelectedRowKeys);
+    };
+    
+    const rowSelection: TableRowSelection<InventoryMovement> = {
+        selectedRowKeys,
+        onChange: onSelectChange,
+    };
 
     useEffect(() => {
         fetch(requestParam);
@@ -162,7 +198,7 @@ const BarangMasuk: React.FC = () => {
                 <Button icon={<ReloadOutlined/>} type="default" onClick={() => fetch(requestParam)} className="my-3" >Reload</Button>
                 <Button icon={<PlusOutlined/>} type="primary" onClick={() => router.push('/inventory/add')} className="my-3" >Tambah</Button>
             </Space>
-            <Table columns={column} dataSource={outs!.data} pagination={false} rowKey={(record) => record.id} loading={loading} />
+            <Table columns={column} dataSource={outs!.data} rowSelection={rowSelection} pagination={false} rowKey={(record) => record.id} loading={loading} />
             <div className="flex justify-end my-4">
             <PaginationTable onChange={paginateClick} defaultCurrent={outs.current_page} total={outs.total} />
             </div>

@@ -7,6 +7,7 @@ import { RequestParam } from "@/type/request_param";
 import axiosInstance from "@/utils/axiosInstance";
 import { formatRupiah } from "@/utils/format_rupiah";
 import { DownOutlined } from '@ant-design/icons';
+import { formatDate } from "@/utils/date_utils";
 const gridStyle: React.CSSProperties = {
     width: '50%',
     textAlign: 'left',
@@ -136,7 +137,7 @@ const DetailInventory: React.FC = () => {
                 dataSource={inventory?.movements}
                 renderItem={(item) => (
                     <List.Item>
-                    <Typography.Text mark>[{item?.product_name}]</Typography.Text> <Tag color="#108ee9">{item?.quantity} {item?.unit_name}</Tag> {item.type == 'in' || item.type == 'adjustment' ? 'Masuk' : item.type == 'out' ? 'Keluar' : 'Mutasi'} {item?.inventory?.location?.name} <p className="italic">{item.note}</p> </List.Item>
+                    <Typography.Text mark>[{item?.product_name}]</Typography.Text> <Tag color="#108ee9">{item?.quantity} {item?.unit_name}</Tag> {item.type == 'in' || item.type == 'adjustment' ? 'Masuk' : item.type == 'out' ? 'Keluar' : 'Mutasi'} {item?.inventory?.location?.name} ({formatDate(item.created_at)}) <p className="italic">{item.note}</p> </List.Item>
                 )}
             />
         </DashboardLayout>
