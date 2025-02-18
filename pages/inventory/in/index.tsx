@@ -15,7 +15,7 @@ import { formatDate } from "@/utils/date_utils";
 import EditButton from "@/pages/component/EditButton";
 import ViewButton from "@/pages/component/ViewButton";
 import DeleteButton from "@/pages/component/DeleteButton";
-import { setCookie } from "cookies-next";
+import { deleteCookie, setCookie } from "cookies-next";
 import { TableRowSelection } from "antd/es/table/interface";
 const BarangMasuk: React.FC = () => {
     const router = useRouter();
@@ -39,6 +39,9 @@ const BarangMasuk: React.FC = () => {
                 type: ['=', 'adjustment'],
             },
         ],
+        orderBy: {
+            created_at: 'desc',
+        },
         request_column_relation: ['inventory','inventory.location']
     });
 
@@ -89,7 +92,7 @@ const BarangMasuk: React.FC = () => {
             title: 'Gudang',
             dataIndex: '',
             key: 'gudang',
-            render: (_: any, record: InventoryMovement, index: number) => <p>{record.inventory?.location?.name ?? ''}</p>
+            render: (_: any, record: InventoryMovement, index: number) => <p>{record.location_to ?? ''}</p>
         },
         {
             title: 'Tanggal',
@@ -196,7 +199,7 @@ const BarangMasuk: React.FC = () => {
             <Title level={2}>Daftar Barang Masuk</Title>
             <Space className="gap-3">
                 <Button icon={<ReloadOutlined/>} type="default" onClick={() => fetch(requestParam)} className="my-3" >Reload</Button>
-                <Button icon={<PlusOutlined/>} type="primary" onClick={() => router.push('/inventory/add')} className="my-3" >Tambah</Button>
+                <Button icon={<PlusOutlined/>} type="primary" href="/inventory/in/add" onClick={() => deleteCookie('movement_id')} className="my-3" >Tambah</Button>
             </Space>
             <Table columns={column} dataSource={outs!.data} rowSelection={rowSelection} pagination={false} rowKey={(record) => record.id} loading={loading} />
             <div className="flex justify-end my-4">

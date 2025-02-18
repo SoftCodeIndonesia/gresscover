@@ -15,4 +15,5 @@ export type RequestParam = {
     search_relation?: any | null,
     whereHas?: any | null,
     group?: string|null,
+    orderBy?: any,
 }

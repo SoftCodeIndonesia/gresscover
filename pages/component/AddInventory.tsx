@@ -704,7 +704,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
     
     return (
         <>
-            {breadcrumb},
+            {breadcrumb}
             <Form
                 layout={formLayout}
                 form={form}

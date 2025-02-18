@@ -25,4 +25,8 @@ export type InventoryMovement = {
     item: Item;
     mutation_history: InventoryMovement[],
     cost: number|null,
+    location_id_from?: string,
+    location_from?: string,
+    location_id_to?: string,
+    location_to?: string,
 }

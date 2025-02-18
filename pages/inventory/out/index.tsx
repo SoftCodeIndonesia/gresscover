@@ -61,7 +61,7 @@ const BarangKeluar: React.FC = () => {
             title: 'Item',
             dataIndex: '',
             key: 'item',
-            render: (_: any, record: InventoryMovement, index: number) => <Link href={`/items/${record.product_id}`} passHref>{record.inventory.product_name}</Link>
+            render: (_: any, record: InventoryMovement, index: number) => <Link href={`/items/${record.product_id}`} passHref>{record.product_name ?? ''}</Link>
         },
         {
             title: 'Quantity',
@@ -73,7 +73,7 @@ const BarangKeluar: React.FC = () => {
             title: 'Keluar Dari',
             dataIndex: '',
             key: 'item',
-            render: (_: any, record: InventoryMovement, index: number) => <p>{record.inventory.location?.name}</p>
+            render: (_: any, record: InventoryMovement, index: number) => <p>{record.location_from ?? ''}</p>
         },
         {
             title: 'Catatan',
