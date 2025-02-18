@@ -528,18 +528,19 @@ const MutasiBarang = () => {
                 render: (_: any, record: TableInventory, index: number) => (
                     <AutoComplete
                             value={record.location_name}
-                            showSearch
+                            showSearch={false}
                             placeholder={'Cari/Tambahkan Gudang Baru'}
                             style={{ width: 150 }}
                             defaultActiveFirstOption={false}
                             suffixIcon={null}
                             filterOption={false}
-                            onChange={(value) => onSelect(value, {}, index)}
+                            // onChange={(value) => onSelect(value, {}, index)}
                             onSearch={(value) => fetchLocation(value)}
                             onSelect={(value, option) => onSelect(value, option, index, false, record)}
                             notFoundContent={null}
                             options={optionsLocation}
                         />
+
                 ),
             },
             {
