@@ -6,7 +6,7 @@ import axiosInstance from "@/utils/axiosInstance";
 import { Image,Button, Divider, Form, Input, message, Select, Space, Table, Modal, Checkbox, AutoComplete, AutoCompleteProps, TableColumnsType } from "antd";
 import { LayoutType } from "@/type/form.layout";
 
-import { CloseCircleOutlined, PlusOutlined } from '@ant-design/icons';
+import { CloseCircleOutlined, PlusOutlined, DeleteFilled } from '@ant-design/icons';
 import { formatRupiah } from "@/utils/format_rupiah";
 import { CheckboxChangeEvent } from "antd/es/checkbox";
 import { Inventory } from "@/type/inventory";
@@ -46,7 +46,7 @@ interface TableInventory {
 }
 
 
-const MutasiBarang = () => {
+const CreateMutation = () => {
     const [itemsSelected, setItemSelected] = useState<Inventory[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [modal, setModalDetail] = useState<boolean>(false);
@@ -64,6 +64,8 @@ const MutasiBarang = () => {
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
 
     const [minimum, setMinimum] = useState<number>(0);
+
+    const [withVarian, setWithVarian] = useState<boolean>(false);
 
     const [form] = Form.useForm();
 
@@ -99,39 +101,39 @@ const MutasiBarang = () => {
 
         // const varian = initialTable.find((parent) => parent.product_id == value.product_id)?.items ?? data;
 
-        // setLoading(true);
-        // try {
+        setLoading(true);
+        try {
 
-        //     const request_param:RequestParam  = {
-        //         table: 'inventory',
-        //         page: 1,
-        //         limit: 10,
-        //         where: [
-        //             {
-        //                 product_id: value.product_id,
-        //             },
-        //             {
-        //                 location_id: value.location_id,
-        //             }
-        //         ],
-        //         request_column:['inventory_id'],
-        //         request_column_relation: []
-        //     };
-        //     const response = await axiosInstance.post('/search', request_param);
+            const request_param:RequestParam  = {
+                table: 'inventory',
+                page: 1,
+                limit: 10,
+                where: [
+                    {
+                        product_id: value.product_id,
+                    },
+                    {
+                        location_id: value.location_id,
+                    }
+                ],
+                request_column:['inventory_id'],
+                request_column_relation: []
+            };
+            const response = await axiosInstance.post('/search', request_param);
 
-        //     if(response.status == 200){
-        //         if(response.data.data.data.length > 0){
-        //             value.inventory_id = response.data.data.data[0].inventory_id;
-        //         }
-        //     }else{
-        //         message.error(response.statusText);
-        //     }
+            if(response.status == 200){
+                if(response.data.data.data.length > 0){
+                    value.inventory_id = response.data.data.data[0].inventory_id;
+                }
+            }else{
+                message.error(response.statusText);
+            }
 
-        // } catch (error: any) {
-        //     message.error(error);
-        // } finally {
-        //     setLoading(false);
-        // }
+        } catch (error: any) {
+            message.error(error);
+        } finally {
+            setLoading(false);
+        }
 
         
         setInitialTableVarian(value.items);
@@ -219,6 +221,19 @@ const MutasiBarang = () => {
         }
     }
 
+    const selectItemToMutation = (value: string, option: DefaultOptionType) => {
+        if(option.object != undefined){
+            const item: Inventory = option.object;
+            form.setFieldsValue({
+                'product_id': item.product_id,
+                'product_name': item.product_name,
+                'unit_id': item.unit_id,
+                'unit_name': item.unit_name,
+                'max_qty': item.quantity,
+            })
+        }
+    }
+
     const onSelectItem = (value: string, option: DefaultOptionType, index: number, is_varian?: boolean) => {
         console.log(option);
         
@@ -303,35 +318,35 @@ const MutasiBarang = () => {
                 newData[index].unit_max_multiplier = item.unit?.max_value ?? 1;
                 newData[index].key = `index_${index}${item.inventory_id}${item.location_id}${item.item.product_id}`
 
-                // const dataChildren:TableInventory[] = item.item.children.map((value: Item, index: number) => {
-                //     return {
-                //         key: `${value.product_id}`, 
-                //         product_name: value.name, 
-                //         product_id: value.product_id, 
-                //         location_name: '', 
-                //         location_id: '', 
-                //         stok: 0, 
-                //         last_stok: 1,
-                //         quantity: 1, 
-                //         sku: value.sku, 
-                //         unit_max_multiplier: item.unit?.max_value ?? 1,
-                //         selling_price: parseInt(value.price), 
-                //         selling_price_string: value.price.toString(), 
-                //         cost: parseInt(value.cost), 
-                //         cost_string: value.cost.toString(), 
-                //         minimum: value.min_stock_quantity,
-                //         checked: false,
-                //         unit_id: value.unit_id,
-                //         unit_name: value.unit_name,
-                //         parent_id: value.parent_id,
-                //         reference: 'inventory',
-                //         reference_id:item.inventory_id,
-                //         type: 'in',
-                //         items: []
-                //     };
-                // });
+                const dataChildren:TableInventory[] = item.item.children.map((value: Item, index: number) => {
+                    return {
+                        key: `${value.product_id}`, 
+                        product_name: value.name, 
+                        product_id: value.product_id, 
+                        location_name: '', 
+                        location_id: '', 
+                        stok: 0, 
+                        last_stok: 1,
+                        quantity: 1, 
+                        sku: value.sku, 
+                        unit_max_multiplier: item.unit?.max_value ?? 1,
+                        selling_price: parseInt(value.price), 
+                        selling_price_string: value.price.toString(), 
+                        cost: parseInt(value.cost), 
+                        cost_string: value.cost.toString(), 
+                        minimum: value.min_stock_quantity,
+                        checked: false,
+                        unit_id: value.unit_id,
+                        unit_name: value.unit_name,
+                        parent_id: value.parent_id,
+                        reference: 'inventory',
+                        reference_id:item.inventory_id,
+                        type: 'in',
+                        items: []
+                    };
+                });
 
-                // newData[index].items = dataChildren,
+                newData[index].items = dataChildren,
 
                 // if(item.item?.unit?.max_value != null && item.item?.unit?.max_value > 0){
                 //     newData[index].children = Array.from({ length: item.item?.unit?.max_value }, (_, indexKey) => ({
@@ -381,7 +396,7 @@ const MutasiBarang = () => {
                 width: 200,
                 render: (_: any, record: TableInventory, index: number) => (
                     <AutoComplete
-                        showSearch
+                        
                         options={optionItem}
                         filterOption={true}
                         style={{ width: 200 }}
@@ -493,12 +508,12 @@ const MutasiBarang = () => {
                 dataIndex: "",
                 width: 150,
                 render: (_: any, record: TableInventory, index: number) => (
-                    index == 0 ? '' : <Button type="text" onClick={() => {
+                    <Button icon={<DeleteFilled/>} type="primary" danger onClick={() => {
                         if(initialTableVarian.length > 1){
                             const newData = [...initialTableVarian].filter((data) => data.key != record.key);
                             setInitialTableVarian(newData);
                         }
-                    }}>Hapus</Button>
+                    }}></Button>
                 ),
             },
     ];
@@ -509,9 +524,11 @@ const MutasiBarang = () => {
                 fixed: 'left',
                 render: (_: any, record: TableInventory, index: number) => (
                     <AutoComplete
+                        
                         options={optionItem}
                         filterOption={true}
                         style={{ width: 200 }}
+                        onChange={(value) => onSelectItem(value, {}, index)}
                         onSelect={(value, option) => onSelectItem(value, option, index)}
                         onSearch={(value) => fetchItems(value,false, record)}
                         placeholder="Cari/Pilih Product"
@@ -688,7 +705,7 @@ const MutasiBarang = () => {
     const fetchItems = async (query: string, is_varian?: boolean, record?: TableInventory, index?: number) => {
         
         try {
-            const querySearch: RequestParam = is_varian ? {
+            const querySearch: RequestParam = {
                 limit: 100,
                 page: 1,
                 table: 'product',
@@ -713,7 +730,35 @@ const MutasiBarang = () => {
                 //         "location_id": form.getFieldValue('reference_id')
                 //     }
                 // }
-            } : {
+            }
+            const response = await axiosInstance.post(`/search`, querySearch);
+            if(response.status == 200){
+                const items: Pagination<Item> = response.data.data;
+                
+                if(items.data.length > 0){
+                    const result = items.data?.map((data: Item) => {
+                        return {
+                            value: `${data?.name}-${data?.sku}`,
+                            label: `${data?.name}-${data?.sku}`,
+                            object: data,
+                        }
+                    })
+                    setOptionsItem(result);
+                }else{
+                    setOptionsItem([]);
+                }
+            }else{
+                message.error(response.data.message);
+            }
+        } catch (error) {
+            message.error(`${error}`);
+        }
+    }
+
+    const fetchItemsToMutation = async (query: string) => {
+        
+        try {
+            const querySearch: RequestParam = {
                 limit: 100,
                 page: 1,
                 table: 'inventory',
@@ -738,36 +783,17 @@ const MutasiBarang = () => {
             }
             const response = await axiosInstance.post(`/search`, querySearch);
             if(response.status == 200){
-                if(is_varian){
-                    const items: Pagination<Item> = response.data.data;
+                const items: Pagination<Inventory> = response.data.data;
                 
-                    if(items.data.length > 0){
-                        const result = items.data?.map((data: Item) => {
-                            return {
-                                value: `${data?.name}-${data?.sku}`,
-                                label: `${data?.name}-${data?.sku}`,
-                                object: data,
-                            }
-                        })
-                        setOptionsItem(result);
-                    }else{
-                        setOptionsItem([]);
-                    }
-                }else{
-                    const items: Pagination<Inventory> = response.data.data;
-                
-                    if(items.data.length > 0){
-                        const result = items.data?.map((data: Inventory) => {
-                            return {
-                                value: `${data.item?.name}-${data.item?.sku}`,
-                                label: `${data.item?.name}-${data.item?.sku}`,
-                                object: data,
-                            }
-                        })
-                        setOptionsItem(result);
-                    }else{
-                        setOptionsItem([]);
-                    }
+                if(items.data.length > 0){
+                    const result = items.data?.map((data: Inventory) => {
+                        return {
+                            value: `${data.item?.name}-${data.item?.sku}`,
+                            label: `${data.item?.name}-${data.item?.sku}`,
+                            object: data,
+                        }
+                    })
+                    setOptionsItem(result);
                 }
             }else{
                 message.error(response.data.message);
@@ -1073,36 +1099,25 @@ const MutasiBarang = () => {
         
         initialTable.forEach(element => {
             if(element.quantity! > 0){
-                const newElement = {...element, type: 'out', before_stok: element.stok, after_stok: (Number(element.stok) - Number(element.quantity))}
+                const newElement = {...element, before_stok: element.stok, after_stok: (Number(element.stok) - Number(element.quantity))}
                 
                 if(element.items.length > 0){
                     
                     const filter = element.items.filter((item) => item.quantity! > 0);
-                    const toConcat = filter.map((value) => {
-                        return {...value, type: 'in', before_stok: value.stok, after_stok: (Number(value.stok) + Number(value.quantity))};
-                    })
-                    console.log(toConcat);
 
-                    dataInitital?.push({
-                        product_name: newElement.product_name,
-                        quantity: newElement.quantity,
-                        sku: newElement.sku,
-                        items: [newElement].concat(toConcat),
-                    });
-                    // dataInitital = dataInitital?.concat(toConcat);
+                    const toConcat = filter.map((value) => {
+                        return {...value, before_stok: value.stok, after_stok: (Number(value.stok) + Number(value.quantity))};
+                    })
+
+                    dataInitital = dataInitital?.concat(toConcat);
                 }
-                
+                dataInitital?.push(newElement);
             }
         });
-
-
-        const to_store = {'mutations': dataInitital, 'from': form.getFieldValue('reference_id'), 'from_name': form.getFieldValue('reference_name')};
-
-        console.log(to_store);
         
 
         try {
-            const response = await axiosInstance.post('/mutations/store', to_store);
+            const response = await axiosInstance.post('/inventory', {'type': 'mutation', 'data': dataInitital });
             if(response.status == 200){
                 message.success(`${response?.data?.message}`)
                 setInitialTableData();
@@ -1154,7 +1169,6 @@ const MutasiBarang = () => {
                     const data = {
                         ...value,
                         reference_id: parent_active?.inventory_id,
-                        
                     }
                     
                     return data;
@@ -1198,7 +1212,7 @@ const MutasiBarang = () => {
     }
     
     const setInitialTableData = () => {
-        setInitialTable(Array.from({ length: 1 }, (_, index) => ({
+        setInitialTable(Array.from({ length: 4 }, (_, index) => ({
             key: `${index}`, 
             product_name: null, 
             product_id: null, 
@@ -1266,34 +1280,6 @@ const MutasiBarang = () => {
         } finally {
             setLoading(false);
         }
-    }
-
-    const newline = () => {
-        const data = [...initialTable];
-        data.push({
-            key: `${data.length + 1}`, 
-            product_name: null, 
-            product_id: null, 
-            stok: 0.0, 
-            quantity: 0,
-            last_stok: 0,
-            sku: null, 
-            selling_price: 0.0, 
-            unit_max_multiplier: 12,
-            cost: 0.0, 
-            minimum: 1,
-            type: 'out',
-            checked: false,
-            location_id: '',
-            location_name: '',
-            cost_string: '0.0',
-            selling_price_string: '0.0',
-            unit_id: '',
-            unit_name: '',
-            parent_id: null,
-            items: [],
-        });
-        setInitialTable(data);
     }
     
 
@@ -1378,25 +1364,37 @@ const MutasiBarang = () => {
                     /> */}
                 </Form.Item>
 
-                {/* {( selectedRowKeys.length > 0 && <div className="flex py-3 justify-between items-center">
-                    <Space className="flex justify-end">
-                        <p className="text-sm">Atur Sekaligus</p>
-                        <Input placeholder="Harga" onChange={(e) => setPrice(parseInt(e.target.value))}></Input>
-                        <Input placeholder="Stok" onChange={(e) => setStok(parseInt(e.target.value))}></Input>
-                        <Input placeholder="Minimum" onChange={(e) => setMinimum(parseInt(e.target.value))}></Input>
-                        <Button type="primary" onClick={applyBulkChange}>Terapkan</Button>
-                    </Space>
-                </div> )} */}
+                <Form.Item className="flex-1" label="Produk yang akan di mutasi" name='product_name' rules={[{ required: true, message: 'Bagian ini tidak boleh kosong!' }]} >
+                    <AutoComplete
+                        showSearch
+                        options={optionItem}
+                        filterOption={true}
+                        value={form.getFieldValue('product_name')}
+                        onSelect={(value, option) => selectItemToMutation(value, option)}
+                        onSearch={(value) => fetchItemsToMutation(value)}
+                        placeholder="Cari/Pilih Product"
+                    />
+                    
+                    
+                </Form.Item>
+
+                <Form.Item className="flex-1" label="Produk yang akan di mutasi" name='Quantity' rules={[{ required: true, message: 'Bagian ini tidak boleh kosong!' }]} >
+                   
+                    
+                </Form.Item>
+
+                <Form.Item label="" name="with_varian" valuePropName="">
+                    <Checkbox onChange={(e) => setWithVarian(e.target.checked)} >Mutasi Dengan Varian?</Checkbox>
+                </Form.Item>
+
                 
-                {showTable && <Table 
-                    columns={columns} 
+                {withVarian && <Table 
+                    columns={columnsVarian} 
                     loading={loading} 
                     rowKey={(record) => record.key ?? ''} 
-                    rowSelection={rowSelection}
                     pagination={false} 
-                    dataSource={initialTable} 
+                    dataSource={initialTableVarian} 
                     scroll={{ x: 'max-content' }}
-                    footer={() => <Button type="text" onClick={newline} className="text-blue-400">Tambah Baris</Button>}
                 />}
                 
                 <Form.Item className="mt-3">
@@ -1430,7 +1428,6 @@ const MutasiBarang = () => {
                 pagination={false} 
                 dataSource={initialTableVarian} 
                 scroll={{ x: 'max-content' }} 
-
             />
 
         </Modal>
@@ -1439,4 +1436,4 @@ const MutasiBarang = () => {
 }
 
 
-export default MutasiBarang;
+export default CreateMutation;

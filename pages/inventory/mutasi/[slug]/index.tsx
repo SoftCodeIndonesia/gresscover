@@ -1,5 +1,6 @@
 import DashboardLayout from "@/pages/component/DashboardLayout";
 import { InventoryMovement } from "@/type/inventory_movement";
+import { Mutation } from "@/type/mutation";
 import { RequestParam } from "@/type/request_param";
 import axiosInstance from "@/utils/axiosInstance";
 import { formatDate } from "@/utils/date_utils";
@@ -17,18 +18,18 @@ const gridStyle: React.CSSProperties = {
 
 const DetailMutation: React.FC = () => {
     const [slug, setSlug] = useState<string | undefined>(undefined);
-    const [mutation, setData] = useState<InventoryMovement>();
+    const [mutation, setData] = useState<Mutation>();
     const [loading, setLoading] = useState<boolean>(false);
     const router = useRouter();
 
     const [requestParam, setParamRequst] = useState<RequestParam>({
-        table: 'inventory_movements',
+        table: 'mutations',
         limit: 1,
         page: 1,
         where: [{
             id: '',
         }],
-        request_column_relation: ["inventory", "item", "mutation_history", "mutation_history.inventory", "mutation_history.inventory.location", "mutation_history.inventory.item"]
+        request_column_relation: ["items"]
     });
 
 
@@ -36,7 +37,7 @@ const DetailMutation: React.FC = () => {
         setLoading(true);
         try {
             requestParam.where = [{
-                id: slug,
+                mutation_id: slug,
             }];
             const response = await axiosInstance.post('/search', requestParam);
             if(response.status == 200){
@@ -80,28 +81,28 @@ const DetailMutation: React.FC = () => {
                         href: '/inventory/mutasi',
                     },
                     {
-                        title: `${mutation?.item.name}`,
+                        title: `${mutation?.product_name}`,
                     }
                 ]}
             />
-            <Card title={`Rincian Mutasi `}>
+            {/* <Card title={`Rincian Mutasi `}>
                 
                 <Card.Grid hoverable={false} style={gridStyle}>Nama Barang</Card.Grid>
-                <Card.Grid hoverable={false} style={gridStyle}>{mutation?.item.name}</Card.Grid>
+                <Card.Grid hoverable={false} style={gridStyle}>{mutation?.product_name}</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>Tanggal</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>{formatDate(mutation?.created_at!)}</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>Jumlah</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>{mutation?.quantity} {mutation?.unit_name}</Card.Grid>
-            </Card>
+            </Card> */}
 
             <List
                 className="mt-5"
                 header={<div className="text-lg font-bold">History</div>}
                 bordered
-                dataSource={mutation?.mutation_history}
+                dataSource={mutation?.items}
                 renderItem={(item) => (
                     <List.Item>
-                    <Typography.Text mark>[{item?.quantity} {item?.unit_name}]</Typography.Text> <Tag color="#108ee9">{item?.inventory?.item?.name}</Tag> Keluar Ke {item?.inventory?.location?.name} ({formatDate(item.created_at)}) </List.Item>
+                    <Typography.Text mark>[{item?.quantity} {item?.unit_name}]</Typography.Text> <Tag color="#108ee9">{item?.product_name}</Tag> Keluar Ke {item?.to_name} ({formatDate(item.created_at)}) </List.Item>
                 )}
             />
         </DashboardLayout>

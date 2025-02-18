@@ -74,18 +74,24 @@ const Items = () => {
             dataIndex: 'sku',
             key: 'sku',
         },
-        {
-            title: 'Semua Stok',
-            dataIndex: 'quantity',
-            key: 'quantity',
-            render: (_:any, record: Item) => <p>{`${record.overall_quantity} pieces`}</p>,
-        },
+        // {
+        //     title: 'Semua Stok',
+        //     dataIndex: 'quantity',
+        //     key: 'quantity',
+        //     render: (_:any, record: Item) => <p>{`${record.overall_quantity ?? 0} pieces`}</p>,
+        // },
         
         {
             title: 'Harga Beli',
             dataIndex: 'cost',
             key: 'cost',
             render: (_:any, record: Item) => formatRupiah(parseFloat(record.cost)),
+        },
+        {
+            title: 'Harga Jual',
+            dataIndex: 'price',
+            key: 'price',
+            render: (_:any, record: Item) => formatRupiah(parseFloat(record.price)),
         },
         {
             title: 'Kategori',

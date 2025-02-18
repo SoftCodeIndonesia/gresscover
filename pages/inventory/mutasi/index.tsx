@@ -12,9 +12,10 @@ import axiosInstance from "@/utils/axiosInstance";
 import Title from "antd/es/typography/Title";
 import { useRouter } from "next/router";
 import { formatDate } from "@/utils/date_utils";
+import { Mutation } from "@/type/mutation";
 const MutasiBarang: React.FC = () => {
 
-    const [outs, setData] = useState<Pagination<InventoryMovement>>({
+    const [outs, setData] = useState<Pagination<Mutation>>({
         current_page: 0,
         data: [],
         last_page: 1,
@@ -23,15 +24,14 @@ const MutasiBarang: React.FC = () => {
     
     const [loading, setLoading] = useState<boolean>(false);
     const [requestParam, setParamRequst] = useState<RequestParam>({
-        table: 'inventory_movements',
+        table: 'mutations',
         limit: 10,
         page: 1,
-        where: [{
-            type: 'mutation',
-        }],
-        request_column: ["id","inventory_id","quantity", "created_at"],
-        request_column_relation: ['inventory', 'inventory.item'],
-        group: "id",
+        request_column: [],
+        request_column_relation: [],
+        orderBy: {
+            created_at: 'Desc',
+        }
     });
 
     const router = useRouter();
@@ -47,14 +47,14 @@ const MutasiBarang: React.FC = () => {
             title: 'Nama Produk',
             dataIndex: '',
             key: '',
-            render: (_: any, record: InventoryMovement, index: number) => <Typography.Link href={'/inventory/mutasi/${record.id}'}>{record.inventory?.item.name ?? ''}</Typography.Link>
+            render: (_: any, record: Mutation, index: number) => <Typography.Link href={'/inventory/mutasi/${record.id}'}>{record.product_name ?? ''}</Typography.Link>
         },
         {
             title: 'SKU',
             dataIndex: '',
             key: 'sku',
-            render: (_: any, record: InventoryMovement, index: number) => <p>
-                <Typography.Link href={'/'}>{record.inventory?.item.sku ?? ''}</Typography.Link>
+            render: (_: any, record: Mutation, index: number) => <p>
+                <Typography.Link href={'/'}>{record.sku ?? ''}</Typography.Link>
             </p>
         },
         
@@ -62,20 +62,20 @@ const MutasiBarang: React.FC = () => {
             title: 'Quantity',
             dataIndex: '',
             key: 'item',
-            render: (_: any, record: InventoryMovement, index: number) => <p>{record.quantity} {record.inventory?.item?.unit_name ?? ''}</p>
+            render: (_: any, record: Mutation, index: number) => <p>{record.quantity}</p>
         },
         {
             title: 'Tanggal',
             dataIndex: 'created_at',
             key: 'created_at',
-            render: (_: any, record: InventoryMovement, index: number) => <p>{formatDate(record.created_at)}</p>
+            render: (_: any, record: Mutation, index: number) => <p>{formatDate(record.created_at)}</p>
         },
         
         {
             title: 'Operasi',
             key: 'action',
-            render: (text: any, record: InventoryMovement) => (
-                <Typography.Link href={`/inventory/mutasi/${record.id}`}>
+            render: (text: any, record: Mutation) => (
+                <Typography.Link href={`/inventory/mutasi/${record.mutation_id}`}>
                         Lihat Rincian
                 </Typography.Link>
             ),
@@ -110,9 +110,9 @@ const MutasiBarang: React.FC = () => {
             <Title level={2}>Daftar Mutasi</Title>
             <Space className="gap-2">
                 <Button icon={<ReloadOutlined/>} type="default" onClick={fetch} className="my-3" >Reload</Button>
-                <Button icon={<PlusOutlined/>} onClick={() => router.push('mutasi/add')} type="primary" className="my-3" >Buat Mutasi</Button>
+                <Button icon={<PlusOutlined/>} href="mutasi/add" type="primary" className="my-3" >Buat Mutasi</Button>
             </Space>
-            <Table columns={column} dataSource={outs!.data} pagination={false} rowKey={(record) => record.id} loading={loading} />
+            <Table columns={column} dataSource={outs!.data} pagination={false} rowKey={(record) => record.mutation_id} loading={loading} />
         </DashboardLayout>
     );
 }

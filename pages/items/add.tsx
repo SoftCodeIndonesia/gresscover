@@ -9,6 +9,8 @@ import axiosInstance from "@/utils/axiosInstance";
 import { deleteCookie, getCookie, setCookie } from "cookies-next";
 import { Item, ItemUnit } from "@/type/item";
 import { Location } from "@/type/location";
+import { RequestParam } from "@/type/request_param";
+import { Pagination } from "@/type/pagination";
 
 type LayoutType = Parameters<typeof Form>[0]['layout'];
 
@@ -29,7 +31,7 @@ const AddItem = () => {
     const [formLayout, setFormLayout] = useState<LayoutType>('vertical');
     const [options, setOptions] = useState<AutoCompleteProps['options']>([]);
     const [fileList, setFileList] = useState<UploadFile[]>([]);
-
+    const [optionItem, setOptionsItem] = useState<AutoCompleteProps['options']>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [units, setUnits] = useState<ItemUnit[]>([]);
 
@@ -103,8 +105,8 @@ const AddItem = () => {
         formData.append('min_quantity', values.min_quantity);
         formData.append('unit_id', values.unit_id);
         formData.append('unit_name', units.filter((value: ItemUnit) =>value.type_id == values.unit_id)[0].name);
-        formData.append('quantity', values.quantity);
-        formData.append('location', values.location);
+        formData.append('quantity', "0");
+        formData.append('parent_id', form.getFieldValue('parent_id'));
         if(fileList.length > 0){
             formData.append('photo', fileList[0].originFileObj as Blob);
         }
@@ -247,6 +249,58 @@ const AddItem = () => {
         })
     }
 
+    const fetchItems = async (query: string) => {
+       
+        try {
+            const querySearch: RequestParam = {
+                limit: 100,
+                page: 1,
+                table: 'product',
+                search: {
+                    column: [
+                        'name',
+                        'sku',
+                    ],
+                    value: query,
+                },
+                where: [
+                    {
+                        parent_id: null,
+                    }
+                ],
+                request_column: ["name", "sku","product_id"],
+                request_column_relation: []
+            }
+            const response = await axiosInstance.post(`/search`, querySearch);
+            if(response.status == 200){
+                const items: Pagination<Item> = response.data.data;
+                
+                if(items.data.length > 0){
+                    const result = items.data?.map((data: Item) => {
+                        return {
+                            value: `${data.name}-${data.sku}`,
+                            label: `${data.name}-${data.sku}`,
+                            object: data,
+                        }
+                    })
+                    setOptionsItem(result);
+                }
+            }else{
+                message.error(response.data.message);
+            }
+        } catch (error) {
+            message.error(`${error}`);
+        }
+    }
+
+    const onSelectItem = (value: string, option: any) => {
+        if(option.object != undefined){
+            const item: Item = option.object;
+            form.setFieldValue('parent_id', item.product_id);
+            form.setFieldValue('sku_induk', item.sku);
+        }
+    }
+
     useEffect(() => {
         const id = getCookie('item_id');
         console.log(id);
@@ -358,24 +412,20 @@ const AddItem = () => {
                     <Form.Item className="flex-1" label="Harga Jual" name="price" rules={[{ required: true, message: 'Bagian ini tidak boleh kosong!' }]}>
                         <Input placeholder="Masukan Harga Jual" type="number" />
                     </Form.Item>
-                    <Form.Item className="flex-1" label="Gudang" name="location" rules={[{ required: true, message: 'Bagian ini tidak boleh kosong!' }]}>
-                        <Select
-                            showSearch
-                            className="w-full"
-                            placeholder={'Cari/Tambahkan Gudang Baru'}
-                            defaultActiveFirstOption={false}
-                            suffixIcon={null}
-                            filterOption={false}
-                            onSearch={(value) => fetchLocation(value,setOptions)}
-                            notFoundContent={null}
-                            options={options}
-                            onSelect={onSelectLocation}
-                        />
-                        
+                    
+                    <Form.Item className="flex-1" label="SKU Induk" name="Masukan SKU Induk jika varian">
+                    <AutoComplete
+                                showSearch
+                                value={form.getFieldValue('sku_induk')}
+                                options={optionItem}
+                                filterOption={false}
+                                style={{ width: 200 }}
+                                onSelect={(value, option) => onSelectItem(value, option)}
+                                onSearch={fetchItems}
+                                placeholder="Cari/Pilih SKU Induk"
+                            />
                     </Form.Item>
-                    <Form.Item className="flex-1" label="Quantity" name="quantity" rules={[{ required: true, message: 'Bagian ini tidak boleh kosong!' }]}>
-                        <Input placeholder="Masukan Quantity" type="number" />
-                    </Form.Item>
+                    
                     <Form.Item className="flex-1" label="Minimum Quantity" name="min_quantity" rules={[{ required: true, message: 'Bagian ini tidak boleh kosong!' }]}>
                         <Input placeholder="Masukan Minimum Quantity" type="number" />
                     </Form.Item>
