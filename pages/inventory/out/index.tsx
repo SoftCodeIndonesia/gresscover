@@ -17,7 +17,9 @@ import Title from "antd/es/typography/Title";
 import { deleteCookie, setCookie } from "cookies-next";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import DeleteButton from "@/pages/component/DeleteButton";
 const BarangKeluar: React.FC = () => {
+    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const router = useRouter();
     const [outs, setData] = useState<Pagination<InventoryMovement>>({
         current_page: 0,
@@ -92,19 +94,41 @@ const BarangKeluar: React.FC = () => {
                     <Link href={`/inventory/out/${record.id}`}>
                         <EyeFilled className="text-blue-500"/>
                     </Link>
-                    <Link href={`/inventory/${record.product_id}`} className="text-red-500">
-                            <DeleteFilled/>
-                    </Link>
+                    <DeleteButton onClick={() => handleDelete([record.id])} label={""}></DeleteButton>
                 </Space>
 
             ),
         },
     ]
 
-    const fetch = async () => {
+    const handleDelete = async (ids: String[]) => {
+
+        if(ids.length <= 0){
+            message.error('Pilih Data Untuk di Hapus!');
+            return;
+        }
+
         setLoading(true);
         try {
-            const response = await axiosInstance.post('/search', requestParam);
+            const response = await axiosInstance.post(`/movement_del`, {"data": ids});
+            if(response.status == 200){
+                message.success('Item Telah Dihapus!');
+                fetch(requestParam);
+                setSelectedRowKeys([]);
+            }else{
+                message.error('Gagal Telah Dihapus!');
+            }
+        } catch (error) {
+            message.error('Gagal Hapus Item!');
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    const fetch = async (request: RequestParam) => {
+        setLoading(true);
+        try {
+            const response = await axiosInstance.post('/search', request);
             if(response.status == 200){
                 // console.log(response.data.data.data);
 
@@ -124,7 +148,7 @@ const BarangKeluar: React.FC = () => {
 
 
     useEffect(() => {
-        fetch();
+        fetch(requestParam);
     }, [])
 
 
@@ -133,7 +157,7 @@ const BarangKeluar: React.FC = () => {
             <Title level={2}>Daftar Barang Keluar</Title>
             <Space className="flex gap-3">
                 <Button icon={<PlusCircleOutlined/>} onClick={handleNewInventory}  type="primary" className="my-3" >Buat Barang Keluar</Button>
-                <Button icon={<ReloadOutlined/>} type="default" onClick={fetch} className="my-3" >Reload</Button>
+                <Button icon={<ReloadOutlined/>} type="default" onClick={() => fetch(requestParam)} className="my-3" >Reload</Button>
             </Space>
             <Table columns={column} dataSource={outs!.data} pagination={false} rowKey={(record) => record.id} loading={loading} />
         </DashboardLayout>
