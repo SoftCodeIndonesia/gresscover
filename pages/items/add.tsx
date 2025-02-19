@@ -106,7 +106,12 @@ const AddItem = () => {
         formData.append('unit_id', values.unit_id);
         formData.append('unit_name', units.filter((value: ItemUnit) =>value.type_id == values.unit_id)[0].name);
         formData.append('quantity', "0");
-        formData.append('parent_id', form.getFieldValue('parent_id'));
+
+        if(form.getFieldValue('parent_id') != undefined){
+
+            formData.append('parent_id', form.getFieldValue('parent_id'));
+        }
+
         if(fileList.length > 0){
             formData.append('photo', fileList[0].originFileObj as Blob);
         }

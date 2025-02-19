@@ -524,7 +524,7 @@ const MutasiBarang = () => {
                 width: 150,
                 render: (_: any, record: TableInventory, index: number) => (
                     <AutoComplete
-                            value={record.location_name}
+                         
                             showSearch={false}
                             placeholder={'Cari/Tambahkan Gudang Baru'}
                             style={{ width: 150 }}
@@ -1073,7 +1073,7 @@ const MutasiBarang = () => {
         
         initialTable.forEach(element => {
             if(element.quantity! > 0){
-                const newElement = {...element, type: 'out', before_stok: element.stok, after_stok: (Number(element.stok) - Number(element.quantity))}
+                const newElement = {...element, location_id: form.getFieldValue('reference_id'), type: 'out', before_stok: element.stok, after_stok: (Number(element.stok) - Number(element.quantity))}
                 
                 if(element.items.length > 0){
                     
@@ -1090,6 +1090,13 @@ const MutasiBarang = () => {
                         items: [newElement].concat(toConcat),
                     });
                     // dataInitital = dataInitital?.concat(toConcat);
+                }else{
+                    dataInitital?.push({
+                        product_name: newElement.product_name,
+                        quantity: newElement.quantity,
+                        sku: newElement.sku,
+                        items: [newElement, {...element, type: 'in', before_stok: element.stok, after_stok: (Number(element.stok) - Number(element.quantity))}],
+                    });
                 }
                 
             }
