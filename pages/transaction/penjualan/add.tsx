@@ -21,6 +21,9 @@ import { Tax } from "@/type/tax";
 import { toFormatLaravel } from "@/utils/date_utils";
 import { title } from "process";
 import dayjs from "dayjs";
+import { useRouter } from "next/router";
+import { Sale } from "@/type/sale";
+import { getCookie } from "cookies-next";
 
 
 interface TableInventory {
@@ -43,6 +46,8 @@ interface TableInventory {
     unit_name: string|null,
     type?: string|null,
     inventory_id: string|null,
+    sale_item_id?: string,
+    sale_id?: string,
     // children: TableInventory[],
 }
 
@@ -66,21 +71,19 @@ const AddTransactionSale: React.FC = () => {
     const [subtotal, setSubtotal] = useState<number>(0);
     const [total, setTotal] = useState<number>(0);
     const [stok, setStok] = useState<number>(0);
+    const [showTable, setShowTabel] = useState<boolean>(false);
+
+    const [slug, setSlug] = useState<string | undefined>(undefined);
+    const router = useRouter();
 
     const [initialTable, setInitialTable] = useState<TableInventory[]>([]);
-    const [initialTableTax, setInitialTableTax] = useState<Tax[]>(Array.from({length: 1}, (index: number) => ({
-        name: 'Admin',
-        max_value: 0,
-        tax_id: null,
-        unit_value: 'percent',
-        value: 0,
-    })));
+    const [initialTableTax, setInitialTableTax] = useState<Tax[]>([]);
 
     const [optionUnit, setOptionUnit] = useState<AutoCompleteProps['options']>([]);
     const [optionsLocation, setOptionsLocation] = useState<AutoCompleteProps['options']>([]);
     const [optionItem, setOptionsItem] = useState<AutoCompleteProps['options']>([]);
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-
+    const [sale_data, setData] = useState<Sale>();
     const [modalItem, setModalItem] = useState<boolean>(false);
 
     const [minimum, setMinimum] = useState<number>(0);
@@ -137,32 +140,18 @@ const AddTransactionSale: React.FC = () => {
             newData[index].quantity = 1;
             newData[index].inventory_id = item.inventory_id;
 
-
-            // if(item.unit?.max_value != null && item.unit?.max_value > 0){
-            //     newData[index].children = Array.from({ length: item.unit?.max_value }, (_, index) => ({
-            //         key: index, 
-            //         product_name: null, 
-            //         product_id: null, 
-            //         stok: 0.0, 
-            //         sku: "", 
-            //         selling_price: 0.0, 
-            //         cost: 0.0, 
-            //         minimum: 1,
-            //         checked: false,
-            //         location_id: '',
-            //         location_name: '',
-            //         cost_string: '0.0',
-            //         selling_price_string: '0.0',
-            //         unit_id: '',
-            //         unit_name: '',
-            //         children: [],
-            //     }))
-            // }
-
             console.log(newData[index]);
 
             setInitialTable(newData);
             sumSubtotal(newData);
+            form.setFieldsValue({
+                items: {
+                    [index]: {
+                        selling_price: item.price * 1,
+                    },
+                },
+            });
+
 
         }
     }
@@ -179,51 +168,6 @@ const AddTransactionSale: React.FC = () => {
         setSubtotal(subtotal);
     }
 
-    const onSelectItemUOM = (value: string, option: any, index: number) => {
-        console.log(option);
-        if(option.object == undefined){
-
-            const newData = [...initialTable];
-            newData[index].unit_name = value;
-            setInitialTable(newData);
-
-        }else{
-            const item: ItemUnit = option.object;
-            const newData = [...initialTable];
-
-            newData[index].unit_id = item.type_id ?? '',
-            newData[index].unit_name = item.name ?? '';
-
-            // if(item.unit?.max_value != null && item.unit?.max_value > 0){
-            //     newData[index].children = Array.from({ length: item.unit?.max_value }, (_, index) => ({
-            //         key: index, 
-            //         product_name: null, 
-            //         product_id: null, 
-            //         stok: 0.0, 
-            //         sku: "", 
-            //         selling_price: 0.0, 
-            //         cost: 0.0, 
-            //         minimum: 1,
-            //         checked: false,
-            //         location_id: '',
-            //         location_name: '',
-            //         cost_string: '0.0',
-            //         selling_price_string: '0.0',
-            //         unit_id: '',
-            //         unit_name: '',
-            //         children: [],
-            //     }))
-            // }
-
-            console.log(newData[index]);
-
-            setInitialTable(newData);
-
-        }
-    }
-
-    
-
     const columns: TableColumnsType<TableInventory> = [
       
         {
@@ -232,16 +176,17 @@ const AddTransactionSale: React.FC = () => {
             fixed: 'left',
             
             render: (_: any, record: TableInventory, index: number) => (
-                <AutoComplete
-                        value={record.product_name}
+                <Form.Item name={['items', index, 'product_name']} rules={[{ required: true, message: 'Field is required' }]}>
+                    <AutoComplete
                         options={optionItem}
-                        filterOption={false}
+                        filterOption={true}
                         style={{ width: '100%' }}
                         // onChange={(value) => onSelectItem(value, {}, index)}
                         onSelect={(value, option) => onSelectItem(value, option, index)}
                         onSearch={(value) => fetchItems(value, index)}
                         placeholder="Cari/Pilih Product"
                     />
+                </Form.Item>
             ),
         },
         {
@@ -249,33 +194,6 @@ const AddTransactionSale: React.FC = () => {
             dataIndex: "stok",
             width: 150,
             render: (_: any, record: TableInventory, index: number) => (
-                // <Input addonAfter={`/${record.stok}`} placeholder="Masukan stok" readOnly type="number" min={record.stok ?? 1}  onChange={(e) => {
-                    
-                //     console.log(e.target.value);
-                //     if(parseInt(handlePriceChange(e.target.value)) > record.stok!){
-                        
-                //         message.error(`Stok Di Gudang ${record.stok}`);
-                //     }
-
-
-                //     const input = parseInt(handlePriceChange(e.target.value)) > record.stok! ? record.stok! : parseInt(handlePriceChange(e.target.value));
-
-                //     console.log(input);
-
-                //     if(input > 0){
-                //         const newData = [...initialTable];
-                //         newData[index].quantity = input;
-
-                //         const selling_price = input * newData[index].selling_price!;
-                        
-
-                //         newData[index].selling_price = selling_price;
-                //         setInitialTable(newData);
-                //         sumSubtotal(newData);
-                //     }
-                   
-
-                // }} />
                 <div className="flex items-center gap-3">
                     <Button type="primary" shape="circle" icon={<MinusCircleOutlined />} onClick={() => {
                         const plus = Number(record.quantity!) - Number(1);
@@ -289,9 +207,11 @@ const AddTransactionSale: React.FC = () => {
                             newData[index].selling_price = selling_price;
                             setInitialTable(newData);
                             sumSubtotal(newData);
+                            countTotalWithTax(initialTableTax, newData);
+                            form.setFieldValue('items', newData);
                         }
                     }} />
-                    <p>{record.quantity}</p>
+                    <p>{record.quantity}/{record.stok}</p>
                     <Button type="primary" shape="circle" icon={<PlusCircleOutlined />} onClick={() => {
                         const plus = Number(record.quantity!) + Number(1);
                         if(plus <= record.stok!){
@@ -303,7 +223,9 @@ const AddTransactionSale: React.FC = () => {
 
                             newData[index].selling_price = selling_price;
                             setInitialTable(newData);
+                            countTotalWithTax(initialTableTax, newData);
                             sumSubtotal(newData);
+                            form.setFieldValue('items', newData);
                         }
                     }} />
                 </div>
@@ -314,106 +236,17 @@ const AddTransactionSale: React.FC = () => {
             dataIndex: "selling_price",
             width: 200,
             render: (_: any, record: TableInventory, index: number) => (
-                <Input placeholder="Masukan Harga Jual" value={formatRupiah(record.selling_price ?? 0.0)} onChange={(e) => {
-                    const newData = [...initialTable];
-                    newData[index].selling_price = parseInt(handlePriceChange(e.target.value));
-                    setInitialTable(newData);
+                <Form.Item name={['items', index, 'selling_price']} rules={[{ required: true, message: 'Field is required' }]}>
+                    <Input placeholder="Masukan Harga Jual" value={formatRupiah(record.selling_price ?? 0.0)} onChange={(e) => {
+                        const newData = [...initialTable];
+                        newData[index].selling_price = parseInt(handlePriceChange(e.target.value));
+                        setInitialTable(newData);
 
-                }} />
+                    }} />
+                </Form.Item>
             ),
         },
     ];
-
-    const columnsPotongan: TableColumnsType<TableInventory> = [
-        {
-            title: "Nama Potongan",
-            dataIndex: "name",
-            
-            render: (_: any, record: TableInventory, index: number) => (
-                <AutoComplete
-                        showSearch
-                        placeholder={'Cari/Tambahkan Gudang Baru'}
-                        style={{ width: 200 }}
-                        defaultActiveFirstOption={false}
-                        suffixIcon={null}
-                        filterOption={false}
-                        onSearch={(value) => fetchLocation(value)}
-                        onSelect={(value, option) => onSelect(value, option, index)}
-                        notFoundContent={null}
-                        options={optionsLocation}
-                    />
-            ),
-        },
-        {
-            title: "Jumlah",
-            dataIndex: "value",
-            fixed: 'left',
-            render: (_: any, record: TableInventory, index: number) => (
-                <AutoComplete
-                        options={optionItem}
-                        filterOption={false}
-                        style={{ width: 200 }}
-                        onSelect={(value, option) => onSelectItem(value, option, index)}
-                        onSearch={(value) => fetchItems(value, index)}
-                        placeholder="Cari/Pilih Product"
-                    />
-            ),
-        },
-        {
-            title: "Unit",
-            fixed: 'left',
-            dataIndex: "unit_value",
-            
-            render: (_: any, record: TableInventory, index: number) => (
-                <Select onChange={(value) => {}} value={'percent'}>
-                    <Select.Option value="percent">Percent</Select.Option>
-                    <Select.Option value="nominal">Nominal</Select.Option>
-                </Select>
-            ),
-        },
-        {
-            title: "Hapus",
-            dataIndex: "",
-            render: (_: any, record: TableInventory, index: number) => (
-                <Button type="primary" className="bg-red-500"><DeleteOutlined /></Button>
-            ),
-        },
-    ];
-
-    const onChangeValue = (key: string, value: any, item: Inventory) => {
-        const data = itemsSelected;
-
-        data.forEach(element => {
-            if(element.item?.product_id == item.item?.product_id){
-                if(key == 'price'){
-                    element.price = value;
-                }else if(key == 'minimum'){
-                    element.minimum_stock = value;
-                }else if(key == 'qty'){
-                    element.quantity = value;
-                }
-
-                console.log(element)
-            }
-        });
-
-        console.log(data);
-
-        setItemSelected(data);
-    }
-
-    const checkOnSelected = (item: Item) => {
-        for (let index = 0; index < itemsSelected.length; index++) {
-            const element = itemsSelected[index];
-            if(element.item?.product_id == item.product_id){
-                return true;
-                break;
-            }
-            
-        }
-
-        return false;
-    }
 
    
 
@@ -444,6 +277,9 @@ const AddTransactionSale: React.FC = () => {
                 where: [
                     {
                         quantity: [">", 0]
+                    },
+                    {
+                        location_id: form.getFieldValue('location_id'),
                     }
                 ],
                 request_column: [],
@@ -456,21 +292,15 @@ const AddTransactionSale: React.FC = () => {
                 if(items.data.length > 0){
                     const result = items.data?.map((data: Inventory) => {
                         return {
-                            value: `${data.item?.parent != null ? data.item?.parent?.name + '->' : ''}${data.item.name}->${data.location?.name}`,
-                            label: `${data.item?.parent != null ? data.item?.parent?.name + '->' : ''}${data.item.name}->${data.location?.name}`,
+                            value: `${data.product_name}`,
+                            label: `${data.product_name}`,
                             object: data,
                             
                         }
                     })
                     setOptionsItem(result);
                 }else{
-                    setOptionsItem([
-                        {
-                            value: `${query}`,
-                            label: `${query}`,
-                            title: `Tambahkan ${query}`,
-                        }
-                    ]);
+                    setOptionsItem([]);
                 }
             }else{
                 message.error(response.data.message);
@@ -480,73 +310,22 @@ const AddTransactionSale: React.FC = () => {
         }
     }
 
-    const fetchUOM = async (query: string) => {
-       
+    const fetchLocation = async () => {
         try {
-            const querySearch: RequestParam = {
-                limit: 100,
-                page: 1,
-                table: 'unit',
-                search: {
-                    column: [
-                        'name',
-                    ],
-                    value: query,
-                },
-                request_column_relation: []
-            }
-            const response = await axiosInstance.post(`/search`, querySearch);
-            if(response.status == 200){
-                const items: Pagination<ItemUnit> = response.data.data;
-                
-                if(items.data.length > 0){
-                    const result = items.data.map((data: ItemUnit) => {
-                        return {
-                            value: `${data.type_id}`,
-                            label: `${data.name}`,
-                            object: data,
-                        }
-                    })
-                    setOptionUnit(result);
-                }else{
-                    setOptionUnit([
-                        {
-                            value: `${query}`,
-                            label: `Tambahkan ${query}`,
-                        }
-                    ]);
-                }
-            }else{
-                message.error(response.data.message);
-            }
-        } catch (error) {
-            message.error(`${error}`);
-        }
-    }
-
-    const fetchLocation = async (search: string,) => {
-        try {
-            const response = await axiosInstance.get(`/location?name=${search}`);
+            const response = await axiosInstance.get(`/location`);
             if(response.status == 200){
                 const locationResult: Location[] = response.data.data;
                 
                 if(locationResult.length > 0){
                     const result = locationResult.map((data: Location) => {
                         return {
-                            value: data.name,
+                            value: data.location_id,
                             label: data.name,
-                            object: data,
-
                         }
                     })
+                    form.setFieldValue('location_id', result[0].value);
                     setOptionsLocation(result);
-                }else{
-                    setOptionsLocation([
-                        {
-                            value: `${search}`,
-                            label: `Tambahkan ${search}`,
-                        }
-                    ]);
+                    ;
                 }
 
             }
@@ -556,8 +335,16 @@ const AddTransactionSale: React.FC = () => {
         }
     }
 
-    const countTotalWithTax = (taxes: Tax[]) => {
-        const total_amount = subtotal;
+    const countSubtotal = (data: TableInventory[]) => {
+        const subtotal = data.reduce((accumulator, currentValue) => {
+            return accumulator + (currentValue.selling_price ?? 0); // Menjumlahkan nilai
+        }, 0);
+
+        return subtotal;
+    }
+
+    const countTotalWithTax = (taxes: Tax[], data: TableInventory[]) => {
+        const total_amount = countSubtotal(data);
 
         let total_tax_tax = 0;
 
@@ -567,6 +354,8 @@ const AddTransactionSale: React.FC = () => {
             }else if(element.unit_value == 'nominal' && element.value != 0){
                 total_tax_tax = Number(total_tax_tax) + Number(element.value!);
             }
+
+            // element.value = 
         });
 
         console.log(total_tax_tax);
@@ -579,10 +368,11 @@ const AddTransactionSale: React.FC = () => {
         setLoading(true);
         
 
-        const items :{ inventory_id: string; quantity: number } [] = [];
+        const items :{ inventory_id: string; quantity: number, sale_item_id?: string, } [] = [];
         initialTable.forEach(element => {
             if(element.inventory_id != '0'){
                 items.push({
+                    'sale_item_id': element.sale_item_id,
                     'inventory_id': element.inventory_id!,
                     'quantity': element.quantity!,
                 });
@@ -590,8 +380,9 @@ const AddTransactionSale: React.FC = () => {
         });
 
         const data = {
+            'sale_id': form.getFieldValue('sale_id') != null ? form.getFieldValue('sale_id') : null,
             'sale_date': toFormatLaravel(form.getFieldValue('sale_date')),
-            'total_amount': total,
+            'total_amount': subtotal,
             'payment_method': null,
             'order_number': form.getFieldValue('order_number'),
             'delivery_number': form.getFieldValue('delivery_number'),
@@ -599,36 +390,36 @@ const AddTransactionSale: React.FC = () => {
             'platform': form.getFieldValue('platform'),
             'taxes': initialTableTax,
             'items': items,
+            "total_amount_before_tax": subtotal,
+            "total_amount_after_tax": total,
         }
 
         console.log(data);
-        
-        // initialTable.forEach(element => {
-        //     if(element.product_name != null){
-        //         dataInitital.push({...element, type: 'in'});
-        //     }
-        // });
 
         try {
             const response = await axiosInstance.post('/sales', data);
             if(response.status == 200){
                 message.success(`${response?.data?.message}`)
-                setInitialTableData();
-                setInitialTableTax([{
-                    name: 'Admin',
-                    max_value: 0,
-                    tax_id: null,
-                    unit_value: 'percent',
-                    value: 0,
-                }]);
-                setTotal(0);
-                setSubtotal(0);
-                form.resetFields();
-                form.setFieldsValue({
-                    sale_date: dayjs(),
-                    status: 'sedang dikemas',
-                    platform: 'shopee'
-                })
+               if(slug){
+                fetchEditData();
+               }else{
+                 setInitialTableData();
+                    setInitialTableTax([{
+                        name: 'Admin',
+                        max_value: 0,
+                        tax_id: null,
+                        unit_value: 'percent',
+                        value: 0,
+                    }]);
+                    setTotal(0);
+                    setSubtotal(0);
+                    form.resetFields();
+                    form.setFieldsValue({
+                        sale_date: dayjs(),
+                        status: 'sedang dikemas',
+                        platform: 'shopee'
+                    })
+               }
             }
         } catch (error: any) {
             message.error(`${error.response?.data?.message}`)
@@ -637,60 +428,9 @@ const AddTransactionSale: React.FC = () => {
         }
     }
 
-    const applyBulkChange = async () => {
-
-        // var newData = itemsSelected.map((obj) => {return { ...obj, minimum_stock: minimum, price: price, quantity: stok }})
-        // console.log(newData);
-        // setItemSelected(newData);
-    }
-
-
-    const onSelect = (value: string, option: any, index: number) => {
-        console.log(option);
-            if(option.object == undefined){
-    
-                const newData = [...initialTable];
-                newData[index].location_id = value;
-                newData[index].location_name = value;
-                setInitialTable(newData);
-    
-            }else{
-                const item: Location = option.object;
-                const newData = [...initialTable];
-    
-                newData[index].location_id = item.location_id;
-                newData[index].location_name = item.name;
-    
-                // if(item.unit?.max_value != null && item.unit?.max_value > 0){
-                //     newData[index].children = Array.from({ length: item.unit?.max_value }, (_, index) => ({
-                //         key: index, 
-                //         product_name: null, 
-                //         product_id: null, 
-                //         stok: 0.0, 
-                //         sku: "", 
-                //         selling_price: 0.0, 
-                //         cost: 0.0, 
-                //         minimum: 1,
-                //         checked: false,
-                //         location_id: '',
-                //         location_name: '',
-                //         cost_string: '0.0',
-                //         selling_price_string: '0.0',
-                //         unit_id: '',
-                //         unit_name: '',
-                //         children: [],
-                //     }))
-                // }
-    
-                console.log(newData[index]);
-    
-                setInitialTable(newData);
-    
-            }
-    };
     
     const setInitialTableData = () => {
-        setInitialTable(Array.from({ length: 4 }, (_, index) => ({
+        setInitialTable(Array.from({ length: 1 }, (_, index) => ({
             key: index, 
             product_name: null, 
             product_id: null, 
@@ -713,14 +453,167 @@ const AddTransactionSale: React.FC = () => {
         })));
     }
 
+    const setInitialTaxes = () => {
+        const tax = localStorage.getItem('taxs');
+        const taxData: Tax[] = JSON.parse(tax as string);
+        setInitialTableTax(taxData);
+    }
+
+    const removeTaxes = async (data: Tax) => {
+        setLoading(true);
+
+        
+        const sales_tax: string[] = [];
+        sale_data?.taxes.forEach(element => {
+            if(element.tax_id == data.tax_id){
+                sales_tax.push(element.sale_tax_id);
+            }
+        });
+        
+        try {
+            const response = await axiosInstance.post('/search_del', {table: 'tax_sales',data: sales_tax});
+            if(response.status == 200){
+                setInitialTableTax(initialTableTax.filter((value) => value.tax_id != data.tax_id));
+            }
+        } catch (error: any) {
+            message.error(`${error?.response?.data?.message ?? error}`);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    const addNewLine = () => {
+        const newData = [...initialTable,{
+            key: initialTable.length, 
+            product_name: null, 
+            product_id: null, 
+            stok: 0.0, 
+            sku: "", 
+            selling_price: 0.0, 
+            cost: 0.0, 
+            minimum: 1,
+            checked: false,
+            location_id: '',
+            location_name: '',
+            cost_string: '0.0',
+            selling_price_string: '0.0',
+            unit_id: '',
+            unit_name: '',
+            quantity: 0,
+            inventory_id: '0',
+            price: 0,
+            // children: [],
+        }]
+        setInitialTable(newData);
+    }
+
+    const setInititalItemEdit = (items: Sale) => {
+        setInitialTableData()
+    }
+
+    const fetchEditData = async () => {
+        try {
+            const request_param: RequestParam = {
+                table: 'sales',
+                limit: 1,
+                page: 1,
+                request_column_relation: ['items', 'items.movement','items.inventory', 'taxes', 'taxes.tax'],
+                where: [
+                    {
+                        sale_id: slug,
+                    }
+                ],
+                
+
+            }
+
+            const response = await axiosInstance.post('/search', request_param);
+
+            if(response.data.data){
+                const responseData: Pagination<Sale> = response.data.data;
+                setData(responseData.data[0]);
+                form.setFieldsValue({
+                    sale_id: responseData.data[0].sale_id,
+                    sale_date: dayjs(responseData.data[0].sale_date),
+                    status: responseData.data[0].status,
+                    platform: responseData.data[0].platform ?? 'shopee',
+                    order_number: responseData.data[0].order_number,
+                    delivery_number: responseData.data[0].delivery_number,
+                    // def
+                })
+
+                const initials = responseData.data[0].items.map((value, index) => {
+                    return {
+                        key: index, 
+                        product_name: value.product_name, 
+                        product_id: value.inventory.product_id ?? '', 
+                        stok: value.inventory.quantity ?? 0, 
+                        sku: '', 
+                        selling_price: parseInt(value.price) * value.quantity, 
+                        cost: value.inventory.cost, 
+                        minimum: 1,
+                        checked: false,
+                        location_id: value.inventory.location_id,
+                        location_name: value.location_name,
+                        cost_string: `${value.inventory.cost}`,
+                        selling_price_string: `${parseInt(value.price) * value.quantity}`,
+                        unit_id: value.inventory.unit_id,
+                        unit_name: value.unit_name,
+                        quantity: value.quantity,
+                        inventory_id: `${value.inventory_id}`,
+                        price: parseInt(value.price),
+                        sale_id: value.sale_id,
+                        sale_item_id: value.sale_item_id,
+                        // children: [],
+                    }
+                });
+                const taxes = responseData.data[0].taxes.map((value) => {
+                    return {
+                        max_value: value.tax.max_value,
+                        name: value.name!,
+                        tax_id: value.tax_id,
+                        unit_value: value.unit_value!,
+                        value: value.value,
+                    }
+                });
+
+                form.setFieldValue('items', initials);
+                setInitialTableTax(taxes);
+                setInitialTable(initials);
+                setSubtotal(countSubtotal(initials));
+                // setTotal(responseData.data[0].total_amount_after_tax);
+                
+                countTotalWithTax(taxes, initials)
+            }
+
+        } catch (error: any) {
+            message.error(`${error.response?.data?.message ?? error}`)
+        } finally {
+            setLoading(false);
+        }
+    }
+
     useEffect(() => {
-        setModalItem(true);
-        setInitialTableData();
-        form.setFieldsValue({
-            sale_date: dayjs(),
-            status: 'sedang dikemas',
-            platform: 'shopee'
-        })
+        if(slug){
+            fetchEditData();
+        }
+    }, [slug])
+
+
+    useEffect(() => {
+        fetchLocation();
+        const sale_id = getCookie('sale_id');
+        if(sale_id == undefined){
+            setInitialTaxes();
+            setInitialTableData();
+            form.setFieldsValue({
+                sale_date: dayjs(),
+                status: 'sedang dikemas',
+                platform: 'shopee'
+            })
+        }else{
+            setSlug(sale_id);
+        }
     }, []);
 
     return (
@@ -744,24 +637,30 @@ const AddTransactionSale: React.FC = () => {
             <Form
                 layout={formLayout}
                 form={form}
-                initialValues={{ layout: formLayout }}
+                // initialValues={form.getFieldsValue}
                 style={{ maxWidth: '100%' }}
                 // labelCol={{ span: 6 }}
                 // wrapperCol={{ span: 14 }}
                 onFinish={handleSubmit}
                 disabled={loading}
             >
-                <Form.Item
-                    label="Tanggal Penjualan"
-                    name="sale_date"
-                    rules={[{ required: true, message: 'Please input tanggal penjualan' }]}
-                    style={{width: '100%'}}
-                >
-                    <DatePicker defaultValue={dayjs()} width={`100%`} />
-                </Form.Item>
+                
                 <div className="flex gap-4">
                     <div className="flex flex-col flex-1">
+                        <Form.Item className="flex-1" label="Pilih Gudang Penjualan" name='location_id' rules={[{ required: true, message: 'Bagian ini tidak boleh kosong!' }]} >
+                            <Select 
+                                placeholder="Pilih Lokasi Awal Gudang"
+                                options={optionsLocation}
+                                onSelect={(value, option) => {
+                                    form.setFieldsValue({
+                                        location_id: value,
+                                    })
 
+                                    setShowTabel(true);
+                                }}
+                            ></Select>
+                        </Form.Item>
+                        
                         <Form.Item label="Nomor Pesanan" name="order_number" rules={[{ required: true, message: 'Please input nomor pesanan!' }]}>
                             <Input placeholder="Nomor Pesanan" />
                         </Form.Item>
@@ -770,6 +669,14 @@ const AddTransactionSale: React.FC = () => {
                         </Form.Item>
                     </div>
                     <div className="flex flex-col flex-1">
+                        <Form.Item
+                            label="Tanggal Penjualan"
+                            name="sale_date"
+                            rules={[{ required: true, message: 'Please input tanggal penjualan' }]}
+                            style={{width: '100%'}}
+                        >
+                            <DatePicker defaultValue={dayjs()} width={`100%`} />
+                        </Form.Item>
                         <Form.Item name="status" label="Status Pesanan" rules={[{ required: true , message: 'Please input status pesanan!'}]}>
                             <Select
                                 defaultValue={'sedang dikemas'}
@@ -817,77 +724,59 @@ const AddTransactionSale: React.FC = () => {
                             rowSelection={rowSelection}
                             pagination={false} 
                             dataSource={initialTable} 
-                            scroll={{ x: 'max-content' }}
+                            footer={() => <Button type="text" color="blue" onClick={addNewLine}>Tambah Baris</Button>}
+                            summary={pageData => {
+                                
+        
+                                return (
+                                <>
+                                    <Table.Summary.Row>
+                                        <Table.Summary.Cell index={(initialTable.length ?? 1) + 1} colSpan={3} align="right"><p className="font-bold">Subtotal</p></Table.Summary.Cell>
+                                        <Table.Summary.Cell index={(initialTable.length ?? 1) + 2} align="right">
+                                            <p>{formatRupiah(subtotal)}</p>
+                                        </Table.Summary.Cell>
+                                    </Table.Summary.Row>
+                                    {initialTableTax.map((value: Tax, index: number) => {
+                                        return <Table.Summary.Row key={index}>
+                                                    <Table.Summary.Cell index={index} colSpan={3} align="right"><Button type="text" danger onClick={() => removeTaxes(value)}><CloseCircleOutlined/></Button> <p className="font-bold">{value.name}</p></Table.Summary.Cell>
+                                                    <Table.Summary.Cell index={index} align="right">
+                                                    <Input addonAfter={
+                                                        
+                                                        <Select  onChange={(value) => {
+                                                            const newData = [...initialTableTax];
+                                                            if(value == 'percent'){
+                                                                newData[index].value = (newData[index].value! / subtotal) * 100;
+                                                            }else{
+                                                                newData[index].value = (subtotal * newData[index].value!) / 100;
+                                                            }
+                                                            newData[index].unit_value = value;
+
+                                                            console.log(newData);
+                                                            setInitialTableTax(newData);
+                                                            countTotalWithTax(newData, initialTable);
+                                                        }} value={value.unit_value}>
+                                                            <Select.Option value="percent">Percent</Select.Option>
+                                                            <Select.Option value="nominal">Nominal</Select.Option>
+                                                        </Select>
+                                                    } placeholder="Masukan stok"  min={1} value={value.value ?? ''}  onChange={(e) => {
+                                                        const newData = [...initialTableTax];
+                                                        newData[index].value = parseInt(e.target.value == '' ? '0' : e.target.value);
+                                                        setInitialTableTax(newData);
+                                                        countTotalWithTax(newData, initialTable);
+                                                    }} />
+                                                    </Table.Summary.Cell>
+                                                </Table.Summary.Row>
+                                    })}
+                                    <Table.Summary.Row>
+                                        <Table.Summary.Cell index={(initialTable.length ?? 1) + 3} colSpan={3} align="right"><p className="font-bold">Total</p></Table.Summary.Cell>
+                                        <Table.Summary.Cell index={(initialTable.length ?? 1) + 4} align="right">
+                                            <p>{formatRupiah(total)}</p>
+                                        </Table.Summary.Cell>
+                                    </Table.Summary.Row>
+                                </>
+                                );
+                            }}
                     />
-                    <Table 
-                            showHeader={false}   
-                            loading={loading} 
-                            rowKey={(record) => record.key ?? ''} 
-                            pagination={false} 
-                            dataSource={[{
-                                key: "0",
-                                
-                            }]} 
-                            scroll={{ x: 'max-content' }}
-                    >
-                        <Column title="" dataIndex="key" key="key" width={150} />
-                        <Column title="" dataIndex="sku" key="sku" width={150} />
-                        <Column title="" dataIndex="qty" key="qty" width={150} />
-                        <Column title="" dataIndex="item" key="item" align="right" render={(_:any, record: Tax) => (<p>{'Subtotal'}</p>)} />
-                        <Column title="" dataIndex="no" key="no" width={200} render={(_: any, record: any) => (
-                            <Input placeholder="Masukan stok"  min={1} value={formatRupiah(subtotal)} readOnly/>
-                        )} />
-                    </Table>
-                    <Table 
-                            showHeader={false}   
-                            loading={loading} 
-                            rowKey={(record) => record.tax_id ?? ''} 
-                            pagination={false} 
-                            dataSource={initialTableTax} 
-                            scroll={{ x: 'max-content' }}
-                    >
-                        <Column title="" dataIndex="" key="" width={150} />
-                        <Column title="" dataIndex="sku" key="sku" width={150} />
-                        <Column title="" dataIndex="qty" key="qty" width={150} />
-                        <Column title="" dataIndex="item" key="item" align="right" render={(_:any, record: Tax) => (<p>{record.name}</p>)} />
-                        <Column title="" dataIndex="no" key="no" width={200} render={(_: any, record: Tax, index: number) => (
-                            <Input addonAfter={
-                                <Select onChange={(value) => {
-                                    const newData = [...initialTableTax];
-                                    newData[index].unit_value = value;
-                                    setInitialTableTax(newData);
-                                    countTotalWithTax(newData);
-                                }} value={'percent'}>
-                                    <Select.Option value="percent">Percent</Select.Option>
-                                    <Select.Option value="nominal">Nominal</Select.Option>
-                                </Select>
-                            } placeholder="Masukan stok"  min={1}  onChange={(e) => {
-                                const newData = [...initialTableTax];
-                                newData[index].value = parseInt(e.target.value == '' ? '0' : e.target.value);
-                                setInitialTableTax(newData);
-                                countTotalWithTax(newData);
-                            }} />
-                        )} />
-                    </Table>
-                    <Table 
-                            showHeader={false}   
-                            loading={loading} 
-                            rowKey={(record) => record.key ?? ''} 
-                            pagination={false} 
-                            dataSource={[{
-                                key: "0",
-                                
-                            }]} 
-                            scroll={{ x: 'max-content' }}
-                    >
-                        <Column title="" dataIndex="key" key="key" width={150} />
-                        <Column title="" dataIndex="sku" key="sku" width={150} />
-                        <Column title="" dataIndex="qty" key="qty" width={150} />
-                        <Column title="" dataIndex="item" key="item" align="right" render={(_:any, record: Tax) => (<p className="font-bold">{'Total'}</p>)} />
-                        <Column title="" dataIndex="no" key="no" width={200} render={(_: any, record: any) => (
-                            <Input placeholder="Masukan stok"  min={1} value={formatRupiah(total)} readOnly />
-                        )} />
-                    </Table>
                     <div className="flex justify-end">
                     <Button type="text" className="text-blue-500" onClick={() => setModalPotongan(true)}>Tambah Potongan Lain</Button>
                     </div>

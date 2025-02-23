@@ -185,13 +185,14 @@ const AddInventory: React.FC = () => {
             title: "Nama",
             dataIndex: "nama",
             fixed: 'left',
+            width: 300,
             render: (_: any, record: TableInventory, index: number) => (
                 <AutoComplete
                 showSearch
                         value={record.product_name}
                         options={optionItem}
                         filterOption={false}
-                        style={{ width: 200 }}
+                        style={{ width: 300 }}
                         onSelect={(value, option) => onSelectItem(value, option, index)}
                         onSearch={fetchItems}
                         onChange={(e) => onSelectItem(e, {}, index)}

@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { Layout, Table, message, Image, Button, Modal, Form, Input, Space, Tag, Typography, Pagination as AntPagination } from "antd";
+import { Layout, Table, message, Image, Button, Modal, Form, Input, Space, Tag, Typography, Pagination as AntPagination, Popconfirm } from "antd";
 import axiosInstance from "@/utils/axiosInstance";
 import { Inventory } from "@/type/inventory";
 import EditButton from '../component/EditButton';
@@ -18,6 +18,7 @@ import { Pagination } from "@/type/pagination";
 import { TransactionType } from "@/type/transcation";
 import { RequestParam } from "@/type/request_param";
 import { setCookie } from "cookies-next";
+import { TableRowSelection } from "antd/es/table/interface";
 
 
 const Transaction: React.FC = () => {
@@ -176,6 +177,16 @@ const Transaction: React.FC = () => {
         getTransactions(request);
     }
 
+    const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
+        console.log('selectedRowKeys changed: ', newSelectedRowKeys);
+        setSelectedRowKeys(newSelectedRowKeys);
+    };
+
+    const rowSelection: TableRowSelection<TransactionType> = {
+        selectedRowKeys,
+        onChange: onSelectChange,
+    };
+
     useEffect(() => {
         getTransactions(requestParam);
     }, []);
@@ -184,10 +195,20 @@ const Transaction: React.FC = () => {
     return (
         <DashboardLayout>
             <Space className="gap-3">
-            <Button icon={<PlusOutlined/>} type="primary" href="transaction/add" className="my-3 bg-blue-600 text-white" >Tambah</Button>
-            <Button icon={<ReloadOutlined/>} type="default" onClick={() => getTransactions(requestParam)} className="my-3" >Reload</Button>
+                <Button icon={<PlusOutlined/>} type="primary" href="transaction/add" className="my-3 bg-blue-600 text-white" >Tambah</Button>
+                <Button icon={<ReloadOutlined/>} type="default" onClick={() => getTransactions(requestParam)} className="my-3" >Reload</Button>
+                {selectedRowKeys.length > 0 && <Popconfirm
+                    title="Yakin Ingin Menghapus Data Inventory?"
+                    description="Data yang sudah dihapus tidak akan bisa di kembalikan!"
+                    onConfirm={() => handleDelete(selectedRowKeys as string[])}
+                    onCancel={() => {}}
+                    okText="Yes"
+                    cancelText="No"
+                >
+                    <Button type="primary" danger>Hapus</Button>
+                </Popconfirm>}
             </Space>
-            <Table columns={columns} loading={loading} pagination={false} dataSource={transaction?.data ?? []} rowKey={(record) => record.unique_id} />
+            <Table columns={columns} loading={loading} rowSelection={rowSelection} pagination={false} dataSource={transaction?.data ?? []} rowKey={(record) => record.unique_id} />
             <div className="flex my-3 justify-end">
             <AntPagination onChange={onChangePagination} defaultCurrent={transaction?.current_page} total={transaction?.total} />
             </div>

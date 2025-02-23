@@ -4,6 +4,7 @@ import { Button, Card, Form, FormProps, Input, Layout, message } from "antd"
 import axiosInstance from '@/utils/axiosInstance';
 import { setCookie } from "cookies-next";
 import React, { useState, useEffect } from "react";
+import { Tax } from "@/type/tax";
 
 type FieldLoginType = {
     email: string,
@@ -11,7 +12,10 @@ type FieldLoginType = {
 }
 
 type AuthResponse = {
-    user: User;
+    user: {
+        data: User,
+        taxes: Tax[],
+    };
     access_token: string;
     token_type: string;
 };
@@ -34,11 +38,15 @@ const LoginPage = () => {
             if(response.status == 200){
 
                 const data = response.data as AuthResponse;
+
+                console.log(data);
                 
                 setCookie('token', data.access_token);
-                setCookie('user', JSON.stringify(data.user));
+                setCookie('user', JSON.stringify(data.user.data));
 
-                message.success('Login Berhasil')
+                message.success('Login Berhasil');
+
+                localStorage.setItem("taxs", JSON.stringify(data.user.taxes))
 
                 window.location.href = '/dashboard';
             }else if(response.status == 401){

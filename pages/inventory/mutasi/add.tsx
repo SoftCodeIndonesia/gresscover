@@ -378,13 +378,13 @@ const MutasiBarang = () => {
                 title: "Varian",
                 dataIndex: "nama",
                 fixed: 'left',
-                width: 200,
+                width: 300,
                 render: (_: any, record: TableInventory, index: number) => (
                     <AutoComplete
                         showSearch
                         options={optionItem}
                         filterOption={true}
-                        style={{ width: 200 }}
+                        style={{ width: 300 }}
                         onSelect={(value, option) => onSelectItem(value, option, index, true)}
                         onSearch={(value) => fetchItems(value, true, parent_active!)}
                         placeholder="Cari/Pilih Varian"

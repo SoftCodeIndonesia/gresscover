@@ -2,23 +2,24 @@ import DashboardLayout from "@/pages/component/DashboardLayout";
 import { Inventory } from "@/type/inventory";
 import { Pagination } from "@/type/pagination";
 import { RequestParam } from "@/type/request_param";
-import { Sale } from "@/type/sale";
+import { Sale, SaleItem } from "@/type/sale";
 import axiosInstance from "@/utils/axiosInstance";
 import { handlePriceChange } from "@/utils/validate_price_change";
 import { AutoComplete, AutoCompleteProps, Breadcrumb, Button, Form, Input, message, Radio, Select, Table, TableColumnsType } from "antd";
-import { MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons';
+import { MinusCircleOutlined, PlusCircleOutlined, SwapOutlined } from '@ant-design/icons';
 import { useEffect, useState } from "react";
 import { InventoryMovement } from "@/type/inventory_movement";
 import TextArea from "antd/es/input/TextArea";
 import { getCookie } from "cookies-next";
-import { ExchangeType } from "@/type/exchange";
+import { ExchangeItem, ExchangeType } from "@/type/exchange";
 
 interface TableInventory {
     key: React.Key, 
-    product_name_from: string|null, 
-    product_id_from: string|null, 
-    product_name_to: string|null, 
-    product_id_to: string|null, 
+    product_name: string|null,
+    product_photo: string|null,
+    location_name: string|null,
+    product_name_to: string|null,
+    product_photo_to: string|null,
     stok: number|null, 
     quantity: number|null, 
     available_quantity: number|null, 
@@ -31,9 +32,13 @@ interface TableInventory {
     reference_id: string,
     inventory_id: string,
     inventory_id_from: string,
-    movement_id_from: string|null,
-    movement_id_to: string|null,
+    change_movement_id: string|null,
+    inventory_id_exchange: string|null,
     note: string,
+    exchange_item_id?:string,
+    exchange_id?: string,
+    sale_item_id?: string,
+    price: number,
 }
 
 type InventoryMovementSearch = {
@@ -53,37 +58,62 @@ const ExchangeAdd: React.FC = () => {
     const [form] = Form.useForm();
     const [optionItem, setOptionsItem] = useState<AutoCompleteProps['options']>([]);
     const [initialTable, setInitialTable] = useState<TableInventory[]>([]);
+    const [data, setData] = useState<ExchangeType>();
+    const [slug, setSlug] = useState<string>();
+
+
     const columns: TableColumnsType<TableInventory> = [
         {
             title: "Produk yang di tukar",
             dataIndex: "nama",
             fixed: 'left',
+            // width: 200,
             render: (_: any, record: TableInventory, index: number) => (
-                <AutoComplete
-                        value={record.product_name_from}
-                        options={optionItem}
-                        filterOption={false}
-                        style={{ width: 200 }}
-                        onChange={(value) => onSelectItem(value, true, {}, index)}
-                        onSelect={(value, option) => onSelectItem(value, true, option, index)}
-                        onSearch={(value) => fetchItems(value, record, index)}
-                        placeholder="Cari/Pilih Product"
+                <Form.Item name={['items', index, 'product_name']}>
+                    <AutoComplete
+                        
+                            options={optionItem}
+                            filterOption={false}
+                            // style={{ width: 200 }}
+                            onChange={(value) => onSelectItem(value, true, {}, index)}
+                            onSelect={(value, option) => onSelectItem(value, true, option, index)}
+                            onSearch={(value) => fetchItems(value, record, index)}
+                            placeholder="Cari/Pilih Product"
                     />
+                </Form.Item>
+            )
+        },
+        {
+            title: "",
+            dataIndex: "",
+            align: "center",
+            width: 50,
+            render: (_: any, record: TableInventory, index: number) => (
+                <Button icon={<SwapOutlined />} onClick={() => {
+                    const newData = [...initialTable];
+                    newData[index].inventory_id_exchange = newData[index].inventory_id_from;
+                    newData[index].product_name_to = newData[index].product_name;
+                    setInitialTable(newData);
+                    form.setFieldValue('items', newData);
+                }} ></Button>
             )
         },
         {
             title: "Ditukar dengan",
             dataIndex: "nama",
             fixed: 'left',
+            // width: 200,
             render: (_: any, record: TableInventory, index: number) => (
-                <AutoComplete
+                <Form.Item name={['items', index, 'product_name_to']}>
+                    <AutoComplete
                         options={optionItem}
                         filterOption={false}
-                        style={{ width: 200 }}
+                        // style={{ width: 200 }}
                         onSelect={(value, option) => onSelectItem(value, false, option, index)}
                         onSearch={(value) => fetchItems(value, record, index)}
                         placeholder="Cari/Pilih Product"
                     />
+                </Form.Item>
             )
         },
         {
@@ -120,7 +150,7 @@ const ExchangeAdd: React.FC = () => {
             width: 200,
             render: (_: any, record: TableInventory, index: number) => (
                 <>
-                <Form.Item label="" >
+                <Form.Item label="" name={['items', index, 'condition']}>
                     <Radio.Group onChange={(value) => {
                         // const parent: TableInventory = initialTable.filter((value) => value.key == record.key)[0];
                         const newData = [...initialTable];
@@ -151,19 +181,9 @@ const ExchangeAdd: React.FC = () => {
                     ],
                     value: query,
                 },
-                where: [
-                    {
-                        location_id: ['=',`${form.getFieldValue('location_id')}`]
-                    }
-                ],
-                whereHas: {
-                    item: {
-                        barcode: ['like', `%${query}%`],
-                        name: ['like', `%${query}%`]
-                    }
-                },
-                request_column: ["product_id", "location_id", "quantity", "cost", "price", "product_name", "unit_id", "unit_name", 'minimum_stock'],
-                request_column_relation: ["item", "location"]
+                group: "inventory_id",
+                request_column: ["product_id", "inventory_id","location_id", "price", "product_name", "unit_name",],
+                request_column_relation: ["location"]
             }
             const response = await axiosInstance.post(`/search`, querySearch);
             if(response.status == 200){
@@ -171,12 +191,14 @@ const ExchangeAdd: React.FC = () => {
                     const resultResponse: Inventory[] = response.data.data.data;
                     const result = resultResponse.map((data: Inventory) => {
                         return {
-                            value: `${data?.product_name}`,
-                            label: `${data?.product_name}`,
+                            value: `${data?.product_name} (${data.location?.name})`,
+                            label: `${data?.product_name} (${data.location?.name})`,
                             object: data,
                         }
                     })
                     setOptionsItem(result);
+                }else{
+                    setOptionsItem([]);
                 }
             }else{
                 message.error(response.data.message);
@@ -187,24 +209,37 @@ const ExchangeAdd: React.FC = () => {
     }
 
     const onSelectItem = async (value: string, is_from: boolean, option: any, index: number,item?: TableInventory) => {
-       
+        console.log(option);
         if(option.object == undefined){
+            // const newData = [...initialTable];
+            // const selected: Inventory = option.object;
+            // if(is_from){
+            //     newData[index].product_name = selected.product_name!;
+            //     newData[index].inventory_id_from = selected.inventory_id;
+            // }else{
+            //     newData[index].product_name_to = selected.product_name!;
+            //     newData[index].inventory_id_exchange = selected.inventory_id;
+                
+            // }
+            // newData[index].reference = 'exchange';
+            // console.log(newData);
+            // setInitialTable(newData);
+
+        }else{
             const newData = [...initialTable];
-            const selected: InventoryMovementSearch = option.object;
+            const selected: Inventory = option.object;
+            console.log(selected);
             if(is_from){
-                newData[index].product_name_from = selected.product_name;
-                newData[index].product_id_from = selected.product_id;
+                newData[index].product_name = selected.product_name!;
                 newData[index].inventory_id_from = selected.inventory_id;
             }else{
-                newData[index].product_name_to = selected.product_name;
-                newData[index].product_id_to = selected.product_id;
-                newData[index].inventory_id = selected.inventory_id;
+                newData[index].product_name_to = selected.product_name!;
+                newData[index].inventory_id_exchange = selected.inventory_id;
                 
             }
             newData[index].reference = 'exchange';
-
+            console.log(newData);
             setInitialTable(newData);
-
         }
     };
 
@@ -219,20 +254,18 @@ const ExchangeAdd: React.FC = () => {
             const sale: Sale = data.object;
             console.log(sale);
             form.setFieldValue('sales_id', sale.sale_id);
-            form.setFieldValue('order_number', sale.order_number);
-
-            setInitialTable(sale.items.map((value: InventoryMovement, index: number) => {
+            form.setFieldValue('sales_number', sale.order_number);
+            const initial = sale.items.map((value: SaleItem, index: number) => {
                 return {
                     key: index, 
-                    product_name_from: value.inventory.product_name ?? '', 
-                    product_id_from: value.inventory.product_id ?? '', 
-                    product_name_to: '', 
-                    product_id_to: '', 
+                    product_name: value.product_name,
+                    product_photo: value.product_photo,
+                    location_name: value.location_name!, 
                     stok: value.inventory.quantity, 
-                    quantity: 0, 
+                    quantity: 1, 
                     available_quantity: value.inventory.quantity, 
                     id: null,
-                    status: form.getFieldValue('status'),
+                    status: '',
                     condition: 'completed',
                     reference: 'exchange',
                     reference_id: '',
@@ -242,9 +275,16 @@ const ExchangeAdd: React.FC = () => {
                     inventory_id_from: value.inventory.inventory_id,
                     note: '',
                     movement_id_from: null,
-                    movement_id_to: null,
+                    inventory_id_exchange: null,
+                    product_name_to: '',
+                    product_photo_to: '',
+                    price: parseInt(value.price),
+                    sale_item_id: value.sale_item_id,
+                    change_movement_id: null,
                 }
-            }))
+            });
+            setInitialTable(initial);
+            form.setFieldValue('items', initial);
         }
     }
 
@@ -255,7 +295,7 @@ const ExchangeAdd: React.FC = () => {
                 limit: 100,
                 page: 1,
                 table: 'sales',
-                request_column_relation: ["items", "items.inventory", "items.item.parent"],
+                request_column_relation: ["items", "items.inventory"],
                 search: {
                     column: [
                         "order_number"
@@ -287,50 +327,42 @@ const ExchangeAdd: React.FC = () => {
     }
 
     const handleSubmit = async () => {
+
         if(initialTable.length == 0){
             return message.error('Tambahkan item yang akan di tukar terlebih dahulu');
         }
 
-        const items: {
-            "quantity": number,
-            "inventory_id": string,
-            "inventory_id_from": string,
-            "unit_id": string,
-            "unit_name": string,
-            "note": string,
-            "status": string,
-            "condition": string
-        }[] = initialTable.map((value: TableInventory) => {
-            const dataItems: {
-                quantity: number,
-                inventory_id: string,
-                inventory_id_from: string,
-                unit_id: string,
-                unit_name: string,
-                note: string,
-                status: string,
-                condition: string,
-                movement_id_from?: string,
-                movement_id_to?: string,
-            } = {
-                "quantity": value.quantity ?? 0,
-                "inventory_id": value.inventory_id,
-                "inventory_id_from": value.inventory_id_from,
-                "unit_id": value.unit_id,
-                "unit_name": value.unit_name,
-                "note": value.note,
-                "status": form.getFieldValue('status'),
-                "condition": value.condition,
-            };
+        
 
-            if(value.movement_id_from != null){
-                dataItems.movement_id_from = value.movement_id_from;
-            }
-            if(value.movement_id_to != null){
-                dataItems.movement_id_to = value.movement_id_to;
-            }
-            return dataItems;
-        });
+        const items: {
+                quantity: number,
+                price: number,
+                total_price: number,
+                sales_item_id: string,
+                item_change_condition: string,
+                product_name: string,
+                product_photo: string|null,
+                location_name: string,
+                unit_name: string,
+                inventory_id_from: string,
+                inventory_id_exchange: string,
+                exchange_item_id?: string,
+                change_movement_id?: string,
+        }[] = initialTable.map((value: TableInventory) => ({
+            quantity: value.quantity ?? 1,
+            price: value.price,
+            total_price: value.price * (value.quantity ?? 1),
+            sales_item_id: value.sale_item_id!,
+            item_change_condition: value.condition,
+            product_name: value.product_name_to!,
+            product_photo: value.product_photo,
+            location_name: value.location_name!,
+            unit_name: value.unit_name,
+            inventory_id_from: value.inventory_id_from,
+            inventory_id_exchange: value.inventory_id_exchange!,
+            exchange_item_id: value.exchange_item_id,
+            change_movement_id: value.change_movement_id!,
+        }));
 
         const data = {
             "sales_id": form.getFieldValue('sales_id'),
@@ -340,77 +372,123 @@ const ExchangeAdd: React.FC = () => {
             "delivery_number": form.getFieldValue('delivery_number'),
             "note": form.getFieldValue('note'),
             "items":items,
+            'exchange_id': form.getFieldValue('exchange_id') ?? null,
         }
+
+        
 
         console.log(data);
 
-        // setLoading(true);
+        setLoading(true);
 
-        // try {
-        //     const response = await axiosInstance.post('/exchange', data);
-        //     if(response.status == 200){
-        //         message.success('Berhasil!');
-        //         form.resetFields();
-        //         setInitialTable([]);
-        //     }
-        // } catch (error: any) {
-        //     message.error(`${error?.response?.data?.message ?? error}`);
-        // } finally {
-        //     setLoading(false);
-        // }
+        try {
+            const response = await axiosInstance.post('/exchange', data);
+            if(response.status == 200){
+                message.success('Berhasil!');
+               if(slug){
+                fetchUpdateData();
+               }else{
+                form.resetFields();
+                setInitialTable([]);
+               }
+            }
+        } catch (error: any) {
+            message.error(`${error?.response?.data?.message ?? error}`);
+        } finally {
+            setLoading(false);
+        }
     }
 
+    const fetchUpdateData = async() => {
+        setLoading(true);
+        try {
+            const requestParam:RequestParam = {
+                table: 'exchange',
+                request_column: [],
+                request_column_relation: ['items', 'items.movement','items.inventory_from','items.inventory_to', 'items.sale_item'],
+                where: [
+                    {
+                        exchange_id: slug,
+                    }
+                ],
+                limit: 10,
+                page: 1,
+        
+            };
+
+            const response = await axiosInstance.post('/search', requestParam);
+
+            if(response.data.data){
+                const responseData: Pagination<ExchangeType> = response.data.data;
+                const exchange: ExchangeType = responseData.data[0];
+
+                form.setFieldValue('exchange_id', exchange.exchange_id);
+                form.setFieldValue('sales_id', exchange.sales_id);
+                form.setFieldValue('order_number', exchange.sales_number);
+                form.setFieldValue('status', exchange.status);
+                form.setFieldValue('delivery_fee', exchange.delivery_fee);
+                form.setFieldValue('delivery_number', exchange.delivery_number);
+                form.setFieldValue('note', exchange.note);
+                const initial = exchange.items.map((value: ExchangeItem, index: number) => {
+                    return {
+                        key: index, 
+                        product_name: value.sale_item?.product_name!,
+                        product_photo: value.product_photo,
+                        location_name: value.sale_item?.location_name!, 
+                        stok: value.sale_item?.quantity ?? 0, 
+                        quantity: value.quantity, 
+                        available_quantity: value.sale_item?.quantity ?? 0, 
+                        id: null,
+                        status: '',
+                        condition: value.item_change_condition,
+                        reference: 'exchange',
+                        reference_id: '',
+                        inventory_id: value.inventory_id_exchange ?? '',
+                        unit_id:  '',
+                        unit_name: value.unit_name ?? '',
+                        inventory_id_from: value.inventory_id_from,
+                        note: '',
+                        inventory_id_exchange: value.inventory_id_exchange,
+                        product_name_to: value.inventory_to.product_name ?? '',
+                        product_photo_to: value.inventory_to.product_photo ?? null,
+                        price: value.price,
+                        sale_item_id: value.sales_item_id,
+                        change_movement_id: value.change_movement_id,
+                        exchange_item_id: value.exchange_item_id,
+                    }
+                });
+
+
+                form.setFieldValue('items', initial);
+                setInitialTable(initial);
+            }
+            
+        } catch (error: any) {
+            message.error(`${error?.response?.data?.message ?? error}`);
+        }finally {
+            setLoading(false);
+        }
+    }
+
+    useEffect(() => {
+        if(slug){
+            console.log(slug)
+            fetchUpdateData();
+        }
+    }, [slug])
     
 
     useEffect(()=> {
         const cookie = getCookie('exchange');
         if(cookie == undefined){
-            // setInitialTableData();
+            form.setFieldsValue({
+                'status': 'deliver_to_seller',
+            });
         }else{
-            const exchange: ExchangeType = JSON.parse(cookie);
-            console.log(exchange);
-            form.setFieldValue('sales_id', exchange.sales_id);
-            form.setFieldValue('order_number', exchange.sales_number);
-            form.setFieldValue('status', exchange.status);
-            form.setFieldValue('delivery_fee', exchange.delivery_fee);
-            form.setFieldValue('delivery_number', exchange.delivery_number);
-            form.setFieldValue('note', exchange.note);
-            // getUpdateData();
-
-            const count = exchange.items.length % 2;
-
-            setInitialTable(exchange.sales!.items.map((value, index) => {
-                return {
-                    key: index, 
-                    product_name_from: exchange.items.filter((item) => (item.inventory_id == value.inventory_id && item.type == 'in') )[0].product_name ?? '', 
-                    product_id_from: value.inventory.product_id ?? '', 
-                    product_name_to: '', 
-                    product_id_to: '', 
-                    stok: value.inventory.quantity, 
-                    quantity: 0, 
-                    available_quantity: value.inventory.quantity, 
-                    id: value.id,
-                    status: form.getFieldValue('status'),
-                    condition: exchange.items.filter((item) => (item.inventory_id == value.inventory_id && item.type == 'in') )[0].status,
-                    reference: 'exchange',
-                    reference_id: '',
-                    inventory_id: exchange.items.filter((item) => (item.inventory_id == value.inventory_id && item.type == 'in') )[0].inventory_id ?? '',
-                    unit_id: exchange.items.filter((item) => (item.inventory_id == value.inventory_id && item.type == 'in') )[0].unit_id ?? '',
-                    unit_name: exchange.items.filter((item) => (item.inventory_id == value.inventory_id && item.type == 'in') )[0].unit_name ?? '',
-                    inventory_id_from: exchange.items.filter((item) => (item.inventory_id == value.inventory_id && item.type == 'in') )[0].inventory_id,
-                    note: '',
-                    movement_id_from: exchange.items.filter((item) => (item.inventory_id == value.inventory_id && item.type == 'in') )[0].id ?? null,
-                    movement_id_to: exchange.items.filter((item) => (item.inventory_id == value.inventory_id && item.type == 'out') )[0].product_name ?? null,
-                }
-            }));
+           setSlug(cookie); 
         }
     }, [])
-    useEffect(()=> {
-        form.setFieldsValue({
-            'status': 'deliver_to_seller',
-        });
-    })
-
+    
     return (
         <DashboardLayout>
             <Breadcrumb

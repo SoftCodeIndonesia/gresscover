@@ -1,3 +1,4 @@
+import CustomButtonPopConfirm from "@/pages/component/CustomButtonPopConfirm";
 import DashboardLayout from "@/pages/component/DashboardLayout";
 import DeleteButton from "@/pages/component/DeleteButton";
 import EditButton from "@/pages/component/EditButton";
@@ -8,8 +9,8 @@ import { RequestParam } from "@/type/request_param";
 import axiosInstance from "@/utils/axiosInstance";
 import { formatDate } from "@/utils/date_utils";
 import { formatRupiah } from "@/utils/format_rupiah";
-import {PlusOutlined, ReloadOutlined} from '@ant-design/icons';
-import { Button, message, Space, Table, Pagination as AntPagination } from "antd";
+import {PlusOutlined, ReloadOutlined, SettingFilled} from '@ant-design/icons';
+import { Button, message, Space, Table, Pagination as AntPagination, Dropdown, Tag } from "antd";
 import { deleteCookie, setCookie } from "cookies-next";
 import router from "next/router";
 import { useEffect, useState } from "react";
@@ -21,11 +22,21 @@ const ExchangePage: React.FC = () => {
     const [requestParam, setRequestParam] = useState<RequestParam>({
         table: 'exchange',
         request_column: [],
-        request_column_relation: ["items", "items.inventory", "sales", "sales.items"],
+        request_column_relation: [],
         limit: 10,
         page: 1,
 
     });
+
+    const showStatus = (_: any, record: ExchangeType, index: number) => {
+        if(record.status == 'deliver_to_seller'){
+            return <Tag color="processing">SEDANG DIKIRIM KE PENJUAL</Tag>;
+        }else if(record.status == 'deliver_to_buyer'){
+            return <Tag color="processing">SEDANG DIKIRIM KE PEMBELI</Tag>;
+        }else if(record.status == 'completed'){
+            return <Tag color="success">SELESAI</Tag>
+        }
+    }
 
     const columns = [
         {
@@ -66,21 +77,96 @@ const ExchangePage: React.FC = () => {
             render: (_: any, record: ExchangeType, index: number) => (formatRupiah(record.delivery_fee!)),
         },
         {
+            title: 'Status',
+            dataIndex:'status', 
+            key: 'status',
+            render: showStatus,
+        },
+        {
             title: 'Aksi',
             key: 'action',
             render: (_: any, item: ExchangeType) => (
                 <>
-                  {/* <EditButton label=''  onClick={() => handleEdit(item)}/> */}
-                  <ViewButton label=''  onClick={() => router.push('inventory/' + item.exchange_id)}/>
-                  <DeleteButton label='' onComfirm={() => handleDelete([item.exchange_id])} okText='Hapus' cancelText='Batal' />
+                  <Dropdown menu={{
+                    items:[
+                        {
+                          key: '1',
+                          label: (
+                            <CustomButtonPopConfirm disabled={item.status == 'deliver_to_seller'} label="Dikirim ke penjual" title="Ganti Status" description="Anda yakin ingin mengganti status?" loading={loading} onConfirm={() => handleUpdateStatus([item], 'deliver_to_seller')} onCancel={() => {}} />
+                          ),
+                          disabled: item.status == 'deliver_to_seller',
+                         
+                        },
+                        {
+                          key: '2',
+                          label: (
+                            <CustomButtonPopConfirm disabled={item.status == 'deliver_to_buyer'} label="Dikirim ke pembeli" title="Ganti Status" description="Anda yakin ingin mengganti status?" loading={loading} onConfirm={() => handleUpdateStatus([item], 'deliver_to_buyer')} onCancel={() => {}} />
+                          ),
+                         disabled: item.status == 'deliver_to_buyer',
+                        },
+                        {
+                          key: '3',
+                          label: (
+                            <CustomButtonPopConfirm disabled={item.status == 'completed'} label="Selesai" title="Ganti Status" description="Anda yakin ingin mengganti status?" loading={loading} onConfirm={() => handleUpdateStatus([item], 'completed')} onCancel={() => {}} />
+                          ),
+                         disabled: item.status == 'completed',
+                        },
+                        {
+                            key: '4',
+                            label: (
+                              <Button type="link" href="penjualan/add" onClick={() => handleEdit(item)} >Edit</Button>
+                            ),
+                            onClick:() => handleEdit(item),
+                        },
+                        {
+                            key: '5',
+                            label: (
+                                <DeleteButton label='Hapus' onComfirm={() => handleDelete([item.exchange_id!])} okText='Hapus' cancelText='Batal' />
+                            ),
+                        },
+                    ]
+                }}>
+                    <SettingFilled />
+                </Dropdown>
                 </>
               ),
         },
     ];
 
+    const handleUpdateStatus = async (record: ExchangeType[], status: string) => {
+       
+        setLoading(true);
+        try {
+
+            // const data: {
+            //     retur_id: string,
+            //     status: string,
+            // }[] = record.map((value) => ({
+            //     "retur_id": value.retur_id,
+            //     "status": status,
+            // }))
+
+            // console.log(data);
+            
+            // const response = await axiosInstance.post(`/retur/status`, {data: data});
+
+            // if(response.status == 200){
+            //     message.success('Berhasil!');
+            //     getRetur();
+            // }else{
+            //     message.error(response.statusText);
+            // }
+
+        } catch (error: any) {
+            message.error(error);
+        } finally {
+            setLoading(false);
+        }
+    }
+
     const handleEdit = (data: ExchangeType) => {
         console.log(data);
-        setCookie('exchange', data);
+        setCookie('exchange', data.exchange_id);
         router.push('change/add');
     }
 
@@ -139,6 +225,8 @@ const ExchangePage: React.FC = () => {
 
         getData(request);
     }
+
+    
 
     useEffect(() => {
         getData(requestParam);

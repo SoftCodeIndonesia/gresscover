@@ -1,11 +1,14 @@
+import CustomButtonPopConfirm from "@/pages/component/CustomButtonPopConfirm";
 import DashboardLayout from "@/pages/component/DashboardLayout";
+import DeleteButton from "@/pages/component/DeleteButton";
 import { InventoryMovement } from "@/type/inventory_movement";
 import { RequestParam } from "@/type/request_param";
-import { Sale, SaleTax } from "@/type/sale";
+import { Sale, SaleItem, SaleTax } from "@/type/sale";
 import axiosInstance from "@/utils/axiosInstance";
 import { formatDate } from "@/utils/date_utils";
 import { formatRupiah } from "@/utils/format_rupiah";
-import { Breadcrumb, Button, Card, Col, Input, message, Row, Select, Skeleton, Spin, Table, TableColumnsType, Tag } from "antd";
+import { capitalizeEachWord } from "@/utils/text_utils";
+import { Breadcrumb, Button, Card, Col, Dropdown, Input, MenuProps, message, Row, Select, Skeleton, Spin, Table, TableColumnsType, Tag } from "antd";
 import Column from "antd/es/table/Column";
 import { TableRowSelection } from "antd/es/table/interface";
 import { useParams } from "next/navigation";
@@ -25,15 +28,43 @@ const SalesDetail: React.FC = () => {
         where: [{
             sale_id: '',
         }],
-        request_column_relation: ['taxes', 'items', 'items.item.parent'],
+        request_column_relation: ['taxes', 'items', 'items'],
     });
 
-    const columns: TableColumnsType<InventoryMovement> = [
+
+    const items: MenuProps['items'] = [
+        {
+          key: '1',
+          label: (
+            <CustomButtonPopConfirm disabled={sale?.status == 'sedang dikemas'} label="Sedang Dikemas" title="Ganti Status" description="Anda yakin ingin mengganti status?" loading={loading} onConfirm={() => handleUpdateStatus('sedang dikemas')} onCancel={() => {}} />
+          ),
+        },
+        {
+          key: '2',
+          label: (
+            <CustomButtonPopConfirm disabled={sale?.status == 'dalam pengiriman'} label="Dalam pengiriman" title="Ganti Status" description="Anda yakin ingin mengganti status?" loading={loading} onConfirm={() => handleUpdateStatus('dalam pengiriman')} onCancel={() => {}} />
+          ),
+        },
+        {
+          key: '3',
+          label: (
+            <CustomButtonPopConfirm disabled={sale?.status == 'pesanan terkirim'} label="Pesanan Terkirim" title="Ganti Status" description="Anda yakin ingin mengganti status?" loading={loading} onConfirm={() => handleUpdateStatus('pesanan terkirim')} onCancel={() => {}} />
+          ),
+        },
+        {
+          key: '4',
+          label: (
+            <DeleteButton label='Hapus' onComfirm={() => handleDelete([sale?.sale_id!])} okText='Hapus' cancelText='Batal' />
+          ),
+        },
+    ];
+
+    const columns: TableColumnsType<SaleItem> = [
       
         {
             title: "Nama",
             dataIndex: "",
-            render: (_: any, record: InventoryMovement, index: number) => <p>{`${record.item.parent?.name} (${record.item.name})`}</p>,
+            render: (_: any, record: SaleItem, index: number) => <p>{`${record.product_name}`}</p>,
         },
         {
             title: "Quantity",
@@ -46,14 +77,14 @@ const SalesDetail: React.FC = () => {
             dataIndex: "amount",
             width: 200,
             align: 'right',
-            render: (_: any, record: InventoryMovement, index: number) => <p>{formatRupiah(record.amount)}</p>,
+            render: (_: any, record: SaleItem, index: number) => <p>{formatRupiah(parseInt(record.price))}</p>,
         },
         {
             title: "Total",
             dataIndex: "total_amount",
             width: 200,
             align: 'right',
-            render: (_: any, record: InventoryMovement, index: number) => <p>{formatRupiah(record.total_amount)}</p>,
+            render: (_: any, record: SaleItem, index: number) => <p>{formatRupiah(record.total_price)}</p>,
         },
     ];
 
@@ -62,7 +93,7 @@ const SalesDetail: React.FC = () => {
         setSelectedRowKeys(newSelectedRowKeys);
     };
 
-    const rowSelection: TableRowSelection<InventoryMovement> = {
+    const rowSelection: TableRowSelection<SaleItem> = {
         selectedRowKeys,
         onChange: onSelectChange,
     };
@@ -91,41 +122,61 @@ const SalesDetail: React.FC = () => {
         }
     }
 
-    const updateStatus = async (data: any) => {
+    const handleUpdateStatus = async (status: string) => {
+        
         setLoading(true);
         try {
-            const response = await axiosInstance.put('/sales/status', data);
-            if(response){
-                const newSale = {...sale!};
-                newSale.status = data.status;
-                setSales(newSale);
+
+            const data = {
+                "sale_id": sale!.sale_id,
+                "status": status,
             }
+
+            console.log(data);
+            
+            const response = await axiosInstance.put(`/sales/status`, data);
+
+            if(response.status == 200){
+                message.success('Berhasil!');
+                fetchDetail();
+            }else{
+                message.error(response.statusText);
+            }
+
         } catch (error: any) {
-            message.error(`${error.response?.data?.message ?? error}`);
+            message.error(error);
         } finally {
             setLoading(false);
         }
     }
 
-    const statusChange = (value: string) => {
-        if(value != 'retur'){
+    const handleDelete = async (sale: string[]) => {
+        setLoading(true);
+        try {
+
             const data = {
-                sale_id: sale?.sale_id,
-                status: value,
+                "data": sale,
             }
 
-            updateStatus(data);
+            console.log(data);
+            
+            const response = await axiosInstance.post(`/sales/del`, data);
 
-        }else{
-            console.log(value);
-            const data = {
-                sale_id: sale?.sale_id,
-                status: value,
+            if(response.status == 200){
+                message.success('Berhasil Hapus Data!');
+                router.back();
+            }else{
+                message.error(response.statusText);
             }
 
-            updateStatus(data);
+        } catch (error: any) {
+            message.error(error);
+        } finally {
+            setLoading(false);
         }
     }
+
+    
 
     const getStatus = () => {
         if(sale?.status == 'sedang dikemas'){
@@ -154,7 +205,7 @@ const SalesDetail: React.FC = () => {
     return (
         <DashboardLayout>
             <Spin spinning={loading}>
-            <Breadcrumb
+                <Breadcrumb
                     separator=">"
                     className="mb-4"
                     items={[
@@ -172,18 +223,9 @@ const SalesDetail: React.FC = () => {
                 />
                 <Card 
                 title="Detail Penjualan" 
-                extra={<Select
-                    value={sale?.status}
-                    
-                    style={{ width: 150 }}
-                    onChange={statusChange}
-                    options={[
-                        { value: 'sedang dikemas', label: 'Sedang Dikemas', disabled: sale?.status == 'retur' },
-                        { value: 'dalam pengiriman', label: 'Dalam Pengiriman', disabled: sale?.status == 'retur' },
-                        { value: 'pesanan terkirim', label: 'Pesanan Terkirim', disabled: sale?.status == 'retur' },
-                        { value: 'retur', label: 'Retur', disabled: sale?.status == 'retur'},
-                    ]}
-                />}
+                extra={<Dropdown menu={{ items }} placement="bottom">
+                            <Button>{capitalizeEachWord(sale?.status ?? '')}</Button>
+                        </Dropdown>}
                 >
                     <Row className="mb-3">
                         <Col span={18} push={6}>{formatDate(sale?.sale_date ?? '')}</Col>
@@ -206,24 +248,24 @@ const SalesDetail: React.FC = () => {
                         <Col span={6} pull={18}>Platform</Col>
                     </Row>
                 </Card>
-                <Card title="Daftar Item" className="mt-4" extra={<Button type="primary" className="bg-red-600" onClick={() => statusChange('retur')} disabled={!hasSelected} loading={loading}>
+                <Card title="Daftar Item" className="mt-4" extra={<Button type="primary" className="bg-red-600" onClick={() => {}} disabled={!hasSelected} loading={loading}>
                 Retur
                 </Button>}>
-                    <Table columns={columns} rowSelection={rowSelection} dataSource={sale?.items} rowKey={(row) => row.id} pagination={false} summary={pageData => {
+                    <Table columns={columns} rowSelection={rowSelection} dataSource={sale?.items} rowKey={(row) => row.sale_item_id} pagination={false} summary={pageData => {
                         let totalQuantity = 0;
-                        let totalAmount = 0;
+                        let totalAmount = sale?.total_amount_before_tax;
 
-                        pageData.forEach(({ quantity, total_amount }) => {
-                            totalQuantity += quantity;
-                            totalAmount += total_amount;
-                        });
+                        // pageData.forEach(({ quantity, total_price }) => {
+                        //     totalQuantity += quantity;
+                        //     totalAmount += total_price;
+                        // });
 
                         return (
                         <>
                             <Table.Summary.Row>
                                 <Table.Summary.Cell index={(sale?.items.length ?? 1) + 1} colSpan={4} align="right"><p className="font-bold">Subtotal</p></Table.Summary.Cell>
                                 <Table.Summary.Cell index={(sale?.items.length ?? 1) + 2} align="right">
-                                    <p>{formatRupiah(totalAmount)}</p>
+                                    <p>{formatRupiah(sale?.total_amount_before_tax ?? 0)}</p>
                                 </Table.Summary.Cell>
                             </Table.Summary.Row>
                             {sale?.taxes?.map((value: SaleTax, index: number) => {
@@ -237,7 +279,7 @@ const SalesDetail: React.FC = () => {
                             <Table.Summary.Row>
                                 <Table.Summary.Cell index={(sale?.items.length ?? 1) + 3} colSpan={4} align="right"><p className="font-bold">Total</p></Table.Summary.Cell>
                                 <Table.Summary.Cell index={(sale?.items.length ?? 1) + 4} align="right">
-                                    <p>{formatRupiah(parseInt(sale?.total_amount ?? "0"))}</p>
+                                    <p>{formatRupiah(sale?.total_amount_after_tax ?? 0)}</p>
                                 </Table.Summary.Cell>
                             </Table.Summary.Row>
                         </>

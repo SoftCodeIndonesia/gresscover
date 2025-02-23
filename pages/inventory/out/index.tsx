@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "../../component/DashboardLayout";
 import { Pagination } from "@/type/pagination";
 import { InventoryMovement } from "@/type/inventory_movement";
-import { Button, Image, Space, Table, Typography, message } from "antd";
+import { Button, Image, Popconfirm, Space, Table, Typography, message } from "antd";
 import {
     DeleteFilled,
     EditFilled,
@@ -18,6 +18,7 @@ import { deleteCookie, setCookie } from "cookies-next";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import DeleteButton from "@/pages/component/DeleteButton";
+import { TableRowSelection } from "antd/es/table/interface";
 const BarangKeluar: React.FC = () => {
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const router = useRouter();
@@ -35,16 +36,7 @@ const BarangKeluar: React.FC = () => {
         page: 1,
         where: [
             {
-                type: ['=', 'out'],
-            },
-            {
-                type: ['=', 'mutation'],
-            },
-            {
-                type: ['=', 'sales'],
-            },
-            {
-                type: ['=', 'exchange'],
+                type: ["in", ["out", "mutation"]],
             },
         ],
         request_column_relation: ['inventory', 'item', 'item.parent', 'inventory.location']
@@ -146,6 +138,16 @@ const BarangKeluar: React.FC = () => {
         router.push('out/add');
     }
 
+    const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
+        console.log('selectedRowKeys changed: ', newSelectedRowKeys);
+        setSelectedRowKeys(newSelectedRowKeys);
+    };
+    
+    const rowSelection: TableRowSelection<InventoryMovement> = {
+        selectedRowKeys,
+        onChange: onSelectChange,
+    };
+
 
     useEffect(() => {
         fetch(requestParam);
@@ -158,8 +160,18 @@ const BarangKeluar: React.FC = () => {
             <Space className="flex gap-3">
                 <Button icon={<PlusCircleOutlined/>} onClick={handleNewInventory}  type="primary" className="my-3" >Buat Barang Keluar</Button>
                 <Button icon={<ReloadOutlined/>} type="default" onClick={() => fetch(requestParam)} className="my-3" >Reload</Button>
+                {selectedRowKeys.length > 0 && <Popconfirm
+                    title="Yakin Ingin Menghapus Data Inventory?"
+                    description="Data yang sudah dihapus tidak akan bisa di kembalikan!"
+                    onConfirm={() => handleDelete(selectedRowKeys as string[])}
+                    onCancel={() => {}}
+                    okText="Yes"
+                    cancelText="No"
+                >
+                    <Button type="primary" danger>Hapus</Button>
+                </Popconfirm>}
             </Space>
-            <Table columns={column} dataSource={outs!.data} pagination={false} rowKey={(record) => record.id} loading={loading} />
+            <Table columns={column} rowSelection={rowSelection} dataSource={outs!.data} pagination={false} rowKey={(record) => record.id} loading={loading} />
         </DashboardLayout>
     );
 }

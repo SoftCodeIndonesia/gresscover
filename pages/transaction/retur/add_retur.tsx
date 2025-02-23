@@ -12,20 +12,28 @@ import { RequestParam } from "@/type/request_param";
 import { Pagination } from "@/type/pagination";
 import { toFormatLaravel } from "@/utils/date_utils";
 import dayjs from "dayjs";
-import { Sale } from "@/type/sale";
+import { Sale, SaleItem } from "@/type/sale";
 import { InventoryMovement } from "@/type/inventory_movement";
+import { getCookie } from "cookies-next";
+import { Retur } from "@/type/retur";
 
 
 interface TableInventory {
     key: React.Key, 
     product_name: string|null, 
+    product_photo: string|null, 
+    location_name: string,
+    unit_name: string,
     product_id: string|null, 
     stok: number|null, 
     quantity: number|null, 
+    price: number|null, 
     id: string|null,
-    children?: TableInventory[],
+    retur_item_id?: string,
     condition: string,
     parent_index: number,
+    sale_item_id?: string,
+    inventory_id: string,
     type: "parent"| "child" | string,
 }
 
@@ -37,14 +45,14 @@ const AddRetur: React.FC = () => {
     const [formLayout, setFormLayout] = useState<LayoutType>('vertical');
     const [subtotal, setSubtotal] = useState<number>(0);
     const [total, setTotal] = useState<number>(0);
-
+    const [data, setData] = useState<Retur>();
+    const [slug, setSlug] = useState<string>();
     const [initialTable, setInitialTable] = useState<TableInventory[]>([]);
     const [optionItem, setOptionsItem] = useState<AutoCompleteProps['options']>([]);
 
     const [form] = Form.useForm();
 
     const columns: TableColumnsType<TableInventory> = [
-        Table.EXPAND_COLUMN,
         {
             title: "Item",
             dataIndex: "nama",
@@ -57,37 +65,24 @@ const AddRetur: React.FC = () => {
             width: 150,
             render: (_: any, record: TableInventory, index: number) => (
                 <div className="flex items-center gap-3">
-                    {record.type == 'parent' && <Button type="primary" shape="circle" icon={<MinusCircleOutlined />} onClick={() => {
+                    <Button type="primary" shape="circle" icon={<MinusCircleOutlined />} onClick={() => {
                         const plus = Number(record.quantity!) - Number(1);
                         const newData = [...initialTable];
-                        newData[index].children?.splice(0,1);
                         if(plus > 0){
                             newData[index].quantity = plus;
                             setInitialTable(newData);
                         }
-                    }} />}
+                    }} />
                     <p>{record.quantity}/{record.stok}</p>
-                    {record.type == 'parent' && <Button type="primary" shape="circle" icon={<PlusCircleOutlined />} onClick={() => {
+                    <Button type="primary" shape="circle" icon={<PlusCircleOutlined />} onClick={() => {
                         const plus = Number(record.quantity!) + Number(1);
                         if(plus <= record.stok!){
                             const newData = [...initialTable];
                             newData[index].quantity = plus;
-                            const newChildren = [...newData[index].children ?? [], {
-                                key: `${newData[index].children!.length + 1}_${record.id}`, 
-                                product_name: `${newData[index].product_name}`, 
-                                product_id: null, 
-                                stok: 1, 
-                                quantity: 1,
-                                id: record.id,
-                                parent_index: index,
-                                condition: 'completed',
-                                type: "child",
-                            }];
-                            newData[index].children = newChildren;
                             console.log(newData);
                             setInitialTable(newData);
                         }
-                    }} />}
+                    }} />
                 </div>
             ),
         },
@@ -97,19 +92,19 @@ const AddRetur: React.FC = () => {
             width: 200,
             render: (_: any, record: TableInventory, index: number) => (
                 <>
-                {record.type == 'child' && <Form.Item label="" >
-                    <Radio.Group onChange={(value) => {
-                        const parentIndex = record.parent_index;
-                        // const parent: TableInventory = initialTable.filter((value) => value.key == record.key)[0];
-                        const newData = [...initialTable];
-                        newData[parentIndex]!.children![index].condition = value.target.value;
-                        setInitialTable(newData);
-                        
-                    }}>
-                        <Radio value="completed"> Baik </Radio>
-                        <Radio value="reject"> Buruk </Radio>
-                    </Radio.Group>
-                </Form.Item>}
+                    <Form.Item name={['items', index, 'condition']}>
+                        <Radio.Group onChange={(value) => {
+                                
+                                // const parent: TableInventory = initialTable.filter((value) => value.key == record.key)[0];
+                                const newData = [...initialTable];
+                                newData[index].condition = value.target.value;
+                                setInitialTable(newData);
+                                
+                            }}>
+                                <Radio value="completed"> Baik </Radio>
+                                <Radio value="reject"> Buruk </Radio>
+                        </Radio.Group>
+                    </Form.Item>
                 </>
             ),
         },
@@ -124,7 +119,7 @@ const AddRetur: React.FC = () => {
                 limit: 100,
                 page: 1,
                 table: 'sales',
-                request_column_relation: ["items", "items.item", "items.item.parent"],
+                request_column_relation: ["items", "items.movement"],
                 search: {
                     column: [
                         "order_number"
@@ -161,32 +156,27 @@ const AddRetur: React.FC = () => {
             console.log(sale);
             form.setFieldValue('order_id', sale.sale_id);
             form.setFieldValue('order_number', sale.order_number);
-
-            setInitialTable(sale.items.map((value: InventoryMovement, index: number) => ({
+            const initials = sale.items.map((value: SaleItem, index: number) => ({
                 key: index, 
-                product_name: `${value.item.parent_id != null ? value.item.parent?.name + '->' : ''}${value.item.name}`, 
+                product_name: `${value.product_name}`, 
                 product_id: null, 
                 stok: value.quantity, 
                 checked: false,
                 quantity: 1,
                 parent_index: -1,
-                id: value.id,
-                condition: 'completed',
+                id: `${index}`,
+                sale_item_id: value.sale_item_id,
+                product_photo: value.product_photo,
+                location_name: value.location_name,
+                unit_name: value.unit_name,
+                inventory_id: value.inventory_id,
+                price: parseInt(value.price),
                 type: "parent",
-                children: [
-                    {
-                        key: `${1}_${value.id}`, 
-                        product_name: `${value.item.parent_id != null ? value.item.parent?.name + '->' : ''}${value.item.name}`, 
-                        product_id: null, 
-                        stok: 1, 
-                        quantity: 1,
-                        parent_index: index,
-                        id: value.id,
-                        condition: 'completed',
-                        type: "child",
-                    }
-                ],
-            })))
+                condition: "completed",
+            }));
+            setInitialTable(initials)
+
+            form.setFieldValue('items', initials);
         }
     }
 
@@ -194,28 +184,46 @@ const AddRetur: React.FC = () => {
     
 
     const handleSubmit = async () => {
-        // setLoading(true);
+        setLoading(true);
         
 
-        const items :{ id: string; quantity: number, status: string } [] = [];
+        const items :{ quantity: number, retur_item_id?: string, inventory_id: string, price: number|null,item_retur_condition: string, sales_item_id?: string, product_name: string, product_photo: string|null, location_name: string, unit_name: string } [] = [];
         initialTable.forEach(element => {
-            if(element.children?.length! > 0){
-                element.children!.forEach(child => {
-                    items.push({
-                        'id': child.id!,
-                        'quantity': child.quantity!,
-                        'status': child.condition,
-                    });
+            if(element.quantity! > 0){
+                items.push({
+                    quantity: element.quantity!,
+                    price: element.price,
+                    inventory_id: element.inventory_id,
+                    sales_item_id: element.sale_item_id,
+                    item_retur_condition: element.condition,
+                    product_name: element.product_name!,
+                    product_photo: element.product_photo,
+                    location_name: element.location_name,
+                    unit_name: element.unit_name,
+                    retur_item_id: element.retur_item_id
                 });
             }
         });
 
+        var total_loss = 0;
+
+        items.forEach(element => {
+            console.log(element);
+            if(element.item_retur_condition != 'completed'){
+                total_loss = total_loss + ((element.price??1) * element.quantity);
+            }
+        });
+
         const data = {
-            'sale_id': form.getFieldValue('order_id'),
-            'status_retur': form.getFieldValue('status'),
-            'delivery_fee': form.getFieldValue('delivery_fee'),
+            'retur_id': form.getFieldValue('retur_id') ?? null,
+            'retur_number': form.getFieldValue('retur_number') ?? null,
+            'sales_id': form.getFieldValue('order_id'),
+            'sales_number': form.getFieldValue('order_number'),
             'delivery_number': form.getFieldValue('delivery_number'),
-            'type_retur': form.getFieldValue('type_retur'),
+            'status': form.getFieldValue('status'),
+            'type': form.getFieldValue('type_retur'),
+            'delivery_fee': form.getFieldValue('delivery_fee'),
+            'retur_item_loss': total_loss,
             'items': items,
         }
 
@@ -225,14 +233,18 @@ const AddRetur: React.FC = () => {
             const response = await axiosInstance.post('/retur', data);
             if(response.status == 200){
                 message.success(`${response?.data?.message}`)
-                setInitialTable([]);
-                setTotal(0);
-                setSubtotal(0);
-                form.resetFields();
-                form.setFieldsValue({
-                    status: 'proses pengembalian',
-                    type_retur: 'pengembalian'
-                })
+                if(slug){
+                    fetchEditData();
+                }else{
+                    setInitialTable([]);
+                    setTotal(0);
+                    setSubtotal(0);
+                    form.resetFields();
+                    form.setFieldsValue({
+                        status: 'proses pengembalian',
+                        type_retur: 'pengembalian'
+                    })
+                }
             }
         } catch (error: any) {
             message.error(`${error.response?.data?.message}`)
@@ -240,13 +252,92 @@ const AddRetur: React.FC = () => {
             setLoading(false);
         }
     }
+
+    const fetchEditData = async () => {
+        try {
+            const retur_id = getCookie('retur_id');
+            const request_param: RequestParam = {
+                table: 'retur',
+                limit: 1,
+                page: 1,
+                request_column_relation: ['items', 'items.movement','items.inventory', 'items.sale_item'],
+                where: [
+                    {
+                        retur_id: retur_id,
+                    }
+                ],
+                
+
+            }
+
+            const response = await axiosInstance.post('/search', request_param);
+
+            if(response.data.data){
+                const responseData: Pagination<Retur> = response.data.data;
+                const retur: Retur = responseData.data[0];
+                setData(retur);
+                form.setFieldValue('retur_id', retur.retur_id);
+                form.setFieldValue('retur_number', retur.retur_number);
+                form.setFieldValue('order_id', retur.sales_id);
+                form.setFieldValue('order_number', retur.sales_number);
+                form.setFieldValue('delivery_number', retur.delivery_number);
+                form.setFieldValue('status', retur.status);
+                form.setFieldValue('type_retur', retur.type);
+                form.setFieldValue('delivery_fee', retur.delivery_fee);
+                const initials = retur.items.map((value, index) => {
+                    return {
+                        key: index, 
+                        product_name: `${value.product_name}`, 
+                        product_id: null, 
+                        stok: value.sale_item?.quantity ?? 1, 
+                        checked: false,
+                        quantity: value.quantity,
+                        parent_index: -1,
+                        id: `${index}`,
+                        sale_item_id: value.sales_item_id,
+                        product_photo: value.product_photo,
+                        location_name: value.location_name,
+                        unit_name: value.unit_name,
+                        inventory_id: value.inventory_id,
+                        price: value.price,
+                        type: "parent",
+                        condition: value.item_retur_condition,
+                        retur_item_id: value.retur_item_id,
+                        // children: [],
+                    }
+                });
+                
+
+                form.setFieldValue('items', initials);
+                setInitialTable(initials);
+            }
+
+        } catch (error: any) {
+            message.error(`${error.response?.data?.message ?? error}`)
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    useEffect(() => {
+        if(slug){
+            console.log(slug)
+            fetchEditData();
+        }
+    }, [slug])
     
 
     useEffect(() => {
-        form.setFieldsValue({
-            status: 'proses pengembalian',
-            type_retur: 'pengembalian'
-        })
+        const retur_id = getCookie('retur_id');
+        
+        if(retur_id == undefined){
+            form.setFieldsValue({
+                status: 'proses pengembalian',
+                type_retur: 'pengembalian'
+            })
+        }else{
+            setSlug(retur_id);
+        }
     }, []);
 
     return (
@@ -304,8 +395,8 @@ const AddRetur: React.FC = () => {
                                
                                 placeholder="Status Retur"
                                 options={[
-                                    {label: 'proses pengembalian', value: 'proses pengembalian'},
-                                    {label: 'selesai', value: 'selesai'},
+                                    {label: 'Proses Pengembalian', value: 'proses pengembalian'},
+                                    {label: 'Selesai', value: 'selesai'},
                                 ]}
                                 onChange={(value) => {console.log(value)}}
                                 allowClear

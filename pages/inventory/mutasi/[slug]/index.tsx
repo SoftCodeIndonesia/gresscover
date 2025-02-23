@@ -18,9 +18,9 @@ const gridStyle: React.CSSProperties = {
 
 const DetailMutation: React.FC = () => {
     const [slug, setSlug] = useState<string | undefined>(undefined);
+    const router = useRouter();
     const [mutation, setData] = useState<Mutation>();
     const [loading, setLoading] = useState<boolean>(false);
-    const router = useRouter();
 
     const [requestParam, setParamRequst] = useState<RequestParam>({
         table: 'mutations',

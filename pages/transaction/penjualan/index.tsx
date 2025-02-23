@@ -1,12 +1,13 @@
 import DashboardLayout from "@/pages/component/DashboardLayout";
-import { Button, Card, message, Skeleton, Space, Table, Tag,DatePicker, TimeRangePickerProps, Typography } from "antd";
+import { Button, Card, message, Skeleton, Space, Table, Tag,DatePicker, TimeRangePickerProps, Typography, Dropdown, MenuProps, Popconfirm } from "antd";
 import {
     ReloadOutlined,
     PlusOutlined,
-    CalendarOutlined
+    CalendarOutlined,
+    SettingFilled
 } from '@ant-design/icons';
 import { Sale } from "@/type/sale";
-import { setCookie } from "cookies-next";
+import { deleteCookie, setCookie } from "cookies-next";
 import EditButton from "@/pages/component/EditButton";
 import DeleteButton from "@/pages/component/DeleteButton";
 import { formatRupiah } from "@/utils/format_rupiah";
@@ -16,6 +17,8 @@ import { Pagination } from "@/type/pagination";
 import axiosInstance from "@/utils/axiosInstance";
 import { formatDate, getStartAndEndOfMonth } from "@/utils/date_utils";
 import dayjs from "dayjs";
+import CustomButtonPopConfirm from "@/pages/component/CustomButtonPopConfirm";
+import { TableRowSelection } from "antd/es/table/interface";
 const { RangePicker } = DatePicker;
 const Transaction: React.FC = () => {
 
@@ -28,10 +31,14 @@ const Transaction: React.FC = () => {
 
     }); 
     const [loading, setLoading] = useState<boolean>(false);
+    const [popupconfirm, setpopupconfirm] = useState<boolean>(false);
     const [sales, setSales] = useState<Pagination<Sale>>();
     const [totalSales, setTotalSales] = useState<string>('0');
     const [currentStartDate, setCurrentStartDate] = useState<string>(getStartAndEndOfMonth().startOfMonth);
     const [currentEndDate, setCurrentEndDate] = useState<string>(getStartAndEndOfMonth().endOfMonth);
+    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+    
+
     
 
     const columns = [
@@ -82,18 +89,95 @@ const Transaction: React.FC = () => {
             title: 'Aksi',
             key: 'action',
             render: (_: any, item: Sale) => (
-                <>
-                  <DeleteButton label='' onComfirm={() => handleDelete([item.sale_id!])} okText='Hapus' cancelText='Batal' />
-                </>
+                <Dropdown menu={{
+                    items:[
+                        {
+                          key: '1',
+                          label: (
+                            <CustomButtonPopConfirm disabled={item.status == 'sedang dikemas'} label="Sedang Dikemas" title="Ganti Status" description="Anda yakin ingin mengganti status?" loading={loading} onConfirm={() => handleUpdateStatus(item, 'sedang dikemas')} onCancel={() => {}} />
+                          ),
+                          disabled: item.status == 'sedang dikemas',
+                         
+                        },
+                        {
+                          key: '2',
+                          label: (
+                            <CustomButtonPopConfirm disabled={item.status == 'dalam pengiriman'} label="Dalam pengiriman" title="Ganti Status" description="Anda yakin ingin mengganti status?" loading={loading} onConfirm={() => handleUpdateStatus(item, 'dalam pengiriman')} onCancel={() => {}} />
+                          ),
+                         disabled: item.status == 'dalam pengiriman',
+                        },
+                        {
+                          key: '3',
+                          label: (
+                            <CustomButtonPopConfirm disabled={item.status == 'pesanan terkirim'} label="Pesanan Terkirim" title="Ganti Status" description="Anda yakin ingin mengganti status?" loading={loading} onConfirm={() => handleUpdateStatus(item, 'pesanan terkirim')} onCancel={() => {}} />
+                          ),
+                         disabled: item.status == 'pesanan terkirim'
+                        },
+                        {
+                            key: '4',
+                            label: (
+                              <Button type="link" href="penjualan/add" onClick={() => handleEdit(item)} >Edit</Button>
+                            ),
+                            onClick:() => handleEdit(item),
+                        },
+                        {
+                            key: '5',
+                            label: (
+                                <DeleteButton label='Hapus' onComfirm={() => handleDelete([item.sale_id!])} okText='Hapus' cancelText='Batal' />
+                            ),
+                        },
+                    ]
+                }}>
+                    <SettingFilled />
+                </Dropdown>
               ),
         },
     ];
 
+
+    const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
+        console.log('selectedRowKeys changed: ', newSelectedRowKeys);
+        setSelectedRowKeys(newSelectedRowKeys);
+    };
+
+    const rowSelection: TableRowSelection<Sale> = {
+        selectedRowKeys,
+        onChange: onSelectChange,
+    };
+    
+    const handleUpdateStatus = async (record: Sale, status: string) => {
+        const sale: Sale = record;
+        sale.status = status;
+        setLoading(true);
+        try {
+
+            const data = {
+                "sale_id": sale.sale_id,
+                "status": status,
+            }
+
+            console.log(data);
+            
+            const response = await axiosInstance.put(`/sales/status`, data);
+
+            if(response.status == 200){
+                message.success('Berhasil!');
+                getSales();
+            }else{
+                message.error(response.statusText);
+            }
+
+        } catch (error: any) {
+            message.error(error);
+        } finally {
+            setLoading(false);
+        }
+    }
     
     
     const handleEdit = (data: Sale) => {
          setCookie('sale_id', data.sale_id);
-         window.location.href = 'transaction/add';
+         window.location.href = 'penjualan/add';
     }
 
     const handleDelete = async (sale: string[]) => {
@@ -203,8 +287,18 @@ const Transaction: React.FC = () => {
     return (
         <DashboardLayout>
             <Space className="gap-3 mt-3">
-                <Button icon={<PlusOutlined/>} type="primary" href="penjualan/add" >Tambah</Button>
+                <Button icon={<PlusOutlined/>} type="primary" href="penjualan/add" onClick={() => deleteCookie('sale_id')} >Tambah</Button>
                 <Button icon={<ReloadOutlined/>} type="default" onClick={getSales} >Reload</Button>
+                {selectedRowKeys.length > 0 && <Popconfirm
+                    title="Yakin Ingin Menghapus Data Inventory?"
+                    description="Data yang sudah dihapus tidak akan bisa di kembalikan!"
+                    onConfirm={() => handleDelete(selectedRowKeys as string[])}
+                    onCancel={() => {}}
+                    okText="Yes"
+                    cancelText="No"
+                >
+                    <Button type="primary" danger>Hapus</Button>
+                </Popconfirm>}
                 <RangePicker 
                     presets={[
                         {
@@ -221,7 +315,7 @@ const Transaction: React.FC = () => {
                 <p>Total Penjualan Bulan ini</p>
                 <p className="text-xl text-green-500">{formatRupiah(parseInt(totalSales))}</p>
             </Card>}
-            <Table columns={columns} dataSource={sales?.data} rowKey={(record) => record.sale_id!} pagination={false} />
+            <Table columns={columns} rowSelection={rowSelection} dataSource={sales?.data} rowKey={(record) => record.sale_id!} pagination={false} />
         </DashboardLayout>
     );
 }

@@ -1,4 +1,6 @@
+import { Inventory } from "./inventory";
 import { InventoryMovement } from "./inventory_movement";
+import { Tax } from "./tax";
 
 export type Sale = {
     sale_id: string|null;
@@ -12,8 +14,29 @@ export type Sale = {
     delivery_number: string|null;
     status: string|null;
     platform: string|null;
-    items: InventoryMovement[],
+    total_amount_before_tax: number,
+    total_amount_after_tax: number,
+    user_name: string,
+    items: SaleItem[],
     taxes: SaleTax[],
+}
+
+export type SaleItem = {
+    sale_item_id: string;
+    sale_id: string;
+    quantity: number;
+    price: string;
+    created_at: string;
+    updated_at: string;
+    total_price: number;
+    movement_id: string;
+    product_name: string;
+    product_photo: string | null;
+    location_name: string;
+    unit_name: string;
+    inventory_id: string;
+    inventory: Inventory;
+    movement: InventoryMovement;
 }
 
 export type SaleTax = {
@@ -23,4 +46,5 @@ export type SaleTax = {
     name: string|null,
     value: number,
     unit_value: string|null,
+    tax: Tax,
 }

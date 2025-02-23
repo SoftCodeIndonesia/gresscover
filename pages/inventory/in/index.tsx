@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "../../component/DashboardLayout";
 import { Pagination } from "@/type/pagination";
 import { InventoryMovement } from "@/type/inventory_movement";
-import { Button, Image, Pagination as PaginationTable, Space, Table, Typography, message } from "antd";
+import { Button, Image, Pagination as PaginationTable, Popconfirm, Space, Table, Typography, message } from "antd";
 import {
     PlusOutlined,
     ReloadOutlined,
@@ -33,10 +33,7 @@ const BarangMasuk: React.FC = () => {
         page: 1,
         where: [
             {
-                type: ['=', 'in'],
-            },
-            {
-                type: ['=', 'adjustment'],
+                type: ["in", ["in", "adjustment"]]
             },
         ],
         orderBy: {
@@ -122,6 +119,8 @@ const BarangMasuk: React.FC = () => {
                 return <p>Retur</p>
             case 'exchange':
                 return <p>Penukaran barang</p>
+            case 'sales':
+                return <p>Penjualan</p>
             default:
                 return <p>-</p>
         }
@@ -200,6 +199,16 @@ const BarangMasuk: React.FC = () => {
             <Space className="gap-3">
                 <Button icon={<ReloadOutlined/>} type="default" onClick={() => fetch(requestParam)} className="my-3" >Reload</Button>
                 <Button icon={<PlusOutlined/>} type="primary" href="/inventory/in/add" onClick={() => deleteCookie('movement_id')} className="my-3" >Tambah</Button>
+                {selectedRowKeys.length > 0 && <Popconfirm
+                    title="Yakin Ingin Menghapus Data Inventory?"
+                    description="Data yang sudah dihapus tidak akan bisa di kembalikan!"
+                    onConfirm={() => handleDelete(selectedRowKeys as string[])}
+                    onCancel={() => {}}
+                    okText="Yes"
+                    cancelText="No"
+                >
+                    <Button type="primary" danger>Hapus</Button>
+                </Popconfirm>}
             </Space>
             <Table columns={column} dataSource={outs!.data} rowSelection={rowSelection} pagination={false} rowKey={(record) => record.id} loading={loading} />
             <div className="flex justify-end my-4">
