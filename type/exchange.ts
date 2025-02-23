@@ -26,6 +26,7 @@ export type ExchangeItem = {
     total_price: number;
     sales_item_id: string;
     change_movement_id: string;
+    movement_in: string;
     item_change_condition: string;
     product_name: string;
     product_photo: string | null;

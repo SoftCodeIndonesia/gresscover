@@ -10,7 +10,8 @@ import axiosInstance from "@/utils/axiosInstance";
 import { formatDate } from "@/utils/date_utils";
 import { formatRupiah } from "@/utils/format_rupiah";
 import {PlusOutlined, ReloadOutlined, SettingFilled} from '@ant-design/icons';
-import { Button, message, Space, Table, Pagination as AntPagination, Dropdown, Tag } from "antd";
+import { Button, message, Space, Table, Pagination as AntPagination, Dropdown, Tag, Popconfirm } from "antd";
+import { TableRowSelection } from "antd/es/table/interface";
 import { deleteCookie, setCookie } from "cookies-next";
 import router from "next/router";
 import { useEffect, useState } from "react";
@@ -138,24 +139,24 @@ const ExchangePage: React.FC = () => {
         setLoading(true);
         try {
 
-            // const data: {
-            //     retur_id: string,
-            //     status: string,
-            // }[] = record.map((value) => ({
-            //     "retur_id": value.retur_id,
-            //     "status": status,
-            // }))
+            const data: {
+                exchange_id: string,
+                status: string,
+            }[] = record.map((value) => ({
+                "exchange_id": value.exchange_id,
+                "status": status,
+            }))
 
-            // console.log(data);
+            console.log(data);
             
-            // const response = await axiosInstance.post(`/retur/status`, {data: data});
+            const response = await axiosInstance.put(`/exchange/status`, {data: data});
 
-            // if(response.status == 200){
-            //     message.success('Berhasil!');
-            //     getRetur();
-            // }else{
-            //     message.error(response.statusText);
-            // }
+            if(response.status == 200){
+                message.success('Berhasil!');
+                getData(requestParam);
+            }else{
+                message.error(response.statusText);
+            }
 
         } catch (error: any) {
             message.error(error);
@@ -226,6 +227,15 @@ const ExchangePage: React.FC = () => {
         getData(request);
     }
 
+    const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
+        console.log('selectedRowKeys changed: ', newSelectedRowKeys);
+        setSelectedRowKeys(newSelectedRowKeys);
+    };
+
+    const rowSelection: TableRowSelection<ExchangeType> = {
+        selectedRowKeys,
+        onChange: onSelectChange,
+    };
     
 
     useEffect(() => {
@@ -239,8 +249,18 @@ const ExchangePage: React.FC = () => {
                     deleteCookie('exchange');
                 }} >Tambah</Button>
                 <Button icon={<ReloadOutlined/>} type="default"  onClick={() => getData(requestParam)} >Reload</Button>
+                {selectedRowKeys.length > 0 && <Popconfirm
+                    title="Yakin Ingin Menghapus Data Penukarang barang?"
+                    description="Data yang sudah dihapus tidak bisa di pulihkan!"
+                    onConfirm={() => handleDelete(selectedRowKeys as string[])}
+                    onCancel={() => {}}
+                    okText="Yes"
+                    cancelText="No"
+                >
+                    <Button type="primary" danger>Hapus</Button>
+                </Popconfirm>}
             </Space>
-            <Table columns={columns} loading={loading} pagination={false} dataSource={data?.data ?? []} rowKey={(record) => record.exchange_id} />
+            <Table columns={columns} loading={loading} rowSelection={rowSelection} pagination={false} dataSource={data?.data ?? []} rowKey={(record) => record.exchange_id} />
             <div className="flex my-3 justify-end">
             <AntPagination onChange={onChangePagination} defaultCurrent={data?.current_page} total={data?.total} />
             </div>

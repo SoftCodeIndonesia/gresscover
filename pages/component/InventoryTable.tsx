@@ -51,7 +51,7 @@ type Sorts = GetSingle<Parameters<OnChange>[2]>;
 
 const { Content } = Layout;
 type TableRowSelection<T extends object = object> = TableProps<T>['rowSelection'];
-const InventoryPage: React.FC = () => {
+const InventoryTable: React.FC = () => {
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [formLayout] = useState<FormLayout>('vertical');
@@ -127,17 +127,17 @@ const InventoryPage: React.FC = () => {
             render: (_:any, record: SearchInventoryResult) => record.quantity == 0 ? <Tag color="#f50">Habis</Tag> : record.quantity_unit + ' ' + record.unit_name,
             sorter: true,
         },
-        {
-            title: 'Aksi',
-            key: 'action',
-            render: (_: any, item: SearchInventoryResult) => (
-                <>
+        // {
+        //     title: 'Aksi',
+        //     key: 'action',
+        //     render: (_: any, item: SearchInventoryResult) => (
+        //         <>
                   
-                  <ViewButton label=''  onClick={() => router.push('inventory/' + item.inventory_id)}/>
-                  <DeleteButton label='' onComfirm={() => handleDelete([item.inventory_id])} okText='Hapus' cancelText='Batal' />
-                </>
-              ),
-        },
+        //           <ViewButton label=''  onClick={() => router.push('inventory/' + item.inventory_id)}/>
+        //           <DeleteButton label='' onComfirm={() => handleDelete([item.inventory_id])} okText='Hapus' cancelText='Batal' />
+        //         </>
+        //       ),
+        // },
     ];
 
     const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
@@ -300,32 +300,15 @@ const InventoryPage: React.FC = () => {
     
 
     return (
-        <DashboardLayout>
-            <Space className="gap-3">
-                <Button icon={<PlusOutlined/>} type="primary" onClick={handleNewInventory} className="my-3" >Tambah</Button>
-                <Button icon={<ReloadOutlined/>} type="default" onClick={() => getInventories(request_param)} className="my-3" >Reload</Button>
-                {selectedRowKeys.length > 0 && <Popconfirm
-                    title="Yakin Ingin Menghapus Data Inventory?"
-                    description="Data yang sudah dihapus tidak akan bisa di kembalikan!"
-                    onConfirm={() => handleDelete(selectedRowKeys as String[])}
-                    onCancel={() => {}}
-                    okText="Yes"
-                    cancelText="No"
-                >
-                    <Button type="primary" danger>Hapus</Button>
-                </Popconfirm>}
-                {selectedRowKeys.length > 0 && <Button variant="solid" color="geekblue" onClick={() => handleEdit(selectedRowKeys as String[])} className="my-3" >Edit</Button>}
-            </Space>
-
+        <>
             <Table<SearchInventoryResult> columns={columns} onChange={onChange}
     showSorterTooltip={{ target: 'sorter-icon' }} pagination={false} loading={loading} rowSelection={rowSelection} dataSource={inventories?.data} rowKey={(record) => record.inventory_id} />
             <div className="flex my-3 justify-end">
                 <AntPagination onChange={onChangePagination} defaultCurrent={inventories?.current_page} total={inventories?.total} />
             </div>
-
-        </DashboardLayout>
+        </>
     );
 };
 
 
-export default InventoryPage;
+export default InventoryTable;

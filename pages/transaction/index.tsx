@@ -102,7 +102,7 @@ const Transaction: React.FC = () => {
             key: 'action',
             render: (_: any, item: TransactionType) => (
                 <>
-                  <EditButton disable={item.status != 'draft'} label='Edit' onClick={() => handleEdit(item)}/>
+                  <EditButton label='Edit' onClick={() => handleEdit(item)}/>
                   <DeleteButton label='Hapus' onComfirm={() => handleDelete([item.unique_id])} okText='Hapus' cancelText='Batal' />
                 </>
               ),

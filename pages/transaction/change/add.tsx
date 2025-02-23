@@ -38,6 +38,7 @@ interface TableInventory {
     exchange_item_id?:string,
     exchange_id?: string,
     sale_item_id?: string,
+    movement_in?: string,
     price: number,
 }
 
@@ -60,6 +61,7 @@ const ExchangeAdd: React.FC = () => {
     const [initialTable, setInitialTable] = useState<TableInventory[]>([]);
     const [data, setData] = useState<ExchangeType>();
     const [slug, setSlug] = useState<string>();
+    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
 
 
     const columns: TableColumnsType<TableInventory> = [
@@ -69,7 +71,7 @@ const ExchangeAdd: React.FC = () => {
             fixed: 'left',
             // width: 200,
             render: (_: any, record: TableInventory, index: number) => (
-                <Form.Item name={['items', index, 'product_name']}>
+                <Form.Item name={['items', index, 'product_name']} rules={[{ required: true, message: 'Bidang ini tidak boleh kosong!' }]}>
                     <AutoComplete
                         
                             options={optionItem}
@@ -104,7 +106,7 @@ const ExchangeAdd: React.FC = () => {
             fixed: 'left',
             // width: 200,
             render: (_: any, record: TableInventory, index: number) => (
-                <Form.Item name={['items', index, 'product_name_to']}>
+                <Form.Item name={['items', index, 'product_name_to']} rules={[{ required: true, message: 'Bidang ini tidak boleh kosong!' }]}>
                     <AutoComplete
                         options={optionItem}
                         filterOption={false}
@@ -150,7 +152,7 @@ const ExchangeAdd: React.FC = () => {
             width: 200,
             render: (_: any, record: TableInventory, index: number) => (
                 <>
-                <Form.Item label="" name={['items', index, 'condition']}>
+                <Form.Item label="" name={['items', index, 'condition']} rules={[{ required: true, message: 'Kondisi barang Harus Di Pilih' }]}>
                     <Radio.Group onChange={(value) => {
                         // const parent: TableInventory = initialTable.filter((value) => value.key == record.key)[0];
                         const newData = [...initialTable];
@@ -348,6 +350,7 @@ const ExchangeAdd: React.FC = () => {
                 inventory_id_exchange: string,
                 exchange_item_id?: string,
                 change_movement_id?: string,
+                movement_in?: string,
         }[] = initialTable.map((value: TableInventory) => ({
             quantity: value.quantity ?? 1,
             price: value.price,
@@ -362,6 +365,7 @@ const ExchangeAdd: React.FC = () => {
             inventory_id_exchange: value.inventory_id_exchange!,
             exchange_item_id: value.exchange_item_id,
             change_movement_id: value.change_movement_id!,
+            movement_in: value.movement_in,
         }));
 
         const data = {
@@ -455,6 +459,7 @@ const ExchangeAdd: React.FC = () => {
                         sale_item_id: value.sales_item_id,
                         change_movement_id: value.change_movement_id,
                         exchange_item_id: value.exchange_item_id,
+                        movement_in: value.movement_in,
                     }
                 });
 
