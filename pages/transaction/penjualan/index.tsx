@@ -1,5 +1,5 @@
 import DashboardLayout from "@/pages/component/DashboardLayout";
-import { Button, Card, message, Skeleton, Space, Table, Tag,DatePicker, TimeRangePickerProps, Typography, Dropdown, MenuProps, Popconfirm } from "antd";
+import { Button, Card, message, Skeleton, Space, Table, Tag,DatePicker, TimeRangePickerProps, Typography, Dropdown, MenuProps, Popconfirm, Modal } from "antd";
 import {
     ReloadOutlined,
     PlusOutlined,
@@ -38,7 +38,7 @@ const Transaction: React.FC = () => {
     const [currentEndDate, setCurrentEndDate] = useState<string>(getStartAndEndOfMonth().endOfMonth);
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     
-
+    
     
 
     const columns = [
@@ -316,6 +316,7 @@ const Transaction: React.FC = () => {
                 <p className="text-xl text-green-500">{formatRupiah(parseInt(totalSales))}</p>
             </Card>}
             <Table columns={columns} rowSelection={rowSelection} dataSource={sales?.data} rowKey={(record) => record.sale_id!} pagination={false} />
+            
         </DashboardLayout>
     );
 }

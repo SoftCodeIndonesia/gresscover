@@ -104,7 +104,7 @@ const ReturPage: React.FC = () => {
                         {
                             key: '4',
                             label: (
-                              <Button type="link" href="penjualan/add" onClick={() => handleEdit(item)} >Edit</Button>
+                              <Button type="link" href="retur/add_retur" onClick={() => handleEdit(item)} >Edit</Button>
                             ),
                             onClick:() => handleEdit(item),
                         },
@@ -148,7 +148,7 @@ const ReturPage: React.FC = () => {
     }
     const handleEdit = (data: Retur) => {
         setCookie('retur_id', data.retur_id);
-        router.push('retur/add_retur');
+        // router.push('retur/add_retur');
     }
 
     const handleUpdateStatus = async (record: Retur[], status: string) => {

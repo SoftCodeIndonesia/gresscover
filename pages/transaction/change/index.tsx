@@ -115,7 +115,7 @@ const ExchangePage: React.FC = () => {
                         {
                             key: '4',
                             label: (
-                              <Button type="link" href="penjualan/add" onClick={() => handleEdit(item)} >Edit</Button>
+                              <Button type="link" href="change/add" onClick={() => handleEdit(item)} >Edit</Button>
                             ),
                             onClick:() => handleEdit(item),
                         },
@@ -166,9 +166,9 @@ const ExchangePage: React.FC = () => {
     }
 
     const handleEdit = (data: ExchangeType) => {
-        console.log(data);
+        
         setCookie('exchange', data.exchange_id);
-        router.push('change/add');
+        
     }
 
     const handleDelete = async (ids: String[]) => {

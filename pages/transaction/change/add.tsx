@@ -410,21 +410,19 @@ const ExchangeAdd: React.FC = () => {
                 table: 'exchange',
                 request_column: [],
                 request_column_relation: ['items', 'items.movement','items.inventory_from','items.inventory_to', 'items.sale_item'],
-                where: [
-                    {
-                        exchange_id: slug,
-                    }
-                ],
+                where: {
+                    exchange_id: slug,
+                },
                 limit: 10,
                 page: 1,
         
             };
 
-            const response = await axiosInstance.post('/search', requestParam);
+            const response = await axiosInstance.post('/exchange/search', requestParam);
 
             if(response.data.data){
-                const responseData: Pagination<ExchangeType> = response.data.data;
-                const exchange: ExchangeType = responseData.data[0];
+                const responseData: ExchangeType[] = response.data.data;
+                const exchange: ExchangeType = responseData[0];
 
                 form.setFieldValue('exchange_id', exchange.exchange_id);
                 form.setFieldValue('sales_id', exchange.sales_id);

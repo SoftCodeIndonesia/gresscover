@@ -34,6 +34,7 @@ interface TableInventory {
     parent_index: number,
     sale_item_id?: string,
     inventory_id: string,
+    retur_movement_id?: string,
     type: "parent"| "child" | string,
 }
 
@@ -57,7 +58,7 @@ const AddRetur: React.FC = () => {
             title: "Item",
             dataIndex: "nama",
             fixed: 'left',
-            render: (_: any, record: TableInventory, index: number) => <p>{record.product_name}</p>
+            render: (_: any, record: TableInventory, index: number) => <p>{record.product_name} ({record.location_name})</p>
         },
         {
             title: "Quantity",
@@ -187,7 +188,7 @@ const AddRetur: React.FC = () => {
         setLoading(true);
         
 
-        const items :{ quantity: number, retur_item_id?: string, inventory_id: string, price: number|null,item_retur_condition: string, sales_item_id?: string, product_name: string, product_photo: string|null, location_name: string, unit_name: string } [] = [];
+        const items :{ quantity: number, retur_movement_id?: string, retur_item_id?: string, inventory_id: string, price: number|null,item_retur_condition: string, sales_item_id?: string, product_name: string, product_photo: string|null, location_name: string, unit_name: string } [] = [];
         initialTable.forEach(element => {
             if(element.quantity! > 0){
                 items.push({
@@ -200,7 +201,8 @@ const AddRetur: React.FC = () => {
                     product_photo: element.product_photo,
                     location_name: element.location_name,
                     unit_name: element.unit_name,
-                    retur_item_id: element.retur_item_id
+                    retur_item_id: element.retur_item_id,
+                    retur_movement_id: element.retur_movement_id,
                 });
             }
         });
@@ -303,6 +305,7 @@ const AddRetur: React.FC = () => {
                         type: "parent",
                         condition: value.item_retur_condition,
                         retur_item_id: value.retur_item_id,
+                        retur_movement_id: value.retur_movement_id,
                         // children: [],
                     }
                 });

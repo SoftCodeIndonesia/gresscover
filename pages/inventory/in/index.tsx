@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "../../component/DashboardLayout";
 import { Pagination } from "@/type/pagination";
 import { InventoryMovement } from "@/type/inventory_movement";
-import { Button, Image, Pagination as PaginationTable, Popconfirm, Space, Table, Typography, message } from "antd";
+import { Button, Image, Pagination as PaginationTable, Popconfirm, Space, Table, Tag, Typography, message } from "antd";
 import {
     PlusOutlined,
     ReloadOutlined,
@@ -41,6 +41,18 @@ const BarangMasuk: React.FC = () => {
         },
         request_column_relation: ['inventory','inventory.location']
     });
+
+    const showStatus = (_: any, record: InventoryMovement, index: number) => {
+        if(record.status == 'completed'){
+            return <Tag color="success">SELESAI</Tag>;
+        }else if(record.status == 'pending'){
+            return <Tag color="processing">PENDING</Tag>;
+        }else if(record.status == 'reject'){
+            return <Tag color="red">REJECT</Tag>;
+        }
+
+      
+    }
 
     const column = [
         {
@@ -96,6 +108,12 @@ const BarangMasuk: React.FC = () => {
             dataIndex: '',
             key: 'tanggal',
             render: (_: any, record: InventoryMovement, index: number) => <p>{formatDate(record.created_at)}</p>
+        },
+        {
+            title: 'Status',
+            dataIndex: '',
+            key: 'status',
+            render: showStatus
         },
         {
             title: 'Operasi',

@@ -179,7 +179,7 @@ const DashboardLayout: React.FC<Props> = ({children}) => {
         </Header>
         <Content
           style={{
-            margin: '24px 16px',
+            margin: '16px 16px',
             padding: 24,
             minHeight: 280,
             // background: colorBgContainer,
