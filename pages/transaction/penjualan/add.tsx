@@ -547,7 +547,7 @@ const AddTransactionSale: React.FC = () => {
                         key: index, 
                         product_name: value.product_name, 
                         product_id: value.inventory.product_id ?? '', 
-                        stok: value.inventory.quantity ?? 0, 
+                        stok: (value.inventory.quantity ?? 0) + (value.quantity ?? 0), 
                         sku: '', 
                         selling_price: parseInt(value.price) * value.quantity, 
                         cost: value.inventory.cost, 

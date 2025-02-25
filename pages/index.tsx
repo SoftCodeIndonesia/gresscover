@@ -24,6 +24,8 @@ export default function Home() {
     const user = getCookie('user');
     if(user != null){
       window.location.href = '/dashboard';
+    }else{
+      window.location.href = '/login';
     }
   })
 
