@@ -1,5 +1,6 @@
+
 import { Key, useEffect, useState } from "react";
-import { Layout, Table, message, Image, Button, Modal, Form, Pagination as AntPagination, Space, Tag, TableProps, Popconfirm, TableColumnsType, Input, Row, Card, Col, Statistic } from "antd";
+import { Layout, Table, message, Image, Button, Modal, Form, Pagination as AntPagination, Space, Tag, TableProps, Popconfirm, TableColumnsType, Input, Row, Card, Col, Statistic, Select } from "antd";
 import axiosInstance from "@/utils/axiosInstance";
 import { Inventory } from "@/type/inventory";
 
@@ -9,7 +10,8 @@ import {
     ReloadOutlined,
     PlusOutlined,
     UserOutlined,
-    SearchOutlined
+    SearchOutlined,
+    FileExcelFilled
 } from '@ant-design/icons';
 import { FormLayout } from "antd/es/form/Form";
 import TextArea from "antd/es/input/TextArea";
@@ -28,9 +30,11 @@ import { StatisticDashbaord } from "@/type/statistic";
 type SearchInventory = {
     order_by: any,
     where?: any,
+    column?: any,
     limit: number,
     page: number,
     keyword?: string,
+    type: string,
 }
 
 type SearchInventoryResult = {
@@ -45,6 +49,8 @@ type SearchInventoryResult = {
     unit_name: string,
     sku: string,
     barcode: string,
+    nilai_asset: number,
+    minimum: number,
 }
 
 type OnChange = NonNullable<TableProps<SearchInventoryResult>['onChange']>;
@@ -67,16 +73,30 @@ const InventoryTable: React.FC = () => {
     const [request_param, setRequestParam] = useState<SearchInventory>({
         order_by: {
             quantity: 'desc',
-        },
+        }, 
         limit: 10,
         page: 1,
+        type: 'search',
     });
 
     const [form] = Form.useForm();
 
     const router = useRouter();
 
-    const columns: TableColumnsType<SearchInventoryResult> = [
+    const exportColumns = [
+        'No',
+        'Nama',
+        'Barcode',
+        'SKU',
+        'Gudang',
+        'Harga Beli',
+        'Harga Jual',
+        'Stok',
+        'Minum Stok', 
+        'Total Asset',
+    ]
+
+    const availableColumns = [
         {
             title: 'No',
             dataIndex: '',
@@ -99,16 +119,6 @@ const InventoryTable: React.FC = () => {
             title: 'SKU',
             dataIndex:'sku', 
             key: 'sku',
-            // render: (_:any, record: SearchInventoryResult) => <p>{record.sku}</p>,
-            // onFilter: (value: boolean | Key, record: SearchInventoryResult) => {
-                
-            //     return true;
-            // },
-            // filters: sku?.map((value: string) => ({
-            //     text: value,
-            //     value: value,
-            // })),
-            // filterSearch: true,
         },
         {
             title: 'SKU Induk',
@@ -139,9 +149,12 @@ const InventoryTable: React.FC = () => {
                 text: value.name,
                 value: value.location_id,
             })),
-            // onFilter: (value) => {
-            //     return console.log(value);
-            // },
+        },
+        {
+            title: 'Harga Beli',
+            dataIndex:'', 
+            key: '',
+            render: (_:any, record: SearchInventoryResult) => <p>{formatRupiah(record.harga_jual)}</p>,
         },
         {
             title: 'Harga Jual',
@@ -155,7 +168,132 @@ const InventoryTable: React.FC = () => {
             key: 'quantity',
             render: (_:any, record: SearchInventoryResult) => record.quantity == 0 ? <Tag color="#f50">Habis</Tag> : record.quantity_unit + ' ' + record.unit_name,
             sorter: true,
-        }
+        },
+        {
+            title: 'Minum Stok',
+            dataIndex:'', 
+            key: '',
+            render: (_:any, record: SearchInventoryResult) => <p>{formatRupiah(record.harga_jual)}</p>,
+        },
+        {
+            title: 'Minum Stok',
+            dataIndex:'i.minimum_stok', 
+            key: 'i.minimum_stok',
+            render: (_:any, record: SearchInventoryResult) => <p>{formatRupiah(record.harga_jual)}</p>,
+        },
+        {
+            title: 'Aksi',
+            key: 'action',
+            render: (_: any, item: SearchInventoryResult) => (
+                <>
+                  
+                  <ViewButton label=''  onClick={() => router.push('inventory/' + item.inventory_id)}/>
+                  <DeleteButton label='' onComfirm={() => handleDelete([item.inventory_id])} okText='Hapus' cancelText='Batal' />
+                </>
+              ),
+        },
+    ]
+
+    const columns: TableColumnsType<SearchInventoryResult> = [
+        {
+            title: 'No',
+            dataIndex: '',
+            key: '',
+            render: (_: any, record: any, index: number) => index + 1,
+        },
+        {
+            title: 'Inventory',
+            dataIndex:'item.name', 
+            key: 'item.name',
+            fixed: 'left',
+            render: (_:any, record: SearchInventoryResult) => <p>{record.product_name}</p>,
+        },
+        {
+            title: 'Stok',
+            dataIndex: 'quantity',
+            key: 'quantity',
+            fixed: 'left',
+            render: (_:any, record: SearchInventoryResult) => record.quantity == 0 ? <Tag color="#f50">Habis</Tag> : record.quantity_unit + ' ' + record.unit_name,
+            sorter: true,
+        },
+        {
+            title: 'SKU',
+            dataIndex:'sku', 
+            key: 'sku',
+            fixed: 'left',
+        },
+        {
+            title: 'Barcode',
+            dataIndex:'barcode', 
+            key: 'barcode',
+            
+        },
+        
+        {
+            title: 'SKU Induk',
+            dataIndex:'parent.sku', 
+            key: 'parent.sku',
+            render: (_:any, record: SearchInventoryResult) => <p>{record.sku_induk}</p>,
+            onFilter: (value: boolean | Key, record: SearchInventoryResult) => {
+                
+                return true;
+            },
+            filters: sku_induk?.map((value: string) => ({
+                text: value,
+                value: value,
+            })),
+            filterSearch: true,
+           
+        },
+        {
+            title: 'Gudang',
+            dataIndex:'i.location_id', 
+            key: 'i.location_id',
+            render: (_:any, record: SearchInventoryResult) => <p>{record.location_name}</p>,
+            onFilter: (value: boolean | Key, record: SearchInventoryResult) => {
+                
+                return true;
+            },
+            filters: locations?.map((value: Location) => ({
+                text: value.name,
+                value: value.location_id,
+            })),
+        },
+        {
+            title: 'Harga Beli',
+            dataIndex:'harga_beli', 
+            key: 'harga_beli',
+            render: (_:any, record: SearchInventoryResult) => <p>{formatRupiah(record.harga_beli)}</p>,
+        },
+        {
+            title: 'Harga Jual',
+            dataIndex:'', 
+            key: '',
+            render: (_:any, record: SearchInventoryResult) => <p>{formatRupiah(record.harga_jual)}</p>,
+        },
+        
+        {
+            title: 'Minimum Stok',
+            dataIndex:'minimum', 
+            key: 'minimum',
+        },
+        {
+            title: 'Nilai Asset',
+            dataIndex:'nilai_asset', 
+            key: 'nilai_asset',
+            render: (_:any, record: SearchInventoryResult) => <p>{formatRupiah(record.nilai_asset)}</p>,
+        },
+        {
+            title: 'Aksi',
+            key: 'action',
+            render: (_: any, item: SearchInventoryResult) => (
+                <>
+                  
+                  <ViewButton label=''  onClick={() => router.push('inventory/' + item.inventory_id)}/>
+                  <DeleteButton label='' onComfirm={() => handleDelete([item.inventory_id])} okText='Hapus' cancelText='Batal' />
+                </>
+              ),
+        },
     ];
 
     const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
@@ -235,6 +373,37 @@ const InventoryTable: React.FC = () => {
             setLoading(false);
         }
     }
+
+    const onExport = async () => {
+        const request = {...request_param};
+        request.column = exportColumns;
+        request.type = 'export';
+        setLoading(true);
+        try {
+            const response = await axiosInstance.post('/inventory/search', request, {
+                responseType: 'blob',
+            });
+            // Buat URL untuk file yang di-download
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+
+            // Buat elemen <a> untuk memicu download
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'export.xlsx'); // Nama file yang akan di-download
+            document.body.appendChild(link);
+
+            // Klik link untuk memulai download
+            link.click();
+
+            // Hapus link setelah download selesai
+            document.body.removeChild(link);
+        } catch (error: any) {
+            message.error(error);
+        } finally {
+            setLoading(false);
+        }
+    }
+    
 
     const getSkuInduk = () => {
         try {
@@ -317,6 +486,12 @@ const InventoryTable: React.FC = () => {
         request.keyword = query;
         getInventories(request);
     }
+    
+    const handelShowRecord = (query: string) => {
+        const request = {...request_param};
+        request.limit = parseInt(query);
+        getInventories(request);
+    }
 
     const getStatistic = async () => {
         setLoading(true);
@@ -340,15 +515,17 @@ const InventoryTable: React.FC = () => {
         // getSkuInduk();
         // getStatistic();
     }, []);
+    
 
     return (
         <>
             <Table<SearchInventoryResult> columns={columns} onChange={onChange}
-    showSorterTooltip={{ target: 'sorter-icon' }} pagination={false} loading={loading} rowSelection={rowSelection} dataSource={inventories?.data} rowKey={(record) => record.inventory_id} />
+    showSorterTooltip={{ target: 'sorter-icon' }} scroll={{ x: 'max-content'}} pagination={false} loading={loading} rowSelection={rowSelection} dataSource={inventories?.data} rowKey={(record) => record.inventory_id} />
             <div className="flex my-3 justify-end">
                 <AntPagination onChange={onChangePagination} defaultCurrent={inventories?.current_page} total={inventories?.total} />
             </div>
         </>
+            
     );
 };
 
