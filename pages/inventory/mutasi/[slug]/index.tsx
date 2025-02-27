@@ -85,15 +85,14 @@ const DetailMutation: React.FC = () => {
                     }
                 ]}
             />
-            {/* <Card title={`Rincian Mutasi `}>
-                
+            <Card title={`Rincian Mutasi `}>
                 <Card.Grid hoverable={false} style={gridStyle}>Nama Barang</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>{mutation?.product_name}</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>Tanggal</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>{formatDate(mutation?.created_at!)}</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>Jumlah</Card.Grid>
-                <Card.Grid hoverable={false} style={gridStyle}>{mutation?.quantity} {mutation?.unit_name}</Card.Grid>
-            </Card> */}
+                <Card.Grid hoverable={false} style={gridStyle}>{mutation?.quantity}</Card.Grid>
+            </Card>
 
             <List
                 className="mt-5"

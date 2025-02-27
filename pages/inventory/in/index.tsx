@@ -40,7 +40,7 @@ const BarangMasuk: React.FC = () => {
         orderBy: {
             created_at: 'desc',
         },
-        request_column: ['inventory_id', 'product_name', 'reference', 'quantity', 'location_to', 'created_at'],
+        request_column: ['inventory_id', 'id', 'product_name', 'reference', 'quantity', 'location_to', 'created_at'],
         request_column_relation: []
     });
 
@@ -249,7 +249,7 @@ const BarangMasuk: React.FC = () => {
             <Space className="gap-3">
                 <Button icon={<ReloadOutlined/>} type="default" onClick={() => fetch(requestParam)} className="my-3" >Reload</Button>
                 <Button icon={<PlusOutlined/>} type="primary" href="/inventory/in/add" onClick={() => deleteCookie('movement_id')} className="my-3" >Tambah</Button>
-                <Button icon={<FileExcelFilled/>} color="green" variant="solid" onClick={onExport} className="my-3" >Export Ke Excel</Button>
+                {/* <Button icon={<FileExcelFilled/>} color="green" variant="solid" onClick={onExport} className="my-3" >Export Ke Excel</Button> */}
                 {selectedRowKeys.length > 0 && <Popconfirm
                     title="Yakin Ingin Menghapus Data Inventory?"
                     description="Data yang sudah dihapus tidak akan bisa di kembalikan!"

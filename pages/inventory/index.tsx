@@ -16,7 +16,7 @@ import {
 import { FormLayout } from "antd/es/form/Form";
 import TextArea from "antd/es/input/TextArea";
 import { formatRupiah } from "@/utils/format_rupiah";
-import { Item } from "@/type/item";
+import { Item, ItemUnit } from "@/type/item";
 import EditButton from "../component/EditButton";
 import DeleteButton from "../component/DeleteButton";
 import { useRouter } from "next/router";
@@ -70,6 +70,7 @@ const InventoryPage: React.FC = () => {
     const [inventories, setInventories] = useState<Pagination<SearchInventoryResult>>();
     const [locations, setLocation] = useState<Location[]>();
     const [sku, setSku] = useState<string[]>();
+    const [units, setUnits] = useState<ItemUnit[]>();
     const [sku_induk, setSkuInduk] = useState<string[]>();
     const [checkedListColumn, setColumns] = useState<string[]>([
         'no',
@@ -168,8 +169,9 @@ const InventoryPage: React.FC = () => {
             },
             filters: locations?.map((value: Location) => ({
                 text: value.name,
-                value: value.location_id,
+                value: value.name,
             })),
+            filterSearch: true,
         },
         {
             title: 'Harga Beli',
@@ -197,19 +199,29 @@ const InventoryPage: React.FC = () => {
             dataIndex: 'unit_name',
             key: 'unit_name',
             render: (_:any, record: SearchInventoryResult) => record.unit_name,
-            sorter: true,
+            onFilter: (value: boolean | Key, record: SearchInventoryResult) => {
+                
+                return true;
+            },
+            filters: units?.map((value: ItemUnit) => ({
+                text: value.name,
+                value: value.name,
+            })),
+            filterSearch: true,
         },
         {
             title: 'Minum Stok',
             dataIndex:'minimum', 
             key: 'minimum',
-            render: (_:any, record: SearchInventoryResult) => <p>{formatRupiah(record.minimum)}</p>,
+            render: (_:any, record: SearchInventoryResult) => <p>{record.minimum}</p>,
+            sorter: true,
         },
         {
             title: 'Nilai Asset',
             dataIndex:'nilai_asset', 
             key: 'nilai_asset',
             render: (_:any, record: SearchInventoryResult) => <p>{formatRupiah(record.nilai_asset)}</p>,
+            sorter: true,
         },
         {
             title: 'Aksi',
@@ -297,6 +309,7 @@ const InventoryPage: React.FC = () => {
                 setLocation(response.data.data.locations);
                 setSkuInduk(response.data.data.sku_induk);
                 setSku(response.data.data.sku);
+                setUnits(response.data.data.units);
                 setInventories(response.data.data.data);
             }else{
                 message.error(response.statusText);
@@ -412,7 +425,7 @@ const InventoryPage: React.FC = () => {
 
         request.where = filterColumn,
 
-        
+        setRequestParam(request);
 
         getInventories(request);
     };

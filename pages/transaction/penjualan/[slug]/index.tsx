@@ -251,7 +251,7 @@ const SalesDetail: React.FC = () => {
                 <Card title="Daftar Item" className="mt-4" extra={<Button type="primary" className="bg-red-600" onClick={() => {}} disabled={!hasSelected} loading={loading}>
                 Retur
                 </Button>}>
-                    <Table columns={columns} rowSelection={rowSelection} dataSource={sale?.items} rowKey={(row) => row.sale_item_id} pagination={false} summary={pageData => {
+                    <Table columns={columns} dataSource={sale?.items} rowKey={(row) => row.sale_item_id} pagination={false} summary={pageData => {
                         let totalQuantity = 0;
                         let totalAmount = sale?.total_amount_before_tax;
 
@@ -263,21 +263,21 @@ const SalesDetail: React.FC = () => {
                         return (
                         <>
                             <Table.Summary.Row>
-                                <Table.Summary.Cell index={(sale?.items.length ?? 1) + 1} colSpan={4} align="right"><p className="font-bold">Subtotal</p></Table.Summary.Cell>
+                                <Table.Summary.Cell index={(sale?.items.length ?? 1) + 1} colSpan={3} align="right"><p className="font-bold">Subtotal</p></Table.Summary.Cell>
                                 <Table.Summary.Cell index={(sale?.items.length ?? 1) + 2} align="right">
                                     <p>{formatRupiah(sale?.total_amount_before_tax ?? 0)}</p>
                                 </Table.Summary.Cell>
                             </Table.Summary.Row>
                             {sale?.taxes?.map((value: SaleTax, index: number) => {
                                 return <Table.Summary.Row key={index}>
-                                            <Table.Summary.Cell index={index} colSpan={4} align="right"><p className="font-bold">{value.name}</p></Table.Summary.Cell>
+                                            <Table.Summary.Cell index={index} colSpan={3} align="right"><p className="font-bold">{value.name}</p></Table.Summary.Cell>
                                             <Table.Summary.Cell index={index} align="right">
                                                 <p>{value.unit_value == 'percent' ? `${value.value}%` : formatRupiah(value.value)}</p>
                                             </Table.Summary.Cell>
                                         </Table.Summary.Row>
                             })}
                             <Table.Summary.Row>
-                                <Table.Summary.Cell index={(sale?.items.length ?? 1) + 3} colSpan={4} align="right"><p className="font-bold">Total</p></Table.Summary.Cell>
+                                <Table.Summary.Cell index={(sale?.items.length ?? 1) + 3} colSpan={3} align="right"><p className="font-bold">Total</p></Table.Summary.Cell>
                                 <Table.Summary.Cell index={(sale?.items.length ?? 1) + 4} align="right">
                                     <p>{formatRupiah(sale?.total_amount_after_tax ?? 0)}</p>
                                 </Table.Summary.Cell>
