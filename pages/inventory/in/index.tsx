@@ -4,6 +4,7 @@ import { Pagination } from "@/type/pagination";
 import { InventoryMovement } from "@/type/inventory_movement";
 import { Button, Image, Pagination as PaginationTable, Popconfirm, Space, Table, Tag, Typography, message } from "antd";
 import {
+    FileExcelFilled,
     PlusOutlined,
     ReloadOutlined,
 } from '@ant-design/icons';
@@ -39,7 +40,8 @@ const BarangMasuk: React.FC = () => {
         orderBy: {
             created_at: 'desc',
         },
-        request_column_relation: ['inventory','inventory.location']
+        request_column: ['inventory_id', 'product_name', 'reference', 'quantity', 'location_to', 'created_at'],
+        request_column_relation: []
     });
 
     const showStatus = (_: any, record: InventoryMovement, index: number) => {
@@ -206,6 +208,36 @@ const BarangMasuk: React.FC = () => {
         onChange: onSelectChange,
     };
 
+    const onExport = async () => {
+        const request = {...requestParam};
+        // request.column = exportColumns;
+        request.type = 'export';
+        setLoading(true);
+        try {
+            const response = await axiosInstance.post('/search', request, {
+                responseType: 'blob',
+            });
+            // Buat URL untuk file yang di-download
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+
+            // Buat elemen <a> untuk memicu download
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'export.xlsx'); // Nama file yang akan di-download
+            document.body.appendChild(link);
+
+            // Klik link untuk memulai download
+            link.click();
+
+            // Hapus link setelah download selesai
+            document.body.removeChild(link);
+        } catch (error: any) {
+            message.error(error);
+        } finally {
+            setLoading(false);
+        }
+    }
+
     useEffect(() => {
         fetch(requestParam);
     }, [])
@@ -217,6 +249,7 @@ const BarangMasuk: React.FC = () => {
             <Space className="gap-3">
                 <Button icon={<ReloadOutlined/>} type="default" onClick={() => fetch(requestParam)} className="my-3" >Reload</Button>
                 <Button icon={<PlusOutlined/>} type="primary" href="/inventory/in/add" onClick={() => deleteCookie('movement_id')} className="my-3" >Tambah</Button>
+                <Button icon={<FileExcelFilled/>} color="green" variant="solid" onClick={onExport} className="my-3" >Export Ke Excel</Button>
                 {selectedRowKeys.length > 0 && <Popconfirm
                     title="Yakin Ingin Menghapus Data Inventory?"
                     description="Data yang sudah dihapus tidak akan bisa di kembalikan!"

@@ -16,4 +16,5 @@ export type RequestParam = {
     whereHas?: any | null,
     group?: string|null,
     orderBy?: any,
+    type?: string,
 }

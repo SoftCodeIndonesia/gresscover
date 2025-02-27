@@ -1,6 +1,6 @@
 
 import { Key, useEffect, useState } from "react";
-import { Layout, Table, message, Image, Button, Modal, Form, Pagination as AntPagination, Space, Tag, TableProps, Popconfirm, TableColumnsType, Input, Row, Card, Col, Statistic, Select } from "antd";
+import { Layout, Table, message, Image, Button, Modal, Form, Pagination as AntPagination, Space, Tag, TableProps, Popconfirm, TableColumnsType, Input, Row, Card, Col, Statistic, Select, Dropdown, MenuProps, Checkbox, Divider } from "antd";
 import axiosInstance from "@/utils/axiosInstance";
 import { Inventory } from "@/type/inventory";
 
@@ -30,11 +30,12 @@ import { StatisticDashbaord } from "@/type/statistic";
 type SearchInventory = {
     order_by: any,
     where?: any,
-    column?: any,
+    column?: string[],
     limit: number,
     page: number,
     keyword?: string,
     type: string,
+    headings?: string[],
 }
 
 type SearchInventoryResult = {
@@ -59,7 +60,7 @@ type Filters = Parameters<OnChange>[1];
 type GetSingle<T> = T extends (infer U)[] ? U : never;
 type Sorts = GetSingle<Parameters<OnChange>[2]>;
 
-
+const CheckboxGroup = Checkbox.Group;
 const { Content } = Layout;
 type TableRowSelection<T extends object = object> = TableProps<T>['rowSelection'];
 const InventoryPage: React.FC = () => {
@@ -70,6 +71,15 @@ const InventoryPage: React.FC = () => {
     const [locations, setLocation] = useState<Location[]>();
     const [sku, setSku] = useState<string[]>();
     const [sku_induk, setSkuInduk] = useState<string[]>();
+    const [checkedListColumn, setColumns] = useState<string[]>([
+        'no',
+        'product_name',
+        'sku',
+        'quantity_unit',
+        'location_name',
+        'harga_jual',
+        'action',
+    ]);
     const [request_param, setRequestParam] = useState<SearchInventory>({
         order_by: {
             quantity: 'desc',
@@ -77,6 +87,7 @@ const InventoryPage: React.FC = () => {
         limit: 10,
         page: 1,
         type: 'search',
+        
     });
 
     const [form] = Form.useForm();
@@ -96,34 +107,44 @@ const InventoryPage: React.FC = () => {
         'Total Asset',
     ]
 
-    const availableColumns = [
+    const availableColumns: TableColumnsType<SearchInventoryResult> = [
         {
             title: 'No',
             dataIndex: '',
-            key: '',
+            key: 'no',
             render: (_: any, record: any, index: number) => index + 1,
         },
         {
             title: 'Inventory',
-            dataIndex:'item.name', 
-            key: 'item.name',
+            dataIndex:'product_name', 
+            key: 'product_name',
+            fixed: 'left',
             render: (_:any, record: SearchInventoryResult) => <p>{record.product_name}</p>,
         },
         {
             title: 'Barcode',
-            dataIndex:'barcode', 
-            key: 'barcode',
-            
+            dataIndex:'barcode',
+            fixed: 'left', 
+            key: 'barcode',  
         },
         {
             title: 'SKU',
             dataIndex:'sku', 
             key: 'sku',
+            fixed: 'left',
+            onFilter: (value: boolean | Key, record: SearchInventoryResult) => {
+                return true;
+            },
+            filters: sku?.map((value: string) => ({
+                text: value,
+                value: value,
+            })),
+            filterSearch: true,
         },
         {
             title: 'SKU Induk',
-            dataIndex:'parent.sku', 
-            key: 'parent.sku',
+            dataIndex:'parent_sku', 
+            key: 'parent_sku',
             render: (_:any, record: SearchInventoryResult) => <p>{record.sku_induk}</p>,
             onFilter: (value: boolean | Key, record: SearchInventoryResult) => {
                 
@@ -138,117 +159,8 @@ const InventoryPage: React.FC = () => {
         },
         {
             title: 'Gudang',
-            dataIndex:'i.location_id', 
-            key: 'i.location_id',
-            render: (_:any, record: SearchInventoryResult) => <p>{record.location_name}</p>,
-            onFilter: (value: boolean | Key, record: SearchInventoryResult) => {
-                
-                return true;
-            },
-            filters: locations?.map((value: Location) => ({
-                text: value.name,
-                value: value.location_id,
-            })),
-        },
-        {
-            title: 'Harga Beli',
-            dataIndex:'', 
-            key: '',
-            render: (_:any, record: SearchInventoryResult) => <p>{formatRupiah(record.harga_jual)}</p>,
-        },
-        {
-            title: 'Harga Jual',
-            dataIndex:'', 
-            key: '',
-            render: (_:any, record: SearchInventoryResult) => <p>{formatRupiah(record.harga_jual)}</p>,
-        },
-        {
-            title: 'Stok',
-            dataIndex: 'quantity',
-            key: 'quantity',
-            render: (_:any, record: SearchInventoryResult) => record.quantity == 0 ? <Tag color="#f50">Habis</Tag> : record.quantity_unit + ' ' + record.unit_name,
-            sorter: true,
-        },
-        {
-            title: 'Minum Stok',
-            dataIndex:'', 
-            key: '',
-            render: (_:any, record: SearchInventoryResult) => <p>{formatRupiah(record.harga_jual)}</p>,
-        },
-        {
-            title: 'Minum Stok',
-            dataIndex:'i.minimum_stok', 
-            key: 'i.minimum_stok',
-            render: (_:any, record: SearchInventoryResult) => <p>{formatRupiah(record.harga_jual)}</p>,
-        },
-        {
-            title: 'Aksi',
-            key: 'action',
-            render: (_: any, item: SearchInventoryResult) => (
-                <>
-                  
-                  <ViewButton label=''  onClick={() => router.push('inventory/' + item.inventory_id)}/>
-                  <DeleteButton label='' onComfirm={() => handleDelete([item.inventory_id])} okText='Hapus' cancelText='Batal' />
-                </>
-              ),
-        },
-    ]
-
-    const columns: TableColumnsType<SearchInventoryResult> = [
-        {
-            title: 'No',
-            dataIndex: '',
-            key: '',
-            render: (_: any, record: any, index: number) => index + 1,
-        },
-        {
-            title: 'Inventory',
-            dataIndex:'item.name', 
-            key: 'item.name',
-            fixed: 'left',
-            render: (_:any, record: SearchInventoryResult) => <p>{record.product_name}</p>,
-        },
-        {
-            title: 'Stok',
-            dataIndex: 'quantity',
-            key: 'quantity',
-            fixed: 'left',
-            render: (_:any, record: SearchInventoryResult) => record.quantity == 0 ? <Tag color="#f50">Habis</Tag> : record.quantity_unit + ' ' + record.unit_name,
-            sorter: true,
-        },
-        {
-            title: 'SKU',
-            dataIndex:'sku', 
-            key: 'sku',
-            fixed: 'left',
-        },
-        {
-            title: 'Barcode',
-            dataIndex:'barcode', 
-            key: 'barcode',
-            
-        },
-        
-        {
-            title: 'SKU Induk',
-            dataIndex:'parent.sku', 
-            key: 'parent.sku',
-            render: (_:any, record: SearchInventoryResult) => <p>{record.sku_induk}</p>,
-            onFilter: (value: boolean | Key, record: SearchInventoryResult) => {
-                
-                return true;
-            },
-            filters: sku_induk?.map((value: string) => ({
-                text: value,
-                value: value,
-            })),
-            filterSearch: true,
-           
-        },
-        {
-            title: 'Gudang',
-            dataIndex:'i.location_id', 
-            key: 'i.location_id',
+            dataIndex:'location_name', 
+            key: 'location_name',
             render: (_:any, record: SearchInventoryResult) => <p>{record.location_name}</p>,
             onFilter: (value: boolean | Key, record: SearchInventoryResult) => {
                 
@@ -263,19 +175,35 @@ const InventoryPage: React.FC = () => {
             title: 'Harga Beli',
             dataIndex:'harga_beli', 
             key: 'harga_beli',
-            render: (_:any, record: SearchInventoryResult) => <p>{formatRupiah(record.harga_beli)}</p>,
+            render: (_:any, record: SearchInventoryResult) => <p>{formatRupiah(record.harga_jual)}</p>,
+            sorter: true,
         },
         {
             title: 'Harga Jual',
-            dataIndex:'', 
-            key: '',
+            dataIndex:'harga_jual', 
+            key: 'harga_jual',
             render: (_:any, record: SearchInventoryResult) => <p>{formatRupiah(record.harga_jual)}</p>,
+            sorter: true,
         },
-        
         {
-            title: 'Minimum Stok',
+            title: 'Stok',
+            dataIndex: 'quantity_unit',
+            key: 'quantity_unit',
+            render: (_:any, record: SearchInventoryResult) => record.quantity == 0 ? <Tag color="#f50">Habis</Tag> : record.quantity_unit,
+            sorter: true,
+        },
+        {
+            title: 'Satuan',
+            dataIndex: 'unit_name',
+            key: 'unit_name',
+            render: (_:any, record: SearchInventoryResult) => record.unit_name,
+            sorter: true,
+        },
+        {
+            title: 'Minum Stok',
             dataIndex:'minimum', 
             key: 'minimum',
+            render: (_:any, record: SearchInventoryResult) => <p>{formatRupiah(record.minimum)}</p>,
         },
         {
             title: 'Nilai Asset',
@@ -294,7 +222,11 @@ const InventoryPage: React.FC = () => {
                 </>
               ),
         },
-    ];
+    ]
+
+    const filteredColumns = availableColumns.filter((column) =>
+        checkedListColumn.includes(column.key!.toString())
+    );
 
     const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
         console.log('selectedRowKeys changed: ', newSelectedRowKeys);
@@ -356,7 +288,10 @@ const InventoryPage: React.FC = () => {
     const getInventories = async (request?: SearchInventory) => {
         setLoading(true);
         try {
-            const response = await axiosInstance.post('/inventory/search', request ?? request_param);
+
+          
+
+            const response = await axiosInstance.post('/inventory/search', request);
 
             if(response.status == 200){
                 setLocation(response.data.data.locations);
@@ -376,7 +311,7 @@ const InventoryPage: React.FC = () => {
 
     const onExport = async () => {
         const request = {...request_param};
-        request.column = exportColumns;
+        request.column = checkedListColumn.filter((value) => value != 'no' && value != 'action');
         request.type = 'export';
         setLoading(true);
         try {
@@ -386,10 +321,12 @@ const InventoryPage: React.FC = () => {
             // Buat URL untuk file yang di-download
             const url = window.URL.createObjectURL(new Blob([response.data]));
 
+            const date = new Date;
+            
             // Buat elemen <a> untuk memicu download
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', 'export.xlsx'); // Nama file yang akan di-download
+            link.setAttribute('download', `daftar_barang_${date.getDay()}-${date.getMonth()}-${date.getFullYear()}.xlsx`); // Nama file yang akan di-download
             document.body.appendChild(link);
 
             // Klik link untuk memulai download
@@ -508,9 +445,14 @@ const InventoryPage: React.FC = () => {
     }
       
 
+    const handleColumnChange = (values: string[]) => {
+        setColumns(values);
+    };
 
     useEffect(() => {
-        getInventories();
+        
+        // console.log(request_param.column);
+        getInventories(request_param);
         // getLocation();
         // getSkuInduk();
         // getStatistic();
@@ -546,6 +488,7 @@ const InventoryPage: React.FC = () => {
                     </Popconfirm>}
                 </Space>
                 <Space className="gap-3">
+                    
                     <Select
                         defaultValue="10"
                         style={{ width: 80 }}
@@ -561,9 +504,18 @@ const InventoryPage: React.FC = () => {
                 </Space>
                 {/* {selectedRowKeys.length > 0 && <Button variant="solid" color="geekblue" onClick={() => handleEdit(selectedRowKeys as String[])} className="my-3" >Edit</Button>} */}
             </Space>
-
-            <Table<SearchInventoryResult> columns={columns} onChange={onChange}
-    showSorterTooltip={{ target: 'sorter-icon' }} scroll={{ x: 'max-content'}} pagination={false} loading={loading} rowSelection={rowSelection} dataSource={inventories?.data} rowKey={(record) => record.inventory_id} />
+            <Select
+                    className="mb-3"
+                    mode="multiple"
+                    placeholder="Pilih kolom yang ingin ditampilkan"
+                    defaultValue={checkedListColumn}
+                    onChange={handleColumnChange}
+                    style={{ width: '100%' }}
+                    options={availableColumns.map((value) => ({label: value.title, value: value.key}))}
+                    >
+            </Select>
+            <Table<SearchInventoryResult> columns={filteredColumns} onChange={onChange}
+                showSorterTooltip={{ target: 'sorter-icon' }} scroll={{ x: 'max-content'}} pagination={false} loading={loading} rowSelection={rowSelection} dataSource={inventories?.data} rowKey={(record) => record.inventory_id} />
             <div className="flex my-3 justify-end">
                 <AntPagination onChange={onChangePagination} defaultCurrent={inventories?.current_page} total={inventories?.total} />
             </div>
