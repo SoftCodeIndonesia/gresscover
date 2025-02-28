@@ -5,4 +5,5 @@ export type StatisticDashbaord = {
     total_penjualan: number|null,
     total_retur: number|null,
     total_pengeluaran_lainya: number|null,
+    gudang: {total_asset: number, total_barang: number, name: string}[],
 }

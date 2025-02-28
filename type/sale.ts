@@ -19,6 +19,8 @@ export type Sale = {
     user_name: string,
     items: SaleItem[],
     taxes: SaleTax[],
+    total_tax?: number|null;
+    is_lunas?: number|null;
 }
 
 export type SaleItem = {

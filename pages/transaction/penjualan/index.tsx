@@ -1,31 +1,40 @@
 import DashboardLayout from "@/pages/component/DashboardLayout";
-import { Button, Card, message, Skeleton, Space, Table, Tag,DatePicker, TimeRangePickerProps, Typography, Dropdown, MenuProps, Popconfirm, Modal } from "antd";
+import { Button, Card, message, Skeleton, Space, Table, Tag,DatePicker, TimeRangePickerProps, Typography, Dropdown, MenuProps, Popconfirm, Modal, TableColumnsType, TableProps, Input, Select } from "antd";
 import {
     ReloadOutlined,
     PlusOutlined,
     CalendarOutlined,
-    SettingFilled
+    SettingFilled,
+    CheckOutlined,
+    CloseOutlined,
+    SearchOutlined
 } from '@ant-design/icons';
 import { Sale } from "@/type/sale";
 import { deleteCookie, setCookie } from "cookies-next";
 import EditButton from "@/pages/component/EditButton";
 import DeleteButton from "@/pages/component/DeleteButton";
 import { formatRupiah } from "@/utils/format_rupiah";
-import { useEffect, useState } from "react";
-import { RequestParam } from "@/type/request_param";
+import { Key, useEffect, useState } from "react";
+import { NewRequestParam, RequestParam } from "@/type/request_param";
 import { Pagination } from "@/type/pagination";
 import axiosInstance from "@/utils/axiosInstance";
 import { formatDate, getStartAndEndOfMonth } from "@/utils/date_utils";
 import dayjs from "dayjs";
 import CustomButtonPopConfirm from "@/pages/component/CustomButtonPopConfirm";
 import { TableRowSelection } from "antd/es/table/interface";
+
+type OnChange = NonNullable<TableProps<Sale>['onChange']>;
+type Filters = Parameters<OnChange>[1];
+
+type GetSingle<T> = T extends (infer U)[] ? U : never;
+type Sorts = GetSingle<Parameters<OnChange>[2]>;
+
 const { RangePicker } = DatePicker;
 const Transaction: React.FC = () => {
 
-    const [request_param, setRequestParam] = useState<RequestParam>({
+    const [request_param, setRequestParam] = useState<NewRequestParam>({
         table: 'sales',
-        request_column: ['order_number', 'delivery_number','total_amount','status', 'sale_id', 'platform', 'sale_date'],
-        request_column_relation: [],
+        request_column: [],
         limit: 10,
         page: 1,
 
@@ -41,7 +50,7 @@ const Transaction: React.FC = () => {
     
     
 
-    const columns = [
+    const columns: TableColumnsType<Sale> = [
         {
             title: 'No',
             dataIndex: '',
@@ -50,7 +59,7 @@ const Transaction: React.FC = () => {
         },
         
         {
-            title: 'No Transaksi',
+            title: 'No Pesanan',
             dataIndex: 'order_number',
             key: 'order_number',
             render: (_: any, record: Sale, index: number) => <Typography.Link href={`/transaction/penjualan/${record.sale_id}`}>{record.order_number}</Typography.Link>,
@@ -71,19 +80,60 @@ const Transaction: React.FC = () => {
             title: 'Total',
             dataIndex:'total_amount', 
             key: 'total_amount',
+            sorter: true,
             render: (_: any, record: Sale, index: number) => <p >{formatRupiah(parseInt(record.total_amount ?? '0'))}</p>,
         },
         {
-            title: 'Status',
-            dataIndex:'status', 
-            key: 'status',
-            render: (_: any, record: Sale, index: number) => (getStatus(record.status!)),
+            title: 'Total Potongan',
+            dataIndex:'total_tax', 
+            key: 'total_tax',
+            sorter: true,
+            render: (_: any, record: Sale, index: number) => <p >{formatRupiah(record.total_tax ?? 0)}</p>,
         },
+        {
+            title: 'Subtotal',
+            dataIndex:'total_amount_after_tax', 
+            key: 'total_amount_after_tax',
+            sorter: true,
+            render: (_: any, record: Sale, index: number) => <p >{formatRupiah(record.total_amount_after_tax ?? 0)}</p>,
+        },
+        
         {
             title: 'Platform',
             dataIndex:'platform', 
             key: 'platform',
+            
+            onFilter: (value: boolean | Key, record: Sale) => {
+                            
+                return true;
+            },
+            filters: [
+                {text: 'Shopee', value: 'shopee'},
+                {text: 'Tokopedia', value: 'tokopedia'},
+                {text: 'Tiktok', value: 'tiktok'},
+                {text: 'Lazada', value: 'lazada'},
+                {text: 'Blibli', value: 'blibli'},
+                {text: 'Offline', value: 'offline'},
+                {text: 'Lainya', value: 'lainya'},
+            ],
+            filterSearch: true,
             render: (_: any, record: Sale, index: number) => <p>{record.platform?.toUpperCase()}</p>
+        },
+        {
+            title: 'Lunas',
+            dataIndex:'is_lunas', 
+            key: 'is_lunas',
+            align: 'center',
+            onFilter: (value: boolean | Key, record: Sale) => {
+                            
+                return true;
+            },
+            filters: [
+                {text: 'Lunas', value: '0'},
+                {text: 'Belum Lunas', value: '1'},
+            ],
+            filterSearch: true,
+            render: (_: any, record: Sale, index: number) => record.is_lunas ? <CheckOutlined/> : <CloseOutlined/>,
         },
         {
             title: 'Aksi',
@@ -133,6 +183,34 @@ const Transaction: React.FC = () => {
               ),
         },
     ];
+
+    const onChange: TableProps<Sale>['onChange'] = (pagination, filters, sorter, extra) => {
+        // console.log('params', pagination, filters, sorter, extra);
+        // console.log(sorter);
+
+        const sort: Sorts = sorter as Sorts;
+        
+        const request = {...request_param};
+        if(sort.columnKey != undefined){
+            request.orderBy = {
+                [sort.columnKey.toString()]: sort.order == "ascend" ? 'ASC' : 'DESC' 
+            }
+        }
+        var filterColumn = {};
+        for(let column in filters){
+            if(filters[column] != null){
+                filterColumn = {...filterColumn, ...{
+                    [column]: ['in', filters[column]],
+                }};
+            }
+            
+        }
+
+        request.where = filterColumn,
+
+        setRequestParam(request);
+        getSales(request)
+    };
 
 
     const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
@@ -206,18 +284,18 @@ const Transaction: React.FC = () => {
         }
     }
 
-    const getSales = async () => {
+    const getSales = async (request?: NewRequestParam) => {
         setLoading(true);
         try {
-            const request: RequestParam = {
-                table: 'sales',
-                request_column: ['order_number', 'delivery_number','total_amount','status', 'sale_id', 'platform', 'sale_date'],
-                request_column_relation: [],
-                limit: 10,
-                page: 1,
+            // const request: RequestParam = {
+            //     table: 'sales',
+            //     request_column: [],
+            //     request_column_relation: [],
+            //     limit: 10,
+            //     page: 1,
         
-            };
-            const response = await axiosInstance.post('/search', request);
+            // };
+            const response = await axiosInstance.post('/sales_search', request ?? request_param);
 
             if(response.status == 200){
                 setSales(response.data.data);
@@ -253,9 +331,19 @@ const Transaction: React.FC = () => {
     const onChangeRangePicker = (dates: [string, string]) => {
         
         if(dates[0] == '' && dates[1] == ''){
-            getSummery([currentStartDate, currentEndDate]);
+            const request = {...request_param};
+            request.where = {...request.where, ...{
+                sale_date: ['between', [currentStartDate, currentEndDate]]
+            }}
+            setRequestParam(request);
+            getSales(request);
         }else{
-            getSummery(dates);
+            const request = {...request_param};
+            request.where = {...request.where, ...{
+                sale_date: ['between', dates]
+            }}
+            setRequestParam(request);
+            getSales(request);
         }
     }
 
@@ -269,6 +357,52 @@ const Transaction: React.FC = () => {
         }else if(status == 'retur'){
             return <Tag color="red">{status.toUpperCase()}</Tag>
         }
+    }
+
+    const onSearch = (query: string) => {
+        const request = {...request_param};
+        request.keyword = query;
+        setRequestParam(request_param);
+        getSales(request);
+    }
+
+    const onExport = async () => {
+        const request = {...request_param};
+        
+        request.type = 'export';
+        setLoading(true);
+        try {
+            const response = await axiosInstance.post('/sales_search', request, {
+                responseType: 'blob',
+            });
+            // Buat URL untuk file yang di-download
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+
+            const date = new Date;
+            
+            // Buat elemen <a> untuk memicu download
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `rekap_penjualan_${date.getDay()}-${date.getMonth()}-${date.getFullYear()}.xlsx`); // Nama file yang akan di-download
+            document.body.appendChild(link);
+
+            // Klik link untuk memulai download
+            link.click();
+
+            // Hapus link setelah download selesai
+            document.body.removeChild(link);
+        } catch (error: any) {
+            message.error(error);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    const handelShowRecord = (query: string) => {
+        const request = {...request_param};
+        request.limit = parseInt(query);
+        setRequestParam(request);
+        getSales(request);
     }
 
     const rangePresets: TimeRangePickerProps['presets'] = [
@@ -286,36 +420,55 @@ const Transaction: React.FC = () => {
 
     return (
         <DashboardLayout>
-            <Space className="gap-3 mt-3">
-                <Button icon={<PlusOutlined/>} type="primary" href="penjualan/add" onClick={() => deleteCookie('sale_id')} >Tambah</Button>
-                <Button icon={<ReloadOutlined/>} type="default" onClick={getSales} >Reload</Button>
-                {selectedRowKeys.length > 0 && <Popconfirm
-                    title="Yakin Ingin Menghapus Data Inventory?"
-                    description="Data yang sudah dihapus tidak akan bisa di kembalikan!"
-                    onConfirm={() => handleDelete(selectedRowKeys as string[])}
-                    onCancel={() => {}}
-                    okText="Yes"
-                    cancelText="No"
-                >
-                    <Button type="primary" danger>Hapus</Button>
-                </Popconfirm>}
-                <RangePicker 
-                    presets={[
-                        {
-                        label: <span aria-label="Current Time to End of Day">Now ~ EOD</span>,
-                        value: () => [dayjs(), dayjs().endOf('day')], // 5.8.0+ support function
-                        },
-                        ...rangePresets,
-                    ]}
-                    onChange={(e, dateString) => onChangeRangePicker(dateString)} 
-                    />
-            </Space>
             {loading && <Skeleton />}
             {!loading && <Card className="my-4" bordered={false} style={{ width: 300 }}>
                 <p>Total Penjualan Bulan ini</p>
                 <p className="text-xl text-green-500">{formatRupiah(parseInt(totalSales))}</p>
             </Card>}
-            <Table columns={columns} rowSelection={rowSelection} dataSource={sales?.data} rowKey={(record) => record.sale_id!} pagination={false} />
+            <Space className="flex justify-between my-4">
+                <Space className="gap-3 ">
+                    <Button icon={<PlusOutlined/>} type="primary" href="penjualan/add" onClick={() => deleteCookie('sale_id')} >Tambah</Button>
+                    <Button icon={<ReloadOutlined/>} type="default" onClick={() => getSales()} >Reload</Button>
+                    {selectedRowKeys.length > 0 && <Popconfirm
+                        title="Yakin Ingin Menghapus Data Inventory?"
+                        description="Data yang sudah dihapus tidak akan bisa di kembalikan!"
+                        onConfirm={() => handleDelete(selectedRowKeys as string[])}
+                        onCancel={() => {}}
+                        okText="Yes"
+                        cancelText="No"
+                    >
+                        <Button type="primary" danger>Hapus</Button>
+                    </Popconfirm>}
+                    <RangePicker 
+                        presets={[
+                            {
+                            label: <span aria-label="Current Time to End of Day">Now ~ EOD</span>,
+                            value: () => [dayjs(), dayjs().endOf('day')], // 5.8.0+ support function
+                            },
+                            ...rangePresets,
+                        ]}
+                        onChange={(e, dateString) => onChangeRangePicker(dateString)} 
+                        />
+                </Space>
+                <Space className="gap-3">
+                        <Button type="default" onClick={onExport}>Export</Button>
+                        <Select
+                            defaultValue="10"
+                            style={{ width: 80 }}
+                            onChange={(e) => handelShowRecord(e)}
+                            options={[
+                                { value: '10', label: '10' },
+                                { value: '30', label: '30' },
+                                { value: '50', label: '50' },
+                                { value: '100', label: '100'},
+                            ]}
+                        />
+                        <Input placeholder="Cari Inventory" onChange={(e) => onSearch(e.target.value)} prefix={<SearchOutlined />}  />
+                    </Space>
+            </Space>
+            
+            <Table columns={columns} onChange={onChange}
+                showSorterTooltip={{ target: 'sorter-icon' }} scroll={{ x: 'max-content'}} rowSelection={rowSelection} dataSource={sales?.data} rowKey={(record) => record.sale_id!} pagination={false} />
             
         </DashboardLayout>
     );

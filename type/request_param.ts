@@ -18,3 +18,14 @@ export type RequestParam = {
     orderBy?: any,
     type?: string,
 }
+export type NewRequestParam = {
+    table: string,
+    keyword?: string,
+    request_column?: string[] | null,
+    limit: number,
+    page: number,
+    where?: any | null,
+    group?: string|null,
+    orderBy?: any,
+    type?: string,
+}
