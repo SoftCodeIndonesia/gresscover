@@ -488,7 +488,7 @@ const InventoryPage: React.FC = () => {
                 <Space className="gap-3">
                     <Button icon={<PlusOutlined/>} type="primary" onClick={handleNewInventory} className="my-3" >Tambah</Button>
                     <Button icon={<ReloadOutlined/>} type="default" onClick={() => getInventories(request_param)} className="my-3" >Reload</Button>
-                    <Button icon={<FileExcelFilled/>} color="green" variant="solid" onClick={onExport} className="my-3" >Export Ke Excel</Button>
+                    
                     {selectedRowKeys.length > 0 && <Popconfirm
                         title="Yakin Ingin Menghapus Data Inventory?"
                         description="Data yang sudah dihapus tidak akan bisa di kembalikan!"
@@ -501,7 +501,7 @@ const InventoryPage: React.FC = () => {
                     </Popconfirm>}
                 </Space>
                 <Space className="gap-3">
-                    
+                <Button icon={<FileExcelFilled/>} variant="solid" onClick={onExport} className="my-3" >Export Ke Excel</Button>
                     <Select
                         defaultValue="10"
                         style={{ width: 80 }}

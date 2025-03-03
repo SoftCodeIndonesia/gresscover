@@ -64,7 +64,7 @@ const Dashboard = () => {
             <Title level={4}>Daftar Gudang</Title>
             <Row gutter={16} >
                 {statisticData?.gudang.map((value: {name: string, total_barang: number, total_asset: number}) => (
-                    <Col span={6} className="mb-3">
+                    <Col span={6} className="mb-3" key={name!}>
                         <Card>
                         {/* <Statistic title={value.name} value={`${formatRupiah(value?.total_asset ?? 0)}/${value.total_barang} barang`} loading={loading} /> */}
                         <div className="flex flex-col">

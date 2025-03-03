@@ -1,5 +1,5 @@
 import DashboardLayout from "@/pages/component/DashboardLayout";
-import { Button, Card, message, Skeleton, Space, Table, Tag,DatePicker, TimeRangePickerProps, Typography, Dropdown, MenuProps, Popconfirm, Modal, TableColumnsType, TableProps, Input, Select } from "antd";
+import { Button, Card, Pagination as AntPagination, message, Skeleton, Space, Table, Tag,DatePicker, TimeRangePickerProps, Typography, Dropdown, MenuProps, Popconfirm, Modal, TableColumnsType, TableProps, Input, Select, Row, Col, Statistic } from "antd";
 import {
     ReloadOutlined,
     PlusOutlined,
@@ -7,7 +7,8 @@ import {
     SettingFilled,
     CheckOutlined,
     CloseOutlined,
-    SearchOutlined
+    SearchOutlined,
+    FileExcelFilled
 } from '@ant-design/icons';
 import { Sale } from "@/type/sale";
 import { deleteCookie, setCookie } from "cookies-next";
@@ -43,18 +44,26 @@ const Transaction: React.FC = () => {
     const [popupconfirm, setpopupconfirm] = useState<boolean>(false);
     const [sales, setSales] = useState<Pagination<Sale>>();
     const [totalSales, setTotalSales] = useState<string>('0');
+    const [summery, setSummery] = useState<{total_item: number, total_amount: number}>({total_amount: 0, total_item: 0});
     const [currentStartDate, setCurrentStartDate] = useState<string>(getStartAndEndOfMonth().startOfMonth);
     const [currentEndDate, setCurrentEndDate] = useState<string>(getStartAndEndOfMonth().endOfMonth);
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     
-    
+    const [checkedListColumn, setColumns] = useState<string[]>([
+        'no',
+        'sale_date',
+        'order_number',
+        'platform',
+        'total_amount',
+        'action',
+    ]);
     
 
-    const columns: TableColumnsType<Sale> = [
+    const availableColumns: TableColumnsType<Sale> = [
         {
             title: 'No',
-            dataIndex: '',
-            key: '',
+            dataIndex: 'no',
+            key: 'no',
             render: (_: any, record: Sale, index: number) => index + 1,
         },
         
@@ -68,6 +77,7 @@ const Transaction: React.FC = () => {
             title: 'Tanggal',
             dataIndex: 'sale_date',
             key: 'sale_date',
+            sorter: true,
             render: (_: any, record: Sale, index: number) => <p><CalendarOutlined /> {formatDate(record.sale_date!)}</p>,
         },
         {
@@ -120,6 +130,12 @@ const Transaction: React.FC = () => {
             render: (_: any, record: Sale, index: number) => <p>{record.platform?.toUpperCase()}</p>
         },
         {
+            title: 'Dibuat Oleh',
+            dataIndex:'created_by', 
+            key: 'created_by',
+            align: 'center',
+        },
+        {
             title: 'Lunas',
             dataIndex:'is_lunas', 
             key: 'is_lunas',
@@ -129,8 +145,8 @@ const Transaction: React.FC = () => {
                 return true;
             },
             filters: [
-                {text: 'Lunas', value: '0'},
-                {text: 'Belum Lunas', value: '1'},
+                {text: 'Lunas', value: '1'},
+                {text: 'Belum Lunas', value: '0'},
             ],
             filterSearch: true,
             render: (_: any, record: Sale, index: number) => record.is_lunas ? <CheckOutlined/> : <CloseOutlined/>,
@@ -184,6 +200,10 @@ const Transaction: React.FC = () => {
         },
     ];
 
+    const filteredColumns = availableColumns.filter((column) =>
+        checkedListColumn.includes(column.key!.toString())
+    );
+
     const onChange: TableProps<Sale>['onChange'] = (pagination, filters, sorter, extra) => {
         // console.log('params', pagination, filters, sorter, extra);
         // console.log(sorter);
@@ -206,7 +226,7 @@ const Transaction: React.FC = () => {
             
         }
 
-        request.where = filterColumn,
+        request.where = {...request.where, ...filterColumn},
 
         setRequestParam(request);
         getSales(request)
@@ -295,10 +315,13 @@ const Transaction: React.FC = () => {
             //     page: 1,
         
             // };
+
+            
             const response = await axiosInstance.post('/sales_search', request ?? request_param);
 
             if(response.status == 200){
-                setSales(response.data.data);
+                setSales(response.data.data.data);
+                setSummery(response.data.data.summery);
             }else{
                 message.error(response.statusText);
             }
@@ -309,24 +332,7 @@ const Transaction: React.FC = () => {
             setLoading(false);
         }
     }
-    const getSummery = async (dates: [string, string]) => {
-        setLoading(true);
-        try {
-            
-            const response = await axiosInstance.get(`/sales/summery?start_date=${dates[0]}&end_date=${dates[1]}`);
-
-            if(response.status == 200){
-                setTotalSales(response.data.data['total']);
-            }else{
-                message.error(response.statusText);
-            }
-
-        } catch (error: any) {
-            message.error(error);
-        } finally {
-            setLoading(false);
-        }
-    }
+    
 
     const onChangeRangePicker = (dates: [string, string]) => {
         
@@ -342,6 +348,7 @@ const Transaction: React.FC = () => {
             request.where = {...request.where, ...{
                 sale_date: ['between', dates]
             }}
+            console.log(request);
             setRequestParam(request);
             getSales(request);
         }
@@ -398,6 +405,10 @@ const Transaction: React.FC = () => {
         }
     }
 
+    const handleColumnChange = (values: string[]) => {
+        setColumns(values);
+    };
+
     const handelShowRecord = (query: string) => {
         const request = {...request_param};
         request.limit = parseInt(query);
@@ -411,24 +422,40 @@ const Transaction: React.FC = () => {
         { label: 'Last 30 Days', value: [dayjs().add(-30, 'd'), dayjs()] },
         { label: 'Last 90 Days', value: [dayjs().add(-90, 'd'), dayjs()] },
     ];
+
+    const onChangePagination = (page: number) => {
+        const request = {...request_param};
+        request.page = page;
+        setRequestParam(request);
+        getSales(request);
+    }
     
     useEffect(() => {
-        getSales();
-        getSummery([getStartAndEndOfMonth().startOfMonth, getStartAndEndOfMonth().endOfMonth]);
+        const request = {...request_param};
+        request.where = {...request.where, ...{
+            sale_date: ['between', [currentStartDate, currentEndDate]]
+        }}
+        setRequestParam(request);
+        getSales(request);
+        
         
     }, []);
 
     return (
         <DashboardLayout>
-            {loading && <Skeleton />}
-            {!loading && <Card className="my-4" bordered={false} style={{ width: 300 }}>
-                <p>Total Penjualan Bulan ini</p>
-                <p className="text-xl text-green-500">{formatRupiah(parseInt(totalSales))}</p>
-            </Card>}
+            <Row gutter={16} >
+                <Col span={6} className="mb-3">
+                    <Card><Statistic title="Total Penjualan" value={formatRupiah(summery.total_amount)} loading={loading} /></Card>
+                </Col>
+               
+                <Col span={6} className="mb-3">
+                    <Card><Statistic title="Total Barang Terjual" value={summery.total_item} loading={loading} /></Card>
+                </Col>
+            </Row>
             <Space className="flex justify-between my-4">
                 <Space className="gap-3 ">
                     <Button icon={<PlusOutlined/>} type="primary" href="penjualan/add" onClick={() => deleteCookie('sale_id')} >Tambah</Button>
-                    <Button icon={<ReloadOutlined/>} type="default" onClick={() => getSales()} >Reload</Button>
+                    <Button icon={<ReloadOutlined/>} type="default" onClick={() => getSales(request_param)} >Reload</Button>
                     {selectedRowKeys.length > 0 && <Popconfirm
                         title="Yakin Ingin Menghapus Data Inventory?"
                         description="Data yang sudah dihapus tidak akan bisa di kembalikan!"
@@ -447,11 +474,13 @@ const Transaction: React.FC = () => {
                             },
                             ...rangePresets,
                         ]}
+                        defaultPickerValue={[dayjs(currentStartDate), dayjs(currentEndDate)]}
+                        defaultValue={[dayjs(currentStartDate), dayjs(currentEndDate)]}
                         onChange={(e, dateString) => onChangeRangePicker(dateString)} 
                         />
                 </Space>
                 <Space className="gap-3">
-                        <Button type="default" onClick={onExport}>Export</Button>
+                        <Button type="default" icon={<FileExcelFilled/>} onClick={onExport}>Export Ke Excel</Button>
                         <Select
                             defaultValue="10"
                             style={{ width: 80 }}
@@ -466,10 +495,21 @@ const Transaction: React.FC = () => {
                         <Input placeholder="Cari Inventory" onChange={(e) => onSearch(e.target.value)} prefix={<SearchOutlined />}  />
                     </Space>
             </Space>
-            
-            <Table columns={columns} onChange={onChange}
+            <Select
+                    className="mb-3"
+                    mode="multiple"
+                    placeholder="Pilih kolom yang ingin ditampilkan"
+                    defaultValue={checkedListColumn}
+                    onChange={handleColumnChange}
+                    style={{ width: '100%' }}
+                    options={availableColumns.map((value) => ({label: value.title, value: value.key}))}
+                    >
+            </Select>
+            <Table columns={filteredColumns} onChange={onChange}
                 showSorterTooltip={{ target: 'sorter-icon' }} scroll={{ x: 'max-content'}} rowSelection={rowSelection} dataSource={sales?.data} rowKey={(record) => record.sale_id!} pagination={false} />
-            
+            <div className="flex my-3 justify-end">
+                <AntPagination onChange={onChangePagination} defaultCurrent={sales?.current_page} total={sales?.total} />
+            </div>
         </DashboardLayout>
     );
 }
