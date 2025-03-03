@@ -177,7 +177,7 @@ const InventoryPage: React.FC = () => {
             title: 'Harga Beli',
             dataIndex:'harga_beli', 
             key: 'harga_beli',
-            render: (_:any, record: SearchInventoryResult) => <p>{formatRupiah(record.harga_jual)}</p>,
+            render: (_:any, record: SearchInventoryResult) => <p>{formatRupiah(record.harga_beli)}</p>,
             sorter: true,
         },
         {
