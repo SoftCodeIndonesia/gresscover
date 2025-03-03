@@ -79,7 +79,7 @@ const InventoryTable: React.FC = () => {
         'quantity_unit',
         'location_name',
         'harga_jual',
-        'action',
+        
     ]);
     const [request_param, setRequestParam] = useState<SearchInventory>({
         order_by: {
