@@ -24,6 +24,7 @@ import dayjs from "dayjs";
 import { useRouter } from "next/router";
 import { Sale } from "@/type/sale";
 import { getCookie } from "cookies-next";
+import { validateDecimal } from "@/utils/validate_decimal";
 
 
 interface TableInventory {
@@ -140,7 +141,7 @@ const AddTransactionSale: React.FC = () => {
             newData[index].quantity = 1;
             newData[index].inventory_id = item.inventory_id;
 
-            console.log(newData[index]);
+            
 
             setInitialTable(newData);
             sumSubtotal(newData);
@@ -152,7 +153,7 @@ const AddTransactionSale: React.FC = () => {
                 },
             });
 
-
+            countTotalWithTax(initialTableTax, newData);
         }
     }
 
@@ -456,6 +457,7 @@ const AddTransactionSale: React.FC = () => {
     const setInitialTaxes = () => {
         const tax = localStorage.getItem('taxs');
         const taxData: Tax[] = JSON.parse(tax as string);
+        form.setFieldValue('taxes', taxData);
         setInitialTableTax(taxData);
     }
 
@@ -740,6 +742,8 @@ const AddTransactionSale: React.FC = () => {
                                         return <Table.Summary.Row key={index}>
                                                     <Table.Summary.Cell index={index} colSpan={3} align="right"><Button type="text" danger onClick={() => removeTaxes(value)}><CloseCircleOutlined/></Button> <p className="font-bold">{value.name}</p></Table.Summary.Cell>
                                                     <Table.Summary.Cell index={index} align="right">
+                                                        
+                                                    <Form.Item name={['taxes', index, 'value']}>
                                                     <Input addonAfter={
                                                         
                                                         <Select  onChange={(value) => {
@@ -758,12 +762,15 @@ const AddTransactionSale: React.FC = () => {
                                                             <Select.Option value="percent">Percent</Select.Option>
                                                             <Select.Option value="nominal">Nominal</Select.Option>
                                                         </Select>
-                                                    } placeholder="Masukan stok"  min={1} value={value.value ?? ''}  onChange={(e) => {
+                                                    } placeholder="Masukan stok" min={1} step={0.1} onChange={(e) => {
+                                                        
                                                         const newData = [...initialTableTax];
-                                                        newData[index].value = parseInt(e.target.value == '' ? '0' : e.target.value);
+                                                        newData[index].value = parseFloat(validateDecimal(e.target.value));
+                                                        console.log(parseFloat(validateDecimal(e.target.value)))
                                                         setInitialTableTax(newData);
                                                         countTotalWithTax(newData, initialTable);
                                                     }} />
+                                                    </Form.Item>
                                                     </Table.Summary.Cell>
                                                 </Table.Summary.Row>
                                     })}

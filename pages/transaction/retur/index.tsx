@@ -109,6 +109,20 @@ const ReturPage: React.FC = () => {
             
         },
         {
+            title: 'Jumlah Produk',
+            dataIndex:'total_items', 
+            key: 'total_items',
+            sorter: true,
+            render: (_: any, record: Retur, index: number) => <p >{record.total_items}</p>,
+        },
+        {
+            title: 'Total Produk',
+            dataIndex:'total_price', 
+            key: 'total_price',
+            sorter: true,
+            render: (_: any, record: Retur, index: number) => <p >{formatRupiah(record.total_price!)}</p>,
+        },
+        {
             title: 'Biaya Pengiriman',
             dataIndex:'delivery_fee', 
             key: 'delivery_fee',
@@ -308,7 +322,7 @@ const ReturPage: React.FC = () => {
     };
 
     const onSearch = (query: string) => {
-        const request = {...requestParam};
+        const request = requestParam;
         request.keyword = query;
         setRequestParam(requestParam);
         getRetur(request);
@@ -355,7 +369,19 @@ const ReturPage: React.FC = () => {
             
         }
 
-        request.where = {...request.where, ...filterColumn},
+        var filterColumn = {};
+        for(let column in filters){
+            if(filters[column] != null){
+                filterColumn = {...filterColumn, ...{
+                    [column]: ['in', filters[column]],
+                }};
+            }
+            
+        }
+
+        request.where = {...filterColumn, ...{
+            created_at: ['between', [currentStartDate, currentEndDate]]
+        }},
 
         setRequestParam(request);
         getRetur(request)
@@ -365,17 +391,14 @@ const ReturPage: React.FC = () => {
         
         if(dates[0] == '' && dates[1] == ''){
             const request = {...requestParam};
-            request.where = {...request.where, ...{
-                created_at: ['between', [currentStartDate, currentEndDate]]
-            }}
+            request.where['created_at'] = ['between', [currentStartDate, currentEndDate]];
             setRequestParam(request);
             getRetur(request);
         }else{
             const request = {...requestParam};
-            request.where = {...request.where, ...{
-                created_at: ['between', dates]
-            }}
-            console.log(request);
+            request.where['created_at'] = ['between', dates];
+            setCurrentEndDate(dates[1]);
+            setCurrentStartDate(dates[0]);
             setRequestParam(request);
             getRetur(request);
         }

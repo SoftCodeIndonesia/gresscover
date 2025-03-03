@@ -16,6 +16,8 @@ export type Retur = {
     updated_at: string;
     sales: Sale|null,
     items: ReturItem[];
+    total_items: number;
+    total_price: number;
 };
 
 export type ReturItem = {

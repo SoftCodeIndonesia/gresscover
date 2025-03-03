@@ -125,6 +125,20 @@ const ExchangePage: React.FC = () => {
             render: (_: any, record: ExchangeType, index: number) => <p >{record.delivery_number}</p>,
         },
         {
+            title: 'Jumlah Produk',
+            dataIndex:'total_items', 
+            key: 'total_items',
+            sorter: true,
+            render: (_: any, record: ExchangeType, index: number) => <p >{record.total_items}</p>,
+        },
+        {
+            title: 'Total Produk',
+            dataIndex:'total_price', 
+            key: 'total_price',
+            sorter: true,
+            render: (_: any, record: ExchangeType, index: number) => <p >{formatRupiah(record.total_price!)}</p>,
+        },
+        {
             title: 'Biaya Pengiriman',
             dataIndex:'delivery_fee', 
             key: 'delivery_fee',
@@ -304,21 +318,16 @@ const ExchangePage: React.FC = () => {
         }else{
             const request = {...requestParam};
             request.where['created_at'] = ['between', dates];
-            
+            setCurrentEndDate(dates[1]);
+            setCurrentStartDate(dates[0]);
             setRequestParam(request);
             getData(request);
         }
     }
 
     const onChangePagination = (page: number) => {
-        const request = {
-            table: 'exchange',
-            request_column: [],
-            request_column_relation: [],
-            limit: 10,
-            page: page,
-    
-        };
+        const request = requestParam;
+        request.page = page,
         setRequestParam(request);
 
         getData(request);
@@ -330,7 +339,7 @@ const ExchangePage: React.FC = () => {
     };
 
     const onSearch = (query: string) => {
-        const request = {...requestParam};
+        const request = requestParam;
         request.keyword = query;
         setRequestParam(requestParam);
         getData(request);
@@ -370,7 +379,11 @@ const ExchangePage: React.FC = () => {
             
         }
 
-        request.where = {...request.where, ...filterColumn},
+        request.where = {...filterColumn, ...{
+            created_at: ['between', [currentStartDate, currentEndDate]],
+        }},
+
+        console.log(request);
 
         setRequestParam(request);
         getData(request)
@@ -424,11 +437,11 @@ const ExchangePage: React.FC = () => {
                 }
             </Space>
             <Row gutter={16} >
-                <Col span={6} className="mb-3">
+                <Col span={12} className="mb-3">
                     <Card><Statistic title="Total Penukaran" value={formatRupiah(summery.total_amount)} loading={loading} /></Card>
                 </Col>
                
-                <Col span={6} className="mb-3">
+                <Col span={12} className="mb-3">
                     <Card><Statistic title="Total Barang Di Tukar" value={summery.total_item} loading={loading} /></Card>
                 </Col>
             </Row>

@@ -16,6 +16,8 @@ export type ExchangeType = {
     delivery_number: string;
     sales?: Sale,
     items: ExchangeItem[],
+    total_items?: number,
+    total_price?: number,
 };
 
 export type ExchangeItem = {

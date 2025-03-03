@@ -272,7 +272,7 @@ const SalesDetail: React.FC = () => {
                                 return <Table.Summary.Row key={index}>
                                             <Table.Summary.Cell index={index} colSpan={3} align="right"><p className="font-bold">{value.name}</p></Table.Summary.Cell>
                                             <Table.Summary.Cell index={index} align="right">
-                                                <p>{value.unit_value == 'percent' ? `${value.value}%` : formatRupiah(value.value)}</p>
+                                                <p>{value.unit_value == 'percent' ? `${value.value}% / ${formatRupiah(sale.total_amount_before_tax * value.value / 100)}` : formatRupiah(value.value)}</p>
                                             </Table.Summary.Cell>
                                         </Table.Summary.Row>
                             })}

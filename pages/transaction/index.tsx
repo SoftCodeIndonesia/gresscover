@@ -1,6 +1,6 @@
 
 import { Key, useEffect, useState } from "react";
-import { Layout, Table, message, Image, Button, Modal, Form, Input, Space, Tag, Typography, Pagination as AntPagination, Popconfirm, Select, DatePicker, TableProps, TimeRangePickerProps, TableColumnsType } from "antd";
+import { Layout, Table, message, Image, Button, Modal, Form, Input, Space, Tag, Typography, Pagination as AntPagination, Popconfirm, Select, DatePicker, TableProps, TimeRangePickerProps, TableColumnsType, Row, Col, Statistic, Card } from "antd";
 import axiosInstance from "@/utils/axiosInstance";
 import { Inventory } from "@/type/inventory";
 import EditButton from '../component/EditButton';
@@ -34,7 +34,7 @@ type Sorts = GetSingle<Parameters<OnChange>[2]>;
 const { RangePicker } = DatePicker;
 
 const Transaction: React.FC = () => {
-    const [summery, setSummery] = useState<{total_item: number, total_amount: number}>({total_amount: 0, total_item: 0});
+    const [summery, setSummery] = useState<{total_pemasukan: number, total_pengeluaran: number}>({total_pemasukan: 0, total_pengeluaran: 0});
     const [currentStartDate, setCurrentStartDate] = useState<string>(getStartAndEndOfMonth().startOfMonth);
     const [currentEndDate, setCurrentEndDate] = useState<string>(getStartAndEndOfMonth().endOfMonth);
 
@@ -44,7 +44,9 @@ const Transaction: React.FC = () => {
         request_column: ['unique_id', 'type', 'reference','reference_id','status', 'total_amount'],
         limit: 10,
         page: 1,
-
+        orderBy: {
+            created_at: 'DESC'
+        },
     });
     const [loading, setLoading] = useState<boolean>(false);
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
@@ -241,14 +243,8 @@ const Transaction: React.FC = () => {
     }
 
     const onChangePagination = (page: number) => {
-        const request = {
-            table: 'transaction',
-            request_column: ['unique_id', 'type', 'reference', 'reference_id','status', 'total_amount'],
-            request_column_relation: [],
-            limit: 10,
-            page: page,
-    
-        };
+        const request = requestParam;
+        request.page = page,
         setRequestParam(request);
 
         getTransactions(request);
@@ -297,7 +293,7 @@ const Transaction: React.FC = () => {
     }
 
     const onSearch = (query: string) => {
-        const request = {...requestParam};
+        const request =requestParam;
         request.keyword = query;
         setRequestParam(requestParam);
         getTransactions(request);
@@ -306,14 +302,18 @@ const Transaction: React.FC = () => {
     const onChangeRangePicker = (dates: [string, string]) => {
         
         if(dates[0] == '' && dates[1] == ''){
-            const request = {...requestParam};
-            request.where['created_at'] = ['between', [currentStartDate, currentEndDate]];
+            const request = requestParam;
+            request.where.created_at = ['between', [currentStartDate, currentEndDate]];
+            setCurrentEndDate(currentEndDate);
+            setCurrentStartDate(currentStartDate);
             setRequestParam(request);
             getTransactions(request);
         }else{
-            const request = {...requestParam};
-            request.where['created_at'] = ['between', dates];
-            console.log(request);
+            const request = requestParam;
+            
+            request.where.created_at = ['between', dates];
+            setCurrentEndDate(dates[1]);
+            setCurrentStartDate(dates[0]);
             setRequestParam(request);
             getTransactions(request);
         }
@@ -348,7 +348,9 @@ const Transaction: React.FC = () => {
             
         }
 
-        request.where = {...request.where, ...filterColumn},
+        request.where = {...filterColumn, ...{
+            created_at: ['between', [currentStartDate, currentEndDate]],
+        }},
 
         setRequestParam(request);
         getTransactions(request)
@@ -356,9 +358,9 @@ const Transaction: React.FC = () => {
 
     useEffect(() => {
         const request = {...requestParam};
-        request.where = {...request.where, ...{
+        request.where = {
             created_at: ['between', [currentStartDate, currentEndDate]],
-        }}
+        }
         setRequestParam(request);
         getTransactions(request);
     }, []);
@@ -380,6 +382,15 @@ const Transaction: React.FC = () => {
                     <Button type="primary" danger>Hapus</Button>
                 </Popconfirm>}
             </Space>
+            <Row gutter={16} className="my-4" >
+                <Col span={12} className="">
+                    <Card><Statistic title="Total Pemasukan" valueStyle={{ color: '#3f8600' }} value={formatRupiah(summery.total_pemasukan)} loading={loading} /></Card>
+                </Col>
+               
+                <Col span={12} className="">
+                    <Card><Statistic title="Total Pengeluaran" valueStyle={{ color: '#cf1322' }} value={summery.total_pengeluaran} loading={loading} /></Card>
+                </Col>
+            </Row>
             <Space className="flex gap-3 items-center my-4">
                     <p className="font-normal">Filter : </p>
                     <RangePicker 

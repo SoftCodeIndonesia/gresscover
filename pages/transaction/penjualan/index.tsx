@@ -130,6 +130,23 @@ const Transaction: React.FC = () => {
             render: (_: any, record: Sale, index: number) => <p>{record.platform?.toUpperCase()}</p>
         },
         {
+            title: 'Status Penjualan',
+            dataIndex:'status', 
+            key: 'status',
+            align: 'center',
+            render: (_: any, record: Sale, index: number) => getStatus(record.status!),
+            onFilter: (value: boolean | Key, record: Sale) => {
+                            
+                return true;
+            },
+            filters: [
+                {text: 'Sedang dikemas', value: 'sedang dikemas'},
+                {text: 'Dalam pengiriman', value: 'dalam pengiriman'},
+                {text: 'Pesanan Terkirim', value: 'pesanan terkirim'},
+            ],
+            filterSearch: true,
+        },
+        {
             title: 'Dibuat Oleh',
             dataIndex:'created_by', 
             key: 'created_by',
@@ -205,7 +222,7 @@ const Transaction: React.FC = () => {
     );
 
     const onChange: TableProps<Sale>['onChange'] = (pagination, filters, sorter, extra) => {
-        // console.log('params', pagination, filters, sorter, extra);
+        console.log('params', pagination, filters, sorter, extra);
         // console.log(sorter);
 
         const sort: Sorts = sorter as Sorts;
@@ -226,7 +243,9 @@ const Transaction: React.FC = () => {
             
         }
 
-        request.where = {...request.where, ...filterColumn},
+        request.where = {...filterColumn, ...{
+            sale_date: ['between', [currentStartDate, currentEndDate]]
+        }},
 
         setRequestParam(request);
         getSales(request)
@@ -260,6 +279,35 @@ const Transaction: React.FC = () => {
 
             if(response.status == 200){
                 message.success('Berhasil!');
+                getSales();
+            }else{
+                message.error(response.statusText);
+            }
+
+        } catch (error: any) {
+            message.error(error);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    const handleUpdateStatusBulk = async (record: string[], status: string) => {
+       
+        setLoading(true);
+        try {
+
+            const data = {
+                data: record,
+                status: status,
+            }
+
+            console.log(data);
+            
+            const response = await axiosInstance.put(`/sales/status_bulk`, data);
+
+            if(response.status == 200){
+                message.success('Berhasil!');
+                setSelectedRowKeys([]);
                 getSales();
             }else{
                 message.error(response.statusText);
@@ -335,7 +383,7 @@ const Transaction: React.FC = () => {
     
 
     const onChangeRangePicker = (dates: [string, string]) => {
-        
+       
         if(dates[0] == '' && dates[1] == ''){
             const request = {...request_param};
             request.where = {...request.where, ...{
@@ -348,7 +396,8 @@ const Transaction: React.FC = () => {
             request.where = {...request.where, ...{
                 sale_date: ['between', dates]
             }}
-            console.log(request);
+            setCurrentEndDate(dates[1]);
+            setCurrentStartDate(dates[0]);
             setRequestParam(request);
             getSales(request);
         }
@@ -367,7 +416,7 @@ const Transaction: React.FC = () => {
     }
 
     const onSearch = (query: string) => {
-        const request = {...request_param};
+        const request = request_param;
         request.keyword = query;
         setRequestParam(request_param);
         getSales(request);
@@ -443,43 +492,67 @@ const Transaction: React.FC = () => {
 
     return (
         <DashboardLayout>
-            <Row gutter={16} >
-                <Col span={6} className="mb-3">
+            <Space className="gap-3 w-full">
+                    <Button icon={<PlusOutlined/>} type="primary" href="penjualan/add" onClick={() => deleteCookie('sale_id')} >Tambah</Button>
+                    <Button icon={<ReloadOutlined/>} type="default" onClick={() => getSales(request_param)} >Reload</Button>
+                    {selectedRowKeys.length > 0 && <>
+                        
+                        <Popconfirm
+                            title="Yakin Ingin Menghapus Data Inventory?"
+                            description="Data yang sudah dihapus tidak akan bisa di kembalikan!"
+                            onConfirm={() => handleDelete(selectedRowKeys as string[])}
+                            onCancel={() => {}}
+                            okText="Yes"
+                            cancelText="No"
+                        >
+                            <Button type="primary" danger>Hapus</Button>
+                        </Popconfirm>
+                        <Select
+                            placeholder="Ubah Status"
+                            onChange={(e) => {
+                                handleUpdateStatusBulk(selectedRowKeys as string[], e);
+                            }}
+                            options={[
+                                { value: 'sedang dikemas', label: 'Sedang Dikemas' },
+                                { value: 'dalam pengiriman', label: 'Dalam Pengiriman' },
+                                { value: 'pesanan terkirim', label: 'Pesanan Terkirim' },
+                                { value: 'lunas', label: 'Lunas' },
+                            ]}
+                            style={{width: 200}}
+                            allowClear
+                        >
+                        </Select>
+                    </>
+                    
+                    }
+                    
+                </Space>
+            <Row gutter={16} className="my-4" >
+                <Col span={12} className="">
                     <Card><Statistic title="Total Penjualan" value={formatRupiah(summery.total_amount)} loading={loading} /></Card>
                 </Col>
                
-                <Col span={6} className="mb-3">
+                <Col span={12} className="">
                     <Card><Statistic title="Total Barang Terjual" value={summery.total_item} loading={loading} /></Card>
                 </Col>
             </Row>
             <Space className="flex justify-between my-4">
-                <Space className="gap-3 ">
-                    <Button icon={<PlusOutlined/>} type="primary" href="penjualan/add" onClick={() => deleteCookie('sale_id')} >Tambah</Button>
-                    <Button icon={<ReloadOutlined/>} type="default" onClick={() => getSales(request_param)} >Reload</Button>
-                    {selectedRowKeys.length > 0 && <Popconfirm
-                        title="Yakin Ingin Menghapus Data Inventory?"
-                        description="Data yang sudah dihapus tidak akan bisa di kembalikan!"
-                        onConfirm={() => handleDelete(selectedRowKeys as string[])}
-                        onCancel={() => {}}
-                        okText="Yes"
-                        cancelText="No"
-                    >
-                        <Button type="primary" danger>Hapus</Button>
-                    </Popconfirm>}
-                    <RangePicker 
+                
+                <Space className="gap-3">
+                <RangePicker 
                         presets={[
                             {
                             label: <span aria-label="Current Time to End of Day">Now ~ EOD</span>,
                             value: () => [dayjs(), dayjs().endOf('day')], // 5.8.0+ support function
                             },
                             ...rangePresets,
+                            
                         ]}
                         defaultPickerValue={[dayjs(currentStartDate), dayjs(currentEndDate)]}
                         defaultValue={[dayjs(currentStartDate), dayjs(currentEndDate)]}
                         onChange={(e, dateString) => onChangeRangePicker(dateString)} 
+
                         />
-                </Space>
-                <Space className="gap-3">
                         <Button type="default" icon={<FileExcelFilled/>} onClick={onExport}>Export Ke Excel</Button>
                         <Select
                             defaultValue="10"
@@ -493,7 +566,7 @@ const Transaction: React.FC = () => {
                             ]}
                         />
                         <Input placeholder="Cari Inventory" onChange={(e) => onSearch(e.target.value)} prefix={<SearchOutlined />}  />
-                    </Space>
+                </Space>
             </Space>
             <Select
                     className="mb-3"

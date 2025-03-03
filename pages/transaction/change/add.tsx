@@ -133,7 +133,7 @@ const ExchangeAdd: React.FC = () => {
                             setInitialTable(newData);
                         }
                     }} />
-                    <p>{record.quantity}/{record.stok}</p>
+                    <p>{record.quantity}/{record.available_quantity}</p>
                     <Button type="primary" shape="circle" icon={<PlusCircleOutlined />} onClick={() => {
                         const plus = Number(record.quantity!) + Number(1);
                         if(plus <= record.available_quantity!){
@@ -263,9 +263,9 @@ const ExchangeAdd: React.FC = () => {
                     product_name: value.product_name,
                     product_photo: value.product_photo,
                     location_name: value.location_name!, 
-                    stok: value.inventory.quantity, 
+                    stok: value.quantity, 
                     quantity: 1, 
-                    available_quantity: value.inventory.quantity, 
+                    available_quantity: value.quantity, 
                     id: null,
                     status: '',
                     condition: 'completed',
