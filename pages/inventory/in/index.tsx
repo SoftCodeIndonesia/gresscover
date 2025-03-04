@@ -1,23 +1,37 @@
-import { useEffect, useState } from "react";
+import { Key, useEffect, useState } from "react";
 import DashboardLayout from "../../component/DashboardLayout";
 import { Pagination } from "@/type/pagination";
 import { InventoryMovement } from "@/type/inventory_movement";
-import { Button, Image, Pagination as PaginationTable, Popconfirm, Space, Table, Tag, Typography, message } from "antd";
+import { Button, Card, Col, DatePicker, Image, Input, Pagination as PaginationTable, Popconfirm, Row, Select, Space, Statistic, Table, TableColumnsType, TableProps, Tag, TimeRangePickerProps, Typography, message } from "antd";
 import {
     FileExcelFilled,
     PlusOutlined,
     ReloadOutlined,
+    SearchOutlined,
 } from '@ant-design/icons';
-import { RequestParam } from "@/type/request_param";
+import { NewRequestParam, RequestParam } from "@/type/request_param";
 import axiosInstance from "@/utils/axiosInstance";
 import Title from "antd/es/typography/Title";
 import { useRouter } from "next/router";
-import { formatDate } from "@/utils/date_utils";
+import { formatDate, getStartAndEndOfMonth } from "@/utils/date_utils";
 import EditButton from "@/pages/component/EditButton";
 import ViewButton from "@/pages/component/ViewButton";
 import DeleteButton from "@/pages/component/DeleteButton";
 import { deleteCookie, setCookie } from "cookies-next";
 import { TableRowSelection } from "antd/es/table/interface";
+import { formatRupiah } from "@/utils/format_rupiah";
+import { getLocation } from "@/utils/get_filters";
+import { Location } from "@/type/location";
+import dayjs from "dayjs";
+
+type OnChange = NonNullable<TableProps<InventoryMovement>['onChange']>;
+type Filters = Parameters<OnChange>[1];
+
+type GetSingle<T> = T extends (infer U)[] ? U : never;
+type Sorts = GetSingle<Parameters<OnChange>[2]>;
+
+const { RangePicker } = DatePicker;
+
 const BarangMasuk: React.FC = () => {
     const router = useRouter();
     const [outs, setData] = useState<Pagination<InventoryMovement>>({
@@ -26,23 +40,26 @@ const BarangMasuk: React.FC = () => {
         last_page: 1,
         total: 0,
     });
+    const [summary, setSummary] = useState<{total_item: number, total_asset: number}>({total_asset: 0, total_item: 0});
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
-    const [requestParam, setParamRequst] = useState<RequestParam>({
-        table: 'inventory_movements',
+    const [locations, setLocations] = useState<Location[]>([]);
+    const [requestParam, setParamRequst] = useState<NewRequestParam>({
+        table: '',
         limit: 10,
         page: 1,
-        where: [
-            {
-                type: ["in", ["in", "adjustment"]]
-            },
-        ],
+        where: {
+            type: ["in", ["in", "adjustment"]]
+        },
         orderBy: {
             created_at: 'desc',
         },
-        request_column: ['inventory_id', 'id', 'product_name', 'reference', 'quantity', 'location_to', 'created_at'],
-        request_column_relation: []
+        type: 'search',
+        request_column: [],
     });
+
+    const [currentStartDate, setCurrentStartDate] = useState<string>(getStartAndEndOfMonth().startOfMonth);
+    const [currentEndDate, setCurrentEndDate] = useState<string>(getStartAndEndOfMonth().endOfMonth);
 
     const showStatus = (_: any, record: InventoryMovement, index: number) => {
         if(record.status == 'completed'){
@@ -56,67 +73,129 @@ const BarangMasuk: React.FC = () => {
       
     }
 
-    const column = [
+    const rangePresets: TimeRangePickerProps['presets'] = [
+        { label: 'Last 7 Days', value: [dayjs().add(-7, 'd'), dayjs()] },
+        { label: 'Last 14 Days', value: [dayjs().add(-14, 'd'), dayjs()] },
+        { label: 'Last 30 Days', value: [dayjs().add(-30, 'd'), dayjs()] },
+        { label: 'Last 90 Days', value: [dayjs().add(-90, 'd'), dayjs()] },
+    ];
+
+    const column:TableColumnsType<InventoryMovement> = [
         {
             title: 'No',
             dataIndex: '',
-            key: '',
+            key: 'no',
             render: (_: any, record: any, index: number) => <p>{(outs.current_page - 1) * 10 + index + 1}</p>,
         },
-        // {
-        //     title: 'Photo',
-        //     dataIndex:'photo', 
-        //     key: 'photo',
-        //     render: (_: any, record: InventoryMovement) => record.item?.photo != null ? <Image
-        //         width={40}
-        //         src={`${process.env.NEXT_PUBLIC_BE}/storage/${record.item?.photo}`}
-        //         fallback="data:image/png;base64,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"
-        //     /> : '',
-        // },
-        // {
-        //     title: 'SKU',
-        //     dataIndex: '',
-        //     key: 'sku',
-        //     render: (_: any, record: InventoryMovement, index: number) => <p>
-        //         <Typography.Link href="/">{record.}</Typography.Link>
-        //     </p>
-        // },
         {
             title: 'Product',
             dataIndex: '',
-            key: 'item',
-            render: (_: any, record: InventoryMovement, index: number) => <p>{record.product_name}</p>
+            key: 'product_name',
+            render: (_: any, record: InventoryMovement, index: number) => <p>{record.product_name}</p>,
+        },
+        {
+            title: 'SKU',
+            dataIndex: 'sku',
+            key: 'sku',
+        },
+        {
+            title: 'Barcode',
+            dataIndex: 'barcode',
+            key: 'barcode',
         },
         {
             title: 'Sumber',
-            dataIndex: '',
-            key: '',
+            dataIndex: 'reference',
+            key: 'reference',
             render: (_: any, record: InventoryMovement, index: number) => checkSource(record),
+            onFilter: (value: boolean | Key, record: InventoryMovement) => {
+                
+                return true;
+            },
+            filters: [
+                {
+                    text: 'Mutasi',
+                    value: 'inventory',
+                },
+                {
+                    text: 'Retur',
+                    value: 'retur',
+                },
+                {
+                    text: 'Penukaran Barang',
+                    value: 'exchange',
+                }
+            ],
+            filterSearch: true,
         },
         {
             title: 'Quantity',
             dataIndex: '',
             key: 'quantity',
+            sorter: true,
             render: (_: any, record: InventoryMovement, index: number) => <p>{record.quantity} {record.unit_name}</p>
         },
         {
             title: 'Gudang',
             dataIndex: '',
-            key: 'gudang',
-            render: (_: any, record: InventoryMovement, index: number) => <p>{record.location_to ?? ''}</p>
-        },
-        {
-            title: 'Tanggal',
-            dataIndex: '',
-            key: 'tanggal',
-            render: (_: any, record: InventoryMovement, index: number) => <p>{formatDate(record.created_at)}</p>
+            key: 'location_to',
+            render: (_: any, record: InventoryMovement, index: number) => <p>{record.location_to ?? ''}</p>,
+            onFilter: (value: boolean | Key, record: InventoryMovement) => {
+                
+                return true;
+            },
+            filters: locations?.map((value: Location) => ({
+                text: value.name,
+                value: value.name,
+            })),
+            filterSearch: true,
         },
         {
             title: 'Status',
             dataIndex: '',
             key: 'status',
-            render: showStatus
+            render: showStatus,
+            onFilter: (value: boolean | Key, record: InventoryMovement) => {
+                
+                return true;
+            },
+            filters: [
+                {
+                    text: 'Pending',
+                    value: 'pending',
+                },
+                {
+                    text: 'Selesai',
+                    value: 'completed',
+                },
+                {
+                    text: 'Reject',
+                    value: 'reject',
+                },
+            ],
+            filterSearch: true,
         },
+        {
+            title: 'Tanggal',
+            dataIndex: '',
+            key: 'created_at',
+            sorter: true,
+            render: (_: any, record: InventoryMovement, index: number) => <p>{formatDate(record.created_at)}</p>
+        },
+        {
+            title: 'Update',
+            dataIndex: 'updated_at',
+            key: 'updated_at',
+            sorter: true,
+            render: (_: any, record: InventoryMovement, index: number) => <p>{formatDate(record.updated_at)}</p>
+        },
+        {
+            title: 'Dibuat oleh',
+            dataIndex: 'created_by',
+            key: 'created_by',
+            render: (_: any, record: InventoryMovement, index: number) => <p>{record.created_by}</p>
+        },
+       
         {
             title: 'Operasi',
             key: 'action',
@@ -129,6 +208,46 @@ const BarangMasuk: React.FC = () => {
             ),
         },
     ]
+
+    const onChange: TableProps<InventoryMovement>['onChange'] = (pagination, filters, sorter, extra) => {
+        // console.log('params', pagination, filters, sorter, extra);
+        // console.log(sorter);
+
+        const sort: Sorts = sorter as Sorts;
+        
+        const request = {...requestParam};
+        if(sort.columnKey != undefined){
+            request.orderBy = {
+                [sort.columnKey.toString()]: sort.order == "ascend" ? 'ASC' : 'DESC' 
+            }
+        }
+        var filterColumn = {};
+        for(let column in filters){
+            if(filters[column] != null){
+                filterColumn = {...filterColumn, ...{
+                    [column]: ['in', filters[column]],
+                }};
+            }
+            
+        }
+
+        var filterColumn = {};
+        for(let column in filters){
+            if(filters[column] != null){
+                filterColumn = {...filterColumn, ...{
+                    [column]: ['in', filters[column]],
+                }};
+            }
+            
+        }
+
+        request.where = {...filterColumn, ...{
+            created_at: ['between', [currentStartDate, currentEndDate]]
+        }},
+
+        setParamRequst(request);
+        fetch(request)
+    };
 
     const checkSource = (source: InventoryMovement) => {
         
@@ -176,14 +295,15 @@ const BarangMasuk: React.FC = () => {
         }
     }
 
-    const fetch = async (request: RequestParam) => {
+    const fetch = async (request: NewRequestParam) => {
         setLoading(true);
         try {
-            const response = await axiosInstance.post('/search', request);
+            const response = await axiosInstance.post('/movement_search', request);
             if(response.status == 200){
                 // console.log(response.data.data.data);
 
-                setData(response.data.data);
+                setData(response.data.data.data);
+                setSummary(response.data.data.summary);
             }
         } catch (error: any) {
             message.error(`${error.response?.data?.message}`);
@@ -192,9 +312,31 @@ const BarangMasuk: React.FC = () => {
         }
     }
 
+    const getLocationUtils = async () => {
+        getLocation().then((response) => {
+            
+            setLocations(response as unknown as Location[]);
+        })
+        
+    }
+
     const paginateClick = (value: number) => {
         const request = {...requestParam};
         request.page = value;
+        fetch(request);
+    }
+
+    const handelShowRecord = (query: string) => {
+        const request = {...requestParam};
+        request.limit = parseInt(query);
+        setParamRequst(request);
+        fetch(request);
+    }
+
+    const onSearch = (query: string) => {
+        const request = {...requestParam};
+        request.keyword = query;
+        setParamRequst(request);
         fetch(request);
     }
 
@@ -214,7 +356,7 @@ const BarangMasuk: React.FC = () => {
         request.type = 'export';
         setLoading(true);
         try {
-            const response = await axiosInstance.post('/search', request, {
+            const response = await axiosInstance.post('/movement_search', request, {
                 responseType: 'blob',
             });
             // Buat URL untuk file yang di-download
@@ -223,7 +365,9 @@ const BarangMasuk: React.FC = () => {
             // Buat elemen <a> untuk memicu download
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', 'export.xlsx'); // Nama file yang akan di-download
+            const date = new Date;
+
+            link.setAttribute('download', `daftar_barang_masuk_${date.getDate()}_${date.getMonth()}_${date.getFullYear()}.xlsx`); // Nama file yang akan di-download
             document.body.appendChild(link);
 
             // Klik link untuk memulai download
@@ -238,7 +382,25 @@ const BarangMasuk: React.FC = () => {
         }
     }
 
+    const onChangeRangePicker = (dates: [string, string]) => {
+        
+        if(dates[0] == '' && dates[1] == ''){
+            const request = {...requestParam};
+            request.where['created_at'] = ['between', [currentStartDate, currentEndDate]];
+            setParamRequst(request);
+            fetch(request);
+        }else{
+            const request = {...requestParam};
+            request.where['created_at'] = ['between', dates];
+            setCurrentEndDate(dates[1]);
+            setCurrentStartDate(dates[0]);
+            setParamRequst(request);
+            fetch(request);
+        }
+    }
+
     useEffect(() => {
+        getLocationUtils();
         fetch(requestParam);
     }, [])
 
@@ -261,9 +423,47 @@ const BarangMasuk: React.FC = () => {
                     <Button type="primary" danger>Hapus</Button>
                 </Popconfirm>}
             </Space>
-            <Table columns={column} dataSource={outs!.data} rowSelection={rowSelection} pagination={false} rowKey={(record) => record.id} loading={loading} />
+            <Row gutter={16} className="my-4" >
+                <Col span={12} className="mb-3">
+                    <Card><Statistic title="Total Harga Beli" value={formatRupiah(summary.total_asset)} loading={loading} /></Card>
+                </Col>
+               
+                <Col span={12} className="mb-3">
+                    <Card><Statistic title="Total Barang Masuk" value={summary.total_item} loading={loading} /></Card>
+                </Col>
+            </Row>
+            <Space className="flex gap-3 items-center">
+                <p className="font-normal">Filter : </p>
+                <RangePicker 
+                    presets={[
+                        {
+                        label: <span aria-label="Current Time to End of Day">Now ~ EOD</span>,
+                        value: () => [dayjs(), dayjs().endOf('day')], // 5.8.0+ support function
+                        },
+                        ...rangePresets,
+                    ]}
+                    defaultPickerValue={[dayjs(currentStartDate), dayjs(currentEndDate)]}
+                    defaultValue={[dayjs(currentStartDate), dayjs(currentEndDate)]}
+                    onChange={(e, dateString) => onChangeRangePicker(dateString)} 
+                />
+                <Button icon={<FileExcelFilled/>} variant="solid" onClick={onExport} className="my-3" >Export Ke Excel</Button>
+                <Select
+                    defaultValue="10"
+                    style={{ width: 80 }}
+                    onChange={(e) => handelShowRecord(e)}
+                    options={[
+                        { value: '10', label: '10' },
+                        { value: '30', label: '30' },
+                        { value: '50', label: '50' },
+                        { value: '100', label: '100'},
+                    ]}
+                />
+                <Input placeholder="Cari Inventory" onChange={(e) => onSearch(e.target.value)} prefix={<SearchOutlined />}  />
+            </Space>
+            <Table<InventoryMovement> onChange={onChange}
+                showSorterTooltip={{ target: 'sorter-icon' }} columns={column} scroll={{ x: 'max-content'}}  dataSource={outs!.data} rowSelection={rowSelection} pagination={false} rowKey={(record) => record.id} loading={loading} />
             <div className="flex justify-end my-4">
-            <PaginationTable onChange={paginateClick} defaultCurrent={outs.current_page} total={outs.total} />
+            <PaginationTable onChange={paginateClick} defaultCurrent={outs.current_page} defaultPageSize={requestParam.limit} total={outs.total} />
             </div>
         </DashboardLayout>
     );

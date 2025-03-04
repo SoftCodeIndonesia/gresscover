@@ -74,6 +74,11 @@ const Items = () => {
             dataIndex: 'sku',
             key: 'sku',
         },
+        {
+            title: 'Barcode',
+            dataIndex: 'barcode',
+            key: 'barcode',
+        },
         // {
         //     title: 'Semua Stok',
         //     dataIndex: 'quantity',

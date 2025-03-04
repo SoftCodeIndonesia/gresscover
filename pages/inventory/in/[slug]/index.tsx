@@ -22,7 +22,7 @@ const DetailInventoryIn = () => {
             //         type: "mutation",
             //     },
             // },
-            request_column_relation: ['inventory', 'inventory.location'],
+            request_column_relation: ['inventory', 'item', 'user', 'inventory.location'],
     });
 
     const [loading, setLoading] = useState<boolean>(false);

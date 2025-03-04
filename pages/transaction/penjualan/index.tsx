@@ -412,6 +412,8 @@ const Transaction: React.FC = () => {
             return <Tag color="green">{status.toUpperCase()}</Tag>
         }else if(status == 'retur'){
             return <Tag color="red">{status.toUpperCase()}</Tag>
+        }else if(status == 'lunas'){
+            return <Tag color="green">{'Selesai'}</Tag>
         }
     }
 

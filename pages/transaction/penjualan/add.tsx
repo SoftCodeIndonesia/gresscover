@@ -847,7 +847,7 @@ const AddTransactionSale: React.FC = () => {
                 
 
                 <Form.Item className="mt-2">
-                        <Button type="link" href="/inventory" loading={loading} >Batal</Button>
+                        <Button type="link" href="/transaction/penjualan" loading={loading} >Batal</Button>
                         <Button type="primary" htmlType="submit" loading={loading}>Kirim</Button>
                 </Form.Item>
             </Form>

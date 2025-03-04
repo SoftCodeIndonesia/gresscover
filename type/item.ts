@@ -1,4 +1,5 @@
 import { Category } from "./category";
+import { User } from "./user";
 
   
 export type Item = {
@@ -23,6 +24,7 @@ export type Item = {
     parent: Item|null,
     overall_quantity?: number,
     children: Item[],
+    user?: User,
 };
 
 export type ItemUnit = {

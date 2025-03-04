@@ -447,11 +447,11 @@ const ReturPage: React.FC = () => {
                     }
                 </Space>
             <Row gutter={16} >
-                <Col span={6} className="mb-3">
+                <Col span={12} className="mb-3">
                     <Card><Statistic title="Total Retur" value={formatRupiah(summery.total_amount)} loading={loading} /></Card>
                 </Col>
                
-                <Col span={6} className="mb-3">
+                <Col span={12} className="mb-3">
                     <Card><Statistic title="Total Barang Retur" value={summery.total_item} loading={loading} /></Card>
                 </Col>
             </Row>

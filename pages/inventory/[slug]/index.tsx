@@ -1,4 +1,4 @@
-import { Breadcrumb, Card, List, message, Tag, Tree, TreeDataNode, TreeProps, Typography } from "antd";
+import { Breadcrumb, Card, Form, List, message, Radio, Table, TableColumnsType, Tag, Tree, TreeDataNode, TreeProps, Typography } from "antd";
 import DashboardLayout from "../../component/DashboardLayout";
 import { useEffect, useState } from "react";
 import { Inventory } from "@/type/inventory";
@@ -6,8 +6,10 @@ import { useRouter } from "next/router";
 import { RequestParam } from "@/type/request_param";
 import axiosInstance from "@/utils/axiosInstance";
 import { formatRupiah } from "@/utils/format_rupiah";
-import { DownOutlined } from '@ant-design/icons';
+import { ArrowRightOutlined, DownOutlined } from '@ant-design/icons';
 import { formatDate } from "@/utils/date_utils";
+import { InventoryMovement } from "@/type/inventory_movement";
+import Link from "next/link";
 const gridStyle: React.CSSProperties = {
     width: '50%',
     textAlign: 'left',
@@ -18,6 +20,7 @@ const DetailInventory: React.FC = () => {
     const [inventory, setInventory] = useState<Inventory>();
     const [loading, setLoading] = useState<boolean>(false);
     const [slug, setSlug] = useState<string | undefined>(undefined);
+    const [viewHistory, setViewHistory] = useState<string>('list');
 
     const [requestParam, setParamRequst] = useState<RequestParam>({
             table: 'inventory',
@@ -31,24 +34,106 @@ const DetailInventory: React.FC = () => {
             //         type: "mutation",
             //     },
             // },
-            request_column_relation: ['movements', 'location', 'movements.mutation_history'],
+            request_column_relation: ['movements', 'location', 'movements.mutation_history', 'movements.user'],
     });
 
+    const [form] = Form.useForm();
+
     const router = useRouter();
+
+    const availableColumns: TableColumnsType<InventoryMovement> = [
+        {
+            title: 'No',
+            dataIndex: '',
+            key: 'no',
+            render: (_: any, record: any, index: number) => index + 1,
+        },
+        {
+            title: 'History',
+            dataIndex:'type', 
+            key: 'type',
+            render: (_:any, record: InventoryMovement) => <p>{record.type == 'in' || record.type == 'adjustment' ? 'Masuk' : record.type == 'out' || record.type == 'mutation' ? 'Keluar' : '-' }</p>,
+        },
+        {
+            title: 'Qty',
+            dataIndex:'quantity', 
+            key: 'quantity',
+            // sorter: (a, b) => a.quantity - b.quantity,
+            render: (_:any, record: InventoryMovement) => <p>{record.quantity} {record.unit_name}</p>,
+        },
+        {
+            title: 'Transaksi',
+            dataIndex:'reference', 
+            key: 'reference',
+            
+            render: (_:any, record: InventoryMovement) => checkSource(record),
+        },
+        {
+            title: 'Tanggal',
+            dataIndex:'created_at', 
+            key: 'created_at',
+            // sorter: (a, b) => new Date(formatDate(a.created_at)).getTime() - new Date(formatDate(a.created_at)).getTime(),
+            render: (_:any, record: InventoryMovement) => <p>{formatDate(record.created_at)}</p>,
+        },
+        {
+            title: 'Dibuat Oleh',
+            dataIndex:'', 
+            key: '',
+            render: (_:any, record: InventoryMovement) => <p>{record.user?.name ?? '-'}</p>,
+        },
+        {
+            title: 'Detail',
+            dataIndex:'', 
+            key: '',
+            render: (_:any, record: InventoryMovement) => <Link href={`${getLink(record)}`} className="text-blue-500 mx-4"><ArrowRightOutlined /></Link>
+        },
+    ]
+
+    const onChangeViewHistory = (view: string) => {
+        setViewHistory(view);
+    }
+
+    const checkSource = (source: InventoryMovement) => {
+        
+        switch (source.reference) {
+            case 'inventory':
+                return <p>Mutasi</p>
+            case 'retur':
+                return <p>Retur</p>
+            case 'exchange':
+                return <p>Penukaran barang</p>
+            case 'sales':
+                return <p>Penjualan</p>
+            default:
+                return <p>-</p>
+        }
+        
+    }
+
+    const getLink = (source: InventoryMovement) => {
+        
+        switch (source.reference) {
+            case 'inventory':
+                return '/inventory/mutasi/' + source.reference_id;
+            case 'retur':
+                return '/transaction/retur/' + source.reference_id;
+            case 'exchange':
+                return '/transaction/change/' + source.reference_id;
+            case 'sales':
+                return '/transaction/penjualan/' + source.reference_id;
+            default:
+                return '/inventory'
+        }
+        
+    }
 
     const fetchDetail = async () => {
         setLoading(true);
         try {
-            requestParam.where = [{
-                inventory_id: slug,
-            }];
-            const response = await axiosInstance.post('/search', requestParam);
+            console.log(slug);
+            const response = await axiosInstance.get(`/inventory/${slug}`);
             if(response.status == 200){
-                // console.log(response.data.data.data);
-                if(response.data.data.data.length > 0){
-                    setInventory(response.data.data.data[0]);
-                }
-                
+                setInventory(response.data.data);
             }
         } catch (error: any) {
             message.error(`${error.response?.data?.message}`);
@@ -83,13 +168,18 @@ const DetailInventory: React.FC = () => {
 
     useEffect(() => {
         if (router.isReady) {
+            console.log(router.query);
             setSlug(router.query.slug as string);
         }
         
     }, [router.isReady, router.query.slug]);
 
     useEffect(() => {
-        fetchDetail();
+        console.log(slug);
+        if(slug){
+            fetchDetail();
+            form.setFieldValue('view', 'list');
+        }
     }, [slug]);
 
     return (
@@ -114,6 +204,16 @@ const DetailInventory: React.FC = () => {
                 
                 <Card.Grid hoverable={false} style={gridStyle}>Nama Barang</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>{inventory?.product_name}</Card.Grid>
+                <Card.Grid hoverable={false} style={gridStyle}>SKU</Card.Grid>
+                <Card.Grid hoverable={false} style={gridStyle}>{inventory?.item?.sku ?? '-'}</Card.Grid>
+                <Card.Grid hoverable={false} style={gridStyle}>Barcode</Card.Grid>
+                <Card.Grid hoverable={false} style={gridStyle}>{inventory?.item?.barcode}</Card.Grid>
+                <Card.Grid hoverable={false} style={gridStyle}>Harga Beli</Card.Grid>
+                <Card.Grid hoverable={false} style={gridStyle}>{formatRupiah(inventory?.cost ?? 0)}</Card.Grid>
+                <Card.Grid hoverable={false} style={gridStyle}>Harga Jual</Card.Grid>
+                <Card.Grid hoverable={false} style={gridStyle}>{formatRupiah(parseInt(inventory?.item?.price ?? '0') ?? 0)}</Card.Grid>
+                <Card.Grid hoverable={false} style={gridStyle}>Minimum Stok</Card.Grid>
+                <Card.Grid hoverable={false} style={gridStyle}>{inventory?.minimum_stock}</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>Gudang</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>{inventory?.location?.name}</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>Stok Saat Ini</Card.Grid>
@@ -130,16 +230,37 @@ const DetailInventory: React.FC = () => {
                 onSelect={onSelect}
                 treeData={toTreeData()}
             /> */}
-            <List
-                className="mt-5"
-                header={<div className="text-lg font-bold">History</div>}
+
+            
+            <Card title="History" className="my-6" extra={
+                <Form form={form}>
+                    <Form.Item label={`Tampilan`} name={'view'} className="my-6">
+                        <Radio.Group onChange={(value) => setViewHistory(value.target.value)}>
+                            <Radio.Button value="list" checked={viewHistory == 'list'} >List</Radio.Button>
+                            <Radio.Button value="table" checked={viewHistory == 'table'} >Table</Radio.Button>
+                        </Radio.Group>
+                    </Form.Item>
+                </Form>
+            }>
+                {form.getFieldValue('view') == 'list' && <List
+                
+                header={<div className="text-lg font-bold"></div>}
                 bordered
                 dataSource={inventory?.movements}
                 renderItem={(item) => (
-                    <List.Item>
-                    <Typography.Text mark>[{item?.product_name}]</Typography.Text> <Tag color="#108ee9">{item?.quantity} {item?.unit_name}</Tag> {item.type == 'in' || item.type == 'adjustment' ? 'Masuk' : item.type == 'out' ? 'Keluar' : 'Mutasi'} {item?.inventory?.location?.name} ({formatDate(item.created_at)}) <p className="italic">{item.note}</p> </List.Item>
+                    <List.Item className="flex">
+                    <Tag color="#87d068">{checkSource(item)}</Tag> 
+                    <Typography.Text mark>[{item?.quantity} {item?.unit_name}]</Typography.Text> 
+                    <Tag className="ml-4" color="#108ee9">{item?.product_name}</Tag> {item.type == 'in' || item.type == 'adjustment' ? 'Masuk' : item.type == 'out' ? 'Keluar' : 'Mutasi'} {item?.inventory?.location?.name} ({formatDate(item.created_at)}) 
+                    <Link href={`${getLink(item)}`} className="text-blue-500 mx-4"><ArrowRightOutlined /></Link>
+                    <p className="italic">{item.note}</p>
+                    </List.Item>
                 )}
-            />
+            /> }
+                {form.getFieldValue('view') == 'table' && <Table columns={availableColumns} dataSource={inventory?.movements} rowKey={(record) => record.id}></Table> }
+            </Card>
+            
+            
         </DashboardLayout>
     );
 }

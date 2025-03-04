@@ -23,7 +23,7 @@ const DetailItem: React.FC = () => {
         where: [{
             product_id: '',
         }],
-        request_column_relation: ["inventories", 'inventories.location']
+        request_column_relation: ["inventories", 'user', 'inventories.location']
     });
 
 
@@ -95,8 +95,16 @@ const DetailItem: React.FC = () => {
                 <Card.Grid hoverable={false} style={gridStyle}>{data?.sku}</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>Barcode</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>{data?.barcode}</Card.Grid>
+                <Card.Grid hoverable={false} style={gridStyle}>Harga Beli</Card.Grid>
+                <Card.Grid hoverable={false} style={gridStyle}>{data?.cost}</Card.Grid>
+                <Card.Grid hoverable={false} style={gridStyle}>Harga Jual</Card.Grid>
+                <Card.Grid hoverable={false} style={gridStyle}>{data?.price}</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>Minimum Stok</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>{data?.min_stock_quantity}</Card.Grid>
+                <Card.Grid hoverable={false} style={gridStyle}>Dibuat Oleh</Card.Grid>
+                <Card.Grid hoverable={false} style={gridStyle}>{data?.user?.name}</Card.Grid>
+                <Card.Grid hoverable={false} style={gridStyle}>Dibuat Tgl</Card.Grid>
+                <Card.Grid hoverable={false} style={gridStyle}>{formatDate(data?.created_at!)}</Card.Grid>
             </Card>
         </DashboardLayout>
     )

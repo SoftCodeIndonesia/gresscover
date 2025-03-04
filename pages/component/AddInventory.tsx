@@ -339,6 +339,8 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
 
         setItemSelected(data);
     }
+
+    const back = () => router.back();
     
 
     const fetchItems = async (query: string) => {
@@ -738,7 +740,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
                 />
 
                 <Form.Item className="mt-4 flex gap-3 ">
-                        <Link type="link" className="mr-3" href="/inventory">Batal</Link>
+                        <Button type="link" className="mr-3" onClick={back}>Batal</Button>
                         <Button type="primary" htmlType="submit" loading={loading}>Kirim</Button>
                 </Form.Item>
             </Form>

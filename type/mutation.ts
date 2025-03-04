@@ -1,3 +1,7 @@
+import { InventoryMovement } from "./inventory_movement";
+import { Item } from "./item";
+import { User } from "./user";
+
 export type Mutation = {
     mutation_id: string;
     product_name: string;
@@ -6,6 +10,10 @@ export type Mutation = {
     items: MutationItem[];
     created_at: string;
     updated_at: string;
+    location?: string;
+    barcode?: string;
+    product?: Item;
+    user?: User;
   };
   
   export type MutationItem = {
@@ -24,5 +32,6 @@ export type Mutation = {
     unit_name: string;
     created_at: string;
     updated_at: string;
+    movement?: InventoryMovement,
   };
   

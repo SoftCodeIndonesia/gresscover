@@ -476,7 +476,15 @@ const MutasiBarang = () => {
                 ),
             },
             {
-                title: "Harga",
+                title: "Harga Beli",
+                dataIndex: "cost",
+                width: 150,
+                render: (_: any, record: TableInventory, index: number) => (
+                    <Input placeholder="Harga Beli" type="number" value={record.cost ?? ''} disabled />
+                ),
+            },
+            {
+                title: "Harga Jual",
                 dataIndex: "selling_price",
                 width: 150,
                 render: (_: any, record: TableInventory, index: number) => (
@@ -1407,7 +1415,7 @@ const MutasiBarang = () => {
                 />}
                 
                 <Form.Item className="mt-3">
-                        <Button type="link" href="/items" loading={loading} >Batal</Button>
+                        <Button type="link" href="/inventory/mutasi" loading={loading} >Batal</Button>
                         <Button type="primary" htmlType="submit" loading={loading}>Kirim</Button>
                 </Form.Item>
             </Form>

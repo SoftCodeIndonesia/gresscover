@@ -8,7 +8,9 @@ import { Breadcrumb, Card, List, message, Tag, Typography } from "antd";
 import Title from "antd/es/typography/Title";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-
+import {
+    ArrowRightOutlined,
+} from '@ant-design/icons';
 const gridStyle: React.CSSProperties = {
     width: '50%',
     textAlign: 'left',
@@ -22,30 +24,14 @@ const DetailMutation: React.FC = () => {
     const [mutation, setData] = useState<Mutation>();
     const [loading, setLoading] = useState<boolean>(false);
 
-    const [requestParam, setParamRequst] = useState<RequestParam>({
-        table: 'mutations',
-        limit: 1,
-        page: 1,
-        where: [{
-            id: '',
-        }],
-        request_column_relation: ["items"]
-    });
 
 
     const fetch = async () => {
         setLoading(true);
         try {
-            requestParam.where = [{
-                mutation_id: slug,
-            }];
-            const response = await axiosInstance.post('/search', requestParam);
+            const response = await axiosInstance.get(`/mutations/${slug}`);
             if(response.status == 200){
-                // console.log(response.data.data.data);
-                if(response.data.data.data.length > 0){
-                    setData(response.data.data.data[0]);
-                }
-                
+                setData(response.data.data);
             }
         } catch (error: any) {
             message.error(`${error.response?.data?.message}`);
@@ -88,10 +74,16 @@ const DetailMutation: React.FC = () => {
             <Card title={`Rincian Mutasi `}>
                 <Card.Grid hoverable={false} style={gridStyle}>Nama Barang</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>{mutation?.product_name}</Card.Grid>
+                <Card.Grid hoverable={false} style={gridStyle}>SKU</Card.Grid>
+                <Card.Grid hoverable={false} style={gridStyle}>{mutation?.sku}</Card.Grid>
+                <Card.Grid hoverable={false} style={gridStyle}>Barcode</Card.Grid>
+                <Card.Grid hoverable={false} style={gridStyle}>{mutation?.product?.barcode}</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>Tanggal</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>{formatDate(mutation?.created_at!)}</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>Jumlah</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>{mutation?.quantity}</Card.Grid>
+                <Card.Grid hoverable={false} style={gridStyle}>Dibuat Oleh</Card.Grid>
+                <Card.Grid hoverable={false} style={gridStyle}>{mutation?.user?.name ?? '-'}</Card.Grid>
             </Card>
 
             <List
@@ -101,7 +93,9 @@ const DetailMutation: React.FC = () => {
                 dataSource={mutation?.items}
                 renderItem={(item) => (
                     <List.Item>
-                    <Typography.Text mark>[{item?.quantity} {item?.unit_name}]</Typography.Text> <Tag color="#108ee9">{item?.product_name}</Tag> Keluar Ke {item?.to_name} ({formatDate(item.created_at)}) </List.Item>
+                        {item.movement?.type == 'out' && <div className="flex gap-3"><Typography.Text mark>[{item?.quantity} {item?.unit_name}]</Typography.Text> <Tag color="#108ee9">{item?.product_name}</Tag> Keluar Dari {item?.from_name} ({formatDate(item.created_at)})</div> }
+                        {item.movement?.type == 'in' && <div className="flex gap-3"><Typography.Text mark>[{item?.quantity} {item?.unit_name}]</Typography.Text> <Tag color="#108ee9">{item?.product_name}</Tag> {item?.from_name} <ArrowRightOutlined /> {item?.to_name} ({formatDate(item.created_at)}) </div>}
+                    </List.Item>
                 )}
             />
         </DashboardLayout>

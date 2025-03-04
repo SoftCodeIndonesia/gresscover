@@ -1,5 +1,6 @@
 import { Inventory } from "./inventory";
 import { Item } from "./item";
+import { User } from "./user";
 
 export type InventoryMovement = {
     id: string;
@@ -29,4 +30,6 @@ export type InventoryMovement = {
     location_from?: string,
     location_id_to?: string,
     location_to?: string,
+    created_by?: string,
+    user?: User,
 }

@@ -13,14 +13,35 @@ export async function getLocation() {
             request_column_relation: []
         }
 
-        axiosInstance.post('/search', param).then((response) => {
-            if(response.status == 200){
-                const locations: Pagination<Location> = response.data.data;
-                return locations.data;
-            }else{
-                [];
-            }
-        })
+        const response = await axiosInstance.post('/search', param);
+        if(response.status == 200){
+            const locations: Pagination<Location> = response.data.data;
+            return locations.data;
+        }else{
+            [];
+        }
+    } catch (error: any) {
+        message.error(`${error.response?.data?.message ?? error}`);
+        return [];
+    }
+}
+export async function getBarcode() {
+    try {
+         const param = {
+            table: 'product',
+            page: 1,
+            limit: 10,
+            request_column:['barcode'],
+            request_column_relation: []
+        }
+
+        const response = await axiosInstance.post('/search', param);
+        if(response.status == 200){
+            const locations: Pagination<Item> = response.data.data;
+            return locations.data;
+        }else{
+            [];
+        }
     } catch (error: any) {
         message.error(`${error.response?.data?.message ?? error}`);
         return [];

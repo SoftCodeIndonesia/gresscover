@@ -187,6 +187,8 @@ const SalesDetail: React.FC = () => {
             return <Tag color="green">{sale?.status.toUpperCase()}</Tag>
         }else if(sale?.status == 'retur'){
             return <Tag color="red">{sale?.status.toUpperCase()}</Tag>
+        }else if(sale?.status == 'lunas'){
+            return <Tag color="green">{'Selesai'}</Tag>
         }
     }
 
@@ -247,10 +249,16 @@ const SalesDetail: React.FC = () => {
                         <Col span={18} push={6}>{sale?.platform?.toUpperCase()}</Col>
                         <Col span={6} pull={18}>Platform</Col>
                     </Row>
+                    <Row className="mb-3">
+                        <Col span={18} push={6}>{sale?.user_name}</Col>
+                        <Col span={6} pull={18}>Dibuat Oleh</Col>
+                    </Row>
+                    <Row className="mb-3">
+                        <Col span={18} push={6}>{formatDate(sale?.created_at!)}</Col>
+                        <Col span={6} pull={18}>Dibuat Tgl</Col>
+                    </Row>
                 </Card>
-                <Card title="Daftar Item" className="mt-4" extra={<Button type="primary" className="bg-red-600" onClick={() => {}} disabled={!hasSelected} loading={loading}>
-                Retur
-                </Button>}>
+                <Card title="Daftar Item" className="mt-4">
                     <Table columns={columns} dataSource={sale?.items} rowKey={(row) => row.sale_item_id} pagination={false} summary={pageData => {
                         let totalQuantity = 0;
                         let totalAmount = sale?.total_amount_before_tax;
