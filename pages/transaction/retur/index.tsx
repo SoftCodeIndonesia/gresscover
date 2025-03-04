@@ -390,8 +390,12 @@ const ReturPage: React.FC = () => {
     const onChangeRangePicker = (dates: [string, string]) => {
         
         if(dates[0] == '' && dates[1] == ''){
+            const start = getStartAndEndOfMonth().startOfMonth;
+            const end = getStartAndEndOfMonth().endOfMonth;
+            setCurrentEndDate(end);
+            setCurrentStartDate(start);
             const request = {...requestParam};
-            request.where['created_at'] = ['between', [currentStartDate, currentEndDate]];
+            request.where['created_at'] = ['between', [start, end]];
             setRequestParam(request);
             getRetur(request);
         }else{

@@ -224,8 +224,13 @@ const MutasiBarang: React.FC = () => {
     const onChangeRangePicker = (dates: [string, string]) => {
         
         if(dates[0] == '' && dates[1] == ''){
+            const start = getStartAndEndOfMonth().startOfMonth;
+            const end = getStartAndEndOfMonth().endOfMonth;
+            setCurrentEndDate(end);
+            setCurrentStartDate(start);
             const request = {...requestParam};
-            request.where['created_at'] = ['between', [currentStartDate, currentEndDate]];
+            
+            request.where['created_at'] = ['between', [start, end]];
             setParamRequst(request);
             fetch(request);
         }else{
@@ -268,10 +273,10 @@ const MutasiBarang: React.FC = () => {
 
     };
     
-    const fetch = async (request?: NewRequestParam) => {
+    const fetch = async (request: NewRequestParam) => {
         setLoading(true);
         try {
-            const response = await axiosInstance.post('/mutations/search', request ?? requestParam);
+            const response = await axiosInstance.post('/mutations/search', request);
             if(response.status == 200){
                 // console.log(response.data.data.data);
 
@@ -289,7 +294,7 @@ const MutasiBarang: React.FC = () => {
         try {
             const response = await axiosInstance.post('/search_del', {data: string, table: 'mutations'});
             if(response.status == 200){
-                fetch();
+                fetch(requestParam);
             }
         } catch (error: any) {
             message.error(`${error.response?.data?.message}`);
@@ -326,7 +331,12 @@ const MutasiBarang: React.FC = () => {
     }
 
     useEffect(() => {
-        fetch();
+        const request = {...requestParam};
+        request.where = {...request.where, ...{
+            created_at: ['between', [currentStartDate, currentEndDate]]
+        }}
+        setParamRequst(request);
+        fetch(request);
         getLocationUtils();
         getListSKU();
         getListBarcode();
@@ -338,7 +348,7 @@ const MutasiBarang: React.FC = () => {
             <Title level={2}>Daftar Mutasi</Title>
             <Space className="flex flex-col items-start my-6">
                 <Space className="gap-2">
-                    <Button icon={<ReloadOutlined/>} type="default" onClick={() => fetch()} className="my-3" >Reload</Button>
+                    <Button icon={<ReloadOutlined/>} type="default" onClick={() => fetch(requestParam)} className="my-3" >Reload</Button>
                     <Button icon={<PlusOutlined/>} href="mutasi/add" type="primary" className="my-3" >Buat Mutasi</Button>
                 </Space>
                 <Space className="flex gap-3 items-center">
