@@ -389,23 +389,23 @@ const ReturPage: React.FC = () => {
 
     const onChangeRangePicker = (dates: [string, string]) => {
         
+        var range: [string, string] = dates;
+
         if(dates[0] == '' && dates[1] == ''){
             const start = getStartAndEndOfMonth().startOfMonth;
             const end = getStartAndEndOfMonth().endOfMonth;
-            setCurrentEndDate(end);
-            setCurrentStartDate(start);
-            const request = {...requestParam};
-            request.where['created_at'] = ['between', [start, end]];
-            setRequestParam(request);
-            getRetur(request);
+            range = [start, end];
         }else{
-            const request = {...requestParam};
-            request.where['created_at'] = ['between', dates];
-            setCurrentEndDate(dates[1]);
-            setCurrentStartDate(dates[0]);
-            setRequestParam(request);
-            getRetur(request);
+            range = [`${range[0]} 00:00:00`, `${range[1]} 23:59:00`];
         }
+
+        setCurrentEndDate(range[1]);
+        setCurrentStartDate(range[0]);
+        const request = {...requestParam};
+        
+        request.where['created_at'] = ['between', range];
+        setRequestParam(request);
+        getRetur(request);
     }
 
     useEffect(() => {
@@ -424,8 +424,8 @@ const ReturPage: React.FC = () => {
                     <Button icon={<PlusOutlined/>} type="primary" href="retur/add_retur" onClick={() => {
                         deleteCookie('sale_id');
                         deleteCookie('retur_id');
-                    }} className="my-3 bg-blue-600 text-white" >Tambah</Button>
-                    <Button icon={<ReloadOutlined/>} type="default" onClick={() => getRetur(requestParam)} className="my-3" >Reload</Button>
+                    }} className="bg-blue-600 text-white" >Tambah</Button>
+                    <Button icon={<ReloadOutlined/>} type="default" onClick={() => getRetur(requestParam)} >Reload</Button>
                     {selectedRowKeys.length > 0 && <Space className="flex items-center"><Popconfirm
                         title="Yakin Ingin Menghapus Data Retur?"
                         description="Data yang sudah dihapus tidak akan bisa di kembalikan!"
@@ -450,16 +450,16 @@ const ReturPage: React.FC = () => {
                     
                     }
                 </Space>
-            <Row gutter={16} >
-                <Col span={12} className="mb-3">
+            <Row gutter={16} className="my-8" >
+                <Col span={12}>
                     <Card><Statistic title="Total Retur" value={formatRupiah(summery.total_amount)} loading={loading} /></Card>
                 </Col>
                
-                <Col span={12} className="mb-3">
+                <Col span={12}>
                     <Card><Statistic title="Total Barang Retur" value={summery.total_item} loading={loading} /></Card>
                 </Col>
             </Row>
-            <Space className="flex gap-3 items-center my-4">
+            <Space className="flex gap-3 items-center mb-4">
                     <p className="font-normal">Filter : </p>
                     <RangePicker 
                         presets={[
@@ -485,7 +485,7 @@ const ReturPage: React.FC = () => {
                             { value: '100', label: '100'},
                         ]}
                     />
-                    <Input placeholder="Cari Data Retur" onChange={(e) => onSearch(e.target.value)} prefix={<SearchOutlined />}  />
+                    <Input placeholder="Cari Daftar Retur" onChange={(e) => onSearch(e.target.value)} prefix={<SearchOutlined />}  />
             </Space>
             <Table columns={columns} onChange={onChange}
                 showSorterTooltip={{ target: 'sorter-icon' }} loading={loading} scroll={{ x: 'max-content'}} rowSelection={rowSelection} dataSource={returs?.data ?? []} pagination={false} rowKey={(record) => record.retur_id} />

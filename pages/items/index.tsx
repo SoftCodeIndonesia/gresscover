@@ -1,6 +1,6 @@
 import { Item } from "@/type/item"
 import { formatRupiah } from "@/utils/format_rupiah";
-import { Image, Button, Input, message, Space, Table, Typography, Popconfirm, TableProps } from "antd";
+import { Image, Button, Input, message, Space, Table, Typography, Popconfirm, TableProps, TableColumnsType } from "antd";
 import { useEffect, useState } from "react"
 import DashboardLayout from "../component/DashboardLayout";
 import Title from "antd/es/typography/Title";
@@ -11,21 +11,33 @@ import {
 import axiosInstance from "@/utils/axiosInstance";
 import { setCookie } from "cookies-next";
 import { Pagination } from "@/type/pagination";
-import { RequestParam } from "@/type/request_param";
+import { NewRequestParam, RequestParam } from "@/type/request_param";
 import Link from "next/link";
+type OnChange = NonNullable<TableProps<Item>['onChange']>;
+type Filters = Parameters<OnChange>[1];
+
+type GetSingle<T> = T extends (infer U)[] ? U : never;
+type Sorts = GetSingle<Parameters<OnChange>[2]>;
 type TableRowSelection<T extends object = object> = TableProps<T>['rowSelection'];
 const Items = () => {
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [items, setItems] = useState<Pagination<Item>>();
     const [loading, setLoading] = useState<boolean>(false);
     const [searchText, setSearchText] = useState('');
-    const [requestParam, setParamRequst] = useState<{limit: number, page: number}>({
+    const [requestParam, setParamRequst] = useState<NewRequestParam>({
+        table: '',
+        orderBy: {
+            'created_at': 'DESC'
+        },
         limit: 10,
         page: 1,
     });
 
     const handleSearch = (value: string) => {
-        setSearchText(value.toLowerCase());
+        const request = {...requestParam};
+        request.keyword = value;
+        setParamRequst(request);
+        fetchItems(requestParam);
     };
 
     const handleEdit = (id: string) => {
@@ -47,7 +59,7 @@ const Items = () => {
         onChange: onSelectChange,
     };
 
-    const columns = [
+    const columns: TableColumnsType<Item> = [
         {
             title: 'No',
             dataIndex: '',
@@ -90,18 +102,36 @@ const Items = () => {
             title: 'Harga Beli',
             dataIndex: 'cost',
             key: 'cost',
+            sorter: true,
             render: (_:any, record: Item) => formatRupiah(parseFloat(record.cost)),
         },
         {
             title: 'Harga Jual',
             dataIndex: 'price',
             key: 'price',
+            sorter: true,
             render: (_:any, record: Item) => formatRupiah(parseFloat(record.price)),
         },
         {
             title: 'Kategori',
             dataIndex: ['category', 'name'],
             key: 'category',
+        },
+        {
+            title: 'SKU Induk',
+            dataIndex: 'sku_induk',
+            key: 'sku_induk',
+        },
+        {
+            title: 'Tgl Dibuat',
+            dataIndex: 'created_at',
+            key: 'created_at',
+            sorter: true,
+        },
+        {
+            title: 'Dibuat oleh',
+            dataIndex: 'user_name',
+            key: 'user_name',
         },
         {
             title: 'Aksi',
@@ -129,7 +159,7 @@ const Items = () => {
             const response = await axiosInstance.post(`/search_del`, {"table": 'product', "data": ids});
             if(response.status == 200){
                 message.success('Item Telah Dihapus!');
-                fetchItems();
+                fetchItems(requestParam);
             }else{
                 setSelectedRowKeys([]);
                 message.error('Gagal Telah Dihapus!');
@@ -141,10 +171,27 @@ const Items = () => {
         }
     }
 
-    const fetchItems = async () => {
+    const onChange: TableProps<Item>['onChange'] = (pagination, filters, sorter, extra) => {
+        // console.log('params', pagination, filters, sorter, extra);
+        // console.log(sorter);
+
+        const sort: Sorts = sorter as Sorts;
+        
+        const request = {...requestParam};
+        if(sort.columnKey != undefined){
+            request.orderBy = {
+                [sort.columnKey.toString()]: sort.order == "ascend" ? 'ASC' : 'DESC' 
+            }
+        }
+
+        setParamRequst(request);
+        fetchItems(request)
+    }
+
+    const fetchItems = async (request: NewRequestParam) => {
         setLoading(true);
         try {
-            const response = await axiosInstance.post('/items_search', requestParam);
+            const response = await axiosInstance.post('/items_search', request);
             if(response.status == 200){
                 setItems(response.data.data);
             }else{
@@ -158,7 +205,7 @@ const Items = () => {
     }
 
     useEffect(() => {
-        fetchItems();
+        fetchItems(requestParam);
     }, [])
 
     return (
@@ -170,7 +217,7 @@ const Items = () => {
                     <Button type="primary" onClick={newItem}>
                         Buat Item Baru
                     </Button>
-                    <Button type="primary" onClick={fetchItems} icon={<ReloadOutlined/>}>
+                    <Button type="primary" onClick={() => fetchItems(requestParam)} icon={<ReloadOutlined/>}>
                         Reload
                     </Button>
                     {selectedRowKeys.length > 0 && <Popconfirm
@@ -184,7 +231,8 @@ const Items = () => {
                         <Button type="primary" danger>Hapus</Button>
                     </Popconfirm>}
                 </Space>
-                <Table dataSource={items?.data} rowSelection={rowSelection} columns={columns} loading={loading} rowKey={(record) => record.product_id} />
+                <Table dataSource={items?.data} onChange={onChange}
+                showSorterTooltip={{ target: 'sorter-icon' }} rowSelection={rowSelection} scroll={{x: 'max-content'}} columns={columns} loading={loading} rowKey={(record) => record.product_id} />
             </div>
         </DashboardLayout>
     )

@@ -138,7 +138,7 @@ const BarangKeluar: React.FC = () => {
         {
             title: 'Gudang',
             dataIndex: '',
-            key: 'location_to',
+            key: 'location_from',
             render: (_: any, record: InventoryMovement, index: number) => <p>{record.location_from ?? ''}</p>,
             onFilter: (value: boolean | Key, record: InventoryMovement) => {
                 
@@ -375,23 +375,23 @@ const BarangKeluar: React.FC = () => {
 
     const onChangeRangePicker = (dates: [string, string]) => {
         
+        var range: [string, string] = dates;
+
         if(dates[0] == '' && dates[1] == ''){
             const start = getStartAndEndOfMonth().startOfMonth;
             const end = getStartAndEndOfMonth().endOfMonth;
-            setCurrentEndDate(end);
-            setCurrentStartDate(start);
-            const request = {...requestParam};
-            request.where['created_at'] = ['between', [start, end]];
-            setParamRequst(request);
-            fetch(request);
+            range = [start, end];
         }else{
-            const request = {...requestParam};
-            request.where['created_at'] = ['between', dates];
-            setCurrentEndDate(dates[1]);
-            setCurrentStartDate(dates[0]);
-            setParamRequst(request);
-            fetch(request);
+            range = [`${range[0]} 00:00:00`, `${range[1]} 23:59:00`];
         }
+
+        setCurrentEndDate(range[1]);
+        setCurrentStartDate(range[0]);
+        const request = {...requestParam};
+        
+        request.where['created_at'] = ['between', range];
+        setParamRequst(request);
+        fetch(request);
     }
 
     useEffect(() => {
@@ -407,10 +407,10 @@ const BarangKeluar: React.FC = () => {
 
     return (
         <DashboardLayout>
-            <Title level={2}>Daftar Barang Masuk</Title>
+            <Title level={2}>Daftar Barang Keluar</Title>
             <Space className="gap-3">
-                <Button icon={<ReloadOutlined/>} type="default" onClick={() => fetch(requestParam)} className="my-3" >Reload</Button>
-                <Button icon={<PlusOutlined/>} type="primary" href="/inventory/in/add" onClick={() => deleteCookie('movement_id')} className="my-3" >Tambah</Button>
+                <Button icon={<ReloadOutlined/>} type="default" onClick={() => fetch(requestParam)} >Reload</Button>
+                <Button icon={<PlusOutlined/>} type="primary" href="/inventory/in/add" onClick={() => deleteCookie('movement_id')} >Tambah</Button>
                 {/* <Button icon={<FileExcelFilled/>} color="green" variant="solid" onClick={onExport} className="my-3" >Export Ke Excel</Button> */}
                 {selectedRowKeys.length > 0 && <Popconfirm
                     title="Yakin Ingin Menghapus Data Inventory?"
@@ -423,16 +423,16 @@ const BarangKeluar: React.FC = () => {
                     <Button type="primary" danger>Hapus</Button>
                 </Popconfirm>}
             </Space>
-            <Row gutter={16} className="my-4" >
-                <Col span={12} className="mb-3">
+            <Row gutter={16} className="my-8" >
+                <Col span={12} className="">
                     <Card><Statistic title="Total Harga Beli" value={formatRupiah(summary.total_asset)} loading={loading} /></Card>
                 </Col>
                
-                <Col span={12} className="mb-3">
+                <Col span={12} className="">
                     <Card><Statistic title="Total Barang keluar" value={summary.total_item} loading={loading} /></Card>
                 </Col>
             </Row>
-            <Space className="flex gap-3 items-center">
+            <Space className="flex gap-3 items-center mb-4">
                 <p className="font-normal">Filter : </p>
                 <RangePicker 
                     presets={[
@@ -446,7 +446,7 @@ const BarangKeluar: React.FC = () => {
                     defaultValue={[dayjs(currentStartDate), dayjs(currentEndDate)]}
                     onChange={(e, dateString) => onChangeRangePicker(dateString)} 
                 />
-                <Button icon={<FileExcelFilled/>} variant="solid" onClick={onExport} className="my-3" >Export Ke Excel</Button>
+                <Button icon={<FileExcelFilled/>} variant="solid" onClick={onExport} >Export Ke Excel</Button>
                 <Select
                     defaultValue="10"
                     style={{ width: 80 }}

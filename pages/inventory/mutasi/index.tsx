@@ -222,25 +222,25 @@ const MutasiBarang: React.FC = () => {
     }
 
     const onChangeRangePicker = (dates: [string, string]) => {
-        
+        // 00:00:00
+
+        var range: [string, string] = dates;
+
         if(dates[0] == '' && dates[1] == ''){
             const start = getStartAndEndOfMonth().startOfMonth;
             const end = getStartAndEndOfMonth().endOfMonth;
-            setCurrentEndDate(end);
-            setCurrentStartDate(start);
-            const request = {...requestParam};
-            
-            request.where['created_at'] = ['between', [start, end]];
-            setParamRequst(request);
-            fetch(request);
+            range = [start, end];
         }else{
-            const request = {...requestParam};
-            request.where['created_at'] = ['between', dates];
-            setCurrentEndDate(dates[1]);
-            setCurrentStartDate(dates[0]);
-            setParamRequst(request);
-            fetch(request);
+            range = [`${range[0]} 00:00:00`, `${range[1]} 23:59:00`];
         }
+
+        setCurrentEndDate(range[1]);
+        setCurrentStartDate(range[0]);
+        const request = {...requestParam};
+        
+        request.where['created_at'] = ['between', range];
+        setParamRequst(request);
+        fetch(request);
     }
     
     const onChange: TableProps<Mutation>['onChange'] = (pagination, filters, sorter, extra) => {
@@ -346,12 +346,12 @@ const MutasiBarang: React.FC = () => {
     return (
         <DashboardLayout>
             <Title level={2}>Daftar Mutasi</Title>
-            <Space className="flex flex-col items-start my-6">
+            <Space className="flex flex-col items-start">
                 <Space className="gap-2">
-                    <Button icon={<ReloadOutlined/>} type="default" onClick={() => fetch(requestParam)} className="my-3" >Reload</Button>
-                    <Button icon={<PlusOutlined/>} href="mutasi/add" type="primary" className="my-3" >Buat Mutasi</Button>
+                    <Button icon={<ReloadOutlined/>} type="default" onClick={() => fetch(requestParam)} >Reload</Button>
+                    <Button icon={<PlusOutlined/>} href="mutasi/add" type="primary" >Buat Mutasi</Button>
                 </Space>
-                <Space className="flex gap-3 items-center">
+                <Space className="flex gap-3 items-center my-4">
                     <p className="font-normal">Filter : </p>
                     <RangePicker 
                         presets={[
@@ -365,7 +365,7 @@ const MutasiBarang: React.FC = () => {
                         defaultValue={[dayjs(currentStartDate), dayjs(currentEndDate)]}
                         onChange={(e, dateString) => onChangeRangePicker(dateString)} 
                     />
-                    <Button icon={<FileExcelFilled/>} variant="solid" onClick={onExport} className="my-3" >Export Ke Excel</Button>
+                    <Button icon={<FileExcelFilled/>} variant="solid" onClick={onExport} >Export Ke Excel</Button>
                     <Select
                         defaultValue="10"
                         style={{ width: 80 }}

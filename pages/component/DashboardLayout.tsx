@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
+  CalculatorOutlined,
   DashboardOutlined,
   DatabaseOutlined,
   ExclamationCircleFilled,
@@ -7,7 +8,10 @@ import {
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  PercentageOutlined,
   PieChartOutlined,
+  SettingOutlined,
+  ShopOutlined,
   UserOutlined,
   UserSwitchOutlined,
 } from '@ant-design/icons';
@@ -100,47 +104,71 @@ const DashboardLayout: React.FC<Props> = ({children}) => {
       label: <Link href="/dashboard">Dashboard</Link>,
     },
     {
-      key: '10',
+      key: '2',
       icon: <PieChartOutlined />,
       label: 'Inventory',
       
       children: [
-        { key: '10.1', label: <Link href="/inventory">Semua Barang</Link>,  },
-        { key: '10.2', label: <Link href="/inventory/mutasi">Mutasi</Link>,  },
-        { key: '10.3', label: <Link href="/inventory/in">Barang Masuk</Link>,  },
-        { key: '10.4', label: <Link href="/inventory/out">Barang Keluar</Link>,  },
+        { key: '2.1', label: <Link href="/inventory">Semua Barang</Link>,  },
+        { key: '2.2', label: <Link href="/inventory/mutasi">Mutasi</Link>,  },
+        { key: '2.3', label: <Link href="/inventory/in">Barang Masuk</Link>,  },
+        { key: '2.4', label: <Link href="/inventory/out">Barang Keluar</Link>,  },
       ],
     },
     {
-      key: '7',
+      key: '3',
       icon: <FileDoneOutlined />,
       label: 'Transaksi',
       children: [
-        { key: '7.1', label:<Link href="/transaction">Semua Transaksi</Link>},
-        { key: '7.2', label:<Link href="/transaction/penjualan">Transaksi Penjualan</Link>},
-        { key: '7.3', label:<Link href="/transaction/retur">Transaksi Retur</Link>},
-        { key: '7.4', label:<Link href="/transaction/change">Penukaran Barang</Link>},
+        { key: '3.1', label:<Link href="/transaction">Semua Transaksi</Link>},
+        { key: '3.2', label:<Link href="/transaction/penjualan">Transaksi Penjualan</Link>},
+        { key: '3.3', label:<Link href="/transaction/retur">Transaksi Retur</Link>},
+        { key: '3.4', label:<Link href="/transaction/change">Penukaran Barang</Link>},
       ],
     },
     {
-      key: '2',
+      key: '4',
       icon: <DatabaseOutlined />,
       label: 'Master',
       children: [
-        { key: '2.1', label: <Link href="/items">Semua Item</Link> },
-        { key: '2.2', label: <Link href="/category">Kategori</Link> },
-        { key: '3.4', label: <Link href="/warehouse">Gudang</Link> },
+        { key: '4.1', label: <Link href="/items">Semua Item</Link> },
+        { key: '4.2', label: <Link href="/category">Kategori</Link> },
+        { key: '4.4', label: <Link href="/warehouse">Gudang</Link> },
+      ],
+    },
+    {
+      key: '5',
+      icon: <UserSwitchOutlined />,
+      label: 'Mejemen User',
+      children: [
+        { key: '5.1', label: <Link href="/staff">User</Link>},
+        { key: '5.2', label: <Link href="/hak_akses">Managemen Hak Akses</Link>},
       ],
     },
     {
       key: '6',
-      icon: <UserSwitchOutlined />,
-      label: 'Mejemen User',
-      children: [
-        { key: '6.1', label: <Link href="/staff">User</Link>},
-        { key: '6.2', label: <Link href="/hak_akses">Managemen Hak Akses</Link>},
-      ],
+      icon: <CalculatorOutlined />,
+      label: <Link href="/tax">Daftar Potongan</Link>,
+     
     },
+    {
+      key: '7',
+      icon: <ShopOutlined />,
+      label: <Link href="/platform">Platform Penjualan</Link>,
+     
+    },
+    {
+      key: '8',
+      icon: <PercentageOutlined />,
+      label: <Link href="/unit_converter">Konversi Satuan</Link>,
+     
+    },
+    {
+      key: '9',
+      icon: <SettingOutlined />,
+      label: <Link href="/settings">Pengaturan</Link>,
+    },
+    
   ]
 
   return (

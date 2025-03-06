@@ -5,6 +5,7 @@ import axiosInstance from '@/utils/axiosInstance';
 import { setCookie } from "cookies-next";
 import React, { useState, useEffect } from "react";
 import { Tax } from "@/type/tax";
+import { GroupSetting } from "@/type/setting";
 
 type FieldLoginType = {
     email: string,
@@ -15,6 +16,7 @@ type AuthResponse = {
     user: {
         data: User,
         taxes: Tax[],
+        settings: GroupSetting[],
     };
     access_token: string;
     token_type: string;
@@ -47,6 +49,7 @@ const LoginPage = () => {
                 message.success('Login Berhasil');
 
                 localStorage.setItem("taxs", JSON.stringify(data.user.taxes))
+                localStorage.setItem("settings", JSON.stringify(data.user.settings))
 
                 window.location.href = '/dashboard';
             }else if(response.status == 401){

@@ -7,6 +7,7 @@ export interface Staff {
     created_at: string;
     updated_at: string;
     user: User; // Relasi ke User
+    creator: User; // Relasi ke User
 }
 
 // Tipe data untuk daftar staff

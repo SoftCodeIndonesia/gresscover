@@ -25,6 +25,9 @@ import { useRouter } from "next/router";
 import { Sale } from "@/type/sale";
 import { getCookie } from "cookies-next";
 import { validateDecimal } from "@/utils/validate_decimal";
+import { GroupSetting } from "@/type/setting";
+import { Platform } from "@/type/platform";
+import { getPlatforms } from "@/utils/get_filters";
 
 
 interface TableInventory {
@@ -81,7 +84,8 @@ const AddTransactionSale: React.FC = () => {
     const [initialTableTax, setInitialTableTax] = useState<Tax[]>([]);
 
     const [optionUnit, setOptionUnit] = useState<AutoCompleteProps['options']>([]);
-    const [optionsLocation, setOptionsLocation] = useState<AutoCompleteProps['options']>([]);
+    const [optionsLocation, setOptionsLocation] = useState<Location[]>([]);
+    const [platforms, setPlatforms] = useState<Platform[]>([]);
     const [optionItem, setOptionsItem] = useState<AutoCompleteProps['options']>([]);
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [sale_data, setData] = useState<Sale>();
@@ -318,15 +322,8 @@ const AddTransactionSale: React.FC = () => {
                 const locationResult: Location[] = response.data.data;
                 
                 if(locationResult.length > 0){
-                    const result = locationResult.map((data: Location) => {
-                        return {
-                            value: data.location_id,
-                            label: data.name,
-                        }
-                    })
-                    form.setFieldValue('location_id', result[0].value);
-                    setOptionsLocation(result);
-                    ;
+                    setOptionsLocation(locationResult);
+                    
                 }
 
             }
@@ -334,6 +331,10 @@ const AddTransactionSale: React.FC = () => {
             message.error(`${error}`);
             
         }
+    }
+    const fetchPlatform = async () => {
+        const response = await getPlatforms();
+        setPlatforms(response as unknown as Platform[]);
     }
 
     const countSubtotal = (data: TableInventory[]) => {
@@ -455,8 +456,26 @@ const AddTransactionSale: React.FC = () => {
     }
 
     const setInitialTaxes = () => {
-        const tax = localStorage.getItem('taxs');
-        const taxData: Tax[] = JSON.parse(tax as string);
+        const settings = localStorage.getItem('settings');
+        const settingsData: GroupSetting[] = JSON.parse(settings as string);
+
+        var taxData: Tax[] = [];
+
+        settingsData.forEach(element => {
+            element.settings.forEach(setting => {
+                if(setting.slug == "default-pilihan-untuk-potongan-penjualan" && setting.value != null){
+                    const decodeValue = JSON.parse(setting.value as string)
+                    taxData = decodeValue as Tax[];
+                }
+            });
+        });
+
+
+        if(taxData.length == 0){
+            const tax = localStorage.getItem('taxs');
+            taxData = JSON.parse(tax as string);
+        }
+        
         form.setFieldValue('taxes', taxData);
         setInitialTableTax(taxData);
     }
@@ -595,6 +614,34 @@ const AddTransactionSale: React.FC = () => {
         }
     }
 
+    const setInitialForm = () => {
+        const settings = localStorage.getItem('settings');
+        const settingsData: GroupSetting[] = JSON.parse(settings as string);
+
+       
+
+        settingsData.forEach(element => {
+            element.settings.forEach(setting => {
+                if(setting.slug == "default-pilihan-untuk-platform-penjualan" && setting.value != null){
+                    const decodeValue = JSON.parse(setting.value as string)
+                    const platform = decodeValue as Platform;
+                    form.setFieldValue('platform', platform.name)
+                }else if(setting.slug == "default-pilihan-gudang-untuk-penjualan" && setting.value != null){
+                    const decodeValue = JSON.parse(setting.value as string)
+                    const location = decodeValue as Location;
+                    form.setFieldValue('location_id', location.location_id)
+                }
+            });
+        });
+
+
+        form.setFieldsValue({
+            sale_date: dayjs(),
+            status: 'sedang dikemas',
+            // platform: 'shopee'
+        })
+    }
+
     useEffect(() => {
         if(slug){
             fetchEditData();
@@ -608,11 +655,7 @@ const AddTransactionSale: React.FC = () => {
         if(sale_id == undefined){
             setInitialTaxes();
             setInitialTableData();
-            form.setFieldsValue({
-                sale_date: dayjs(),
-                status: 'sedang dikemas',
-                platform: 'shopee'
-            })
+            setInitialForm();
         }else{
             setSlug(sale_id);
         }
@@ -652,7 +695,7 @@ const AddTransactionSale: React.FC = () => {
                         <Form.Item className="flex-1" label="Pilih Gudang Penjualan" name='location_id' rules={[{ required: true, message: 'Bagian ini tidak boleh kosong!' }]} >
                             <Select 
                                 placeholder="Pilih Lokasi Awal Gudang"
-                                options={optionsLocation}
+                                options={optionsLocation.map((value) => ({label: value.name, value: value.location_id}))}
                                 onSelect={(value, option) => {
                                     form.setFieldsValue({
                                         location_id: value,
@@ -690,26 +733,17 @@ const AddTransactionSale: React.FC = () => {
                                     {label: 'Retur', value: 'retur'},
                                 ]}
                                 onChange={(value) => {console.log(value)}}
-                                allowClear
+                                allowClear={false}
                             >
                             </Select>
                         </Form.Item>
 
                         <Form.Item name="platform" label="Platform" rules={[{ required: true , message: 'Please input platform!'}]}>
                             <Select
-                                defaultValue={'shopee'}
                                 placeholder="platform penjualan"
-                                options={[
-                                    {label: 'Shopee', value: 'shopee'},
-                                    {label: 'Tokopedia', value: 'tokopedia'},
-                                    {label: 'Tiktok', value: 'tiktok'},
-                                    {label: 'Lazada', value: 'lazada'},
-                                    {label: 'Blibli', value: 'blibli'},
-                                    {label: 'Offline', value: 'offline'},
-                                    {label: 'Lainya', value: 'lainya'},
-                                ]}
+                                options={platforms.map((value) => ({label: value.name, value: value.slug}))}
                                 onChange={(value) => {console.log(value)}}
-                                allowClear
+                                allowClear={false}
                             >
                             </Select>
                         </Form.Item>

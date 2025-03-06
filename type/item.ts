@@ -14,6 +14,7 @@ export type Item = {
     stock_quantity: number;
     min_stock_quantity: number;
     created_by: number;
+    user_name?: string;
     unit_id: string;
     unit_name: string;
     created_at: string;
@@ -21,6 +22,7 @@ export type Item = {
     category: Category;
     unit: ItemUnit|null,
     parent_id: string|null,
+    sku_induk?: string|null,
     parent: Item|null,
     overall_quantity?: number,
     children: Item[],

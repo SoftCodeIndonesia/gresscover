@@ -301,27 +301,23 @@ const Transaction: React.FC = () => {
 
     const onChangeRangePicker = (dates: [string, string]) => {
         
+        var range: [string, string] = dates;
+
         if(dates[0] == '' && dates[1] == ''){
             const start = getStartAndEndOfMonth().startOfMonth;
             const end = getStartAndEndOfMonth().endOfMonth;
-            setCurrentEndDate(end);
-            setCurrentStartDate(start);
-
-            const request = requestParam;
-            request.where.created_at = ['between', [start, end]];
-            setCurrentEndDate(currentEndDate);
-            setCurrentStartDate(currentStartDate);
-            setRequestParam(request);
-            getTransactions(request);
+            range = [start, end];
         }else{
-            const request = requestParam;
-            
-            request.where.created_at = ['between', dates];
-            setCurrentEndDate(dates[1]);
-            setCurrentStartDate(dates[0]);
-            setRequestParam(request);
-            getTransactions(request);
+            range = [`${range[0]} 00:00:00`, `${range[1]} 23:59:00`];
         }
+
+        setCurrentEndDate(range[1]);
+        setCurrentStartDate(range[0]);
+        const request = {...requestParam};
+        
+        request.where['created_at'] = ['between', range];
+        setRequestParam(request);
+        getTransactions(request);
     }
 
     const handelShowRecord = (query: string) => {
@@ -374,8 +370,8 @@ const Transaction: React.FC = () => {
     return (
         <DashboardLayout>
             <Space className="gap-3">
-                <Button icon={<PlusOutlined/>} type="primary" href="transaction/add" className="my-3 bg-blue-600 text-white" >Tambah</Button>
-                <Button icon={<ReloadOutlined/>} type="default" onClick={() => getTransactions(requestParam)} className="my-3" >Reload</Button>
+                <Button icon={<PlusOutlined/>} type="primary" href="transaction/add" className=" bg-blue-600 text-white" >Tambah</Button>
+                <Button icon={<ReloadOutlined/>} type="default" onClick={() => getTransactions(requestParam)} className="" >Reload</Button>
                 {selectedRowKeys.length > 0 && <Popconfirm
                     title="Yakin Ingin Menghapus Data Inventory?"
                     description="Data yang sudah dihapus tidak akan bisa di kembalikan!"
@@ -387,7 +383,7 @@ const Transaction: React.FC = () => {
                     <Button type="primary" danger>Hapus</Button>
                 </Popconfirm>}
             </Space>
-            <Row gutter={16} className="my-4" >
+            <Row gutter={16} className="my-8" >
                 <Col span={12} className="">
                     <Card><Statistic title="Total Pemasukan" valueStyle={{ color: '#3f8600' }} value={formatRupiah(summery.total_pemasukan)} loading={loading} /></Card>
                 </Col>
@@ -396,7 +392,7 @@ const Transaction: React.FC = () => {
                     <Card><Statistic title="Total Pengeluaran" valueStyle={{ color: '#cf1322' }} value={summery.total_pengeluaran} loading={loading} /></Card>
                 </Col>
             </Row>
-            <Space className="flex gap-3 items-center my-4">
+            <Space className="flex gap-3 mb-4 items-center">
                     <p className="font-normal">Filter : </p>
                     <RangePicker 
                         presets={[

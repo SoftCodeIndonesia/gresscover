@@ -82,7 +82,7 @@ const LocationForm: React.FC<LocationFormProps> = ({ onSuccess, data, onReload }
       <Form.Item name="name" label="Nama Gudang" rules={[{ required: true, message: 'Nama gudang harus diisi' }]}>
         <Input />
       </Form.Item>
-      <Form.Item name="parent_id" label="Parent Gudang" initialValue={null}>
+      <Form.Item name="parent_id" label="Sub Gudang Dari" initialValue={null}>
         <Select allowClear>
           {parentLocations.map((location) => (
             <Option key={location.location_id} value={location.location_id}>

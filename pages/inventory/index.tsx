@@ -133,29 +133,29 @@ const InventoryPage: React.FC = () => {
             dataIndex:'sku', 
             key: 'sku',
             fixed: 'left',
-            onFilter: (value: boolean | Key, record: SearchInventoryResult) => {
-                return true;
-            },
-            filters: sku?.map((value: string) => ({
-                text: value,
-                value: value,
-            })),
-            filterSearch: true,
+            // onFilter: (value: boolean | Key, record: SearchInventoryResult) => {
+            //     return true;
+            // },
+            // filters: sku?.map((value: string) => ({
+            //     text: value,
+            //     value: value,
+            // })),
+            // filterSearch: true,
         },
         {
             title: 'SKU Induk',
             dataIndex:'parent_sku', 
             key: 'parent_sku',
             render: (_:any, record: SearchInventoryResult) => <p>{record.sku_induk}</p>,
-            onFilter: (value: boolean | Key, record: SearchInventoryResult) => {
+            // onFilter: (value: boolean | Key, record: SearchInventoryResult) => {
                 
-                return true;
-            },
-            filters: sku_induk?.map((value: string) => ({
-                text: value,
-                value: value,
-            })),
-            filterSearch: true,
+            //     return true;
+            // },
+            // filters: sku_induk?.map((value: string) => ({
+            //     text: value,
+            //     value: value,
+            // })),
+            // filterSearch: true,
            
         },
         {

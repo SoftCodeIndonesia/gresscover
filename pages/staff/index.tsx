@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Table, Typography, Spin, Alert, Button, Form, Modal, Input, message } from 'antd';
+import { Table, Typography, Spin, Alert, Button, Form, Modal, Input, message, Space } from 'antd';
 import { Staff, StaffList } from '@/type/staff';
 import { getCookie } from 'cookies-next';
 import axiosInstance from '@/utils/axiosInstance';
@@ -16,17 +16,30 @@ const layout = {
     labelCol: { span: 5 },
     wrapperCol: { span: 16 },
 };
-  
+import {
+    ReloadOutlined,
+    SearchOutlined,
+} from '@ant-design/icons';
 
 const StaffPage = () => {
     const [staff, setStaff] = useState<StaffList>([]);
     const [loading, setLoading] = useState(true);
+    const [searchkeyword, setSearchText] = useState<string>('');
     const [error, setError] = useState<string | null>(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingStaff, setEditingStaff] = useState<Staff | null>(null); // Menyimpan data staff yang sedang diedit
     const [form] = Form.useForm();
     const token = getCookie('token');
 
+    const filteredData = staff.filter((data) =>
+        data.user.name.toLowerCase().includes(searchkeyword) ||
+        data.user.email?.toLowerCase().includes(searchkeyword) ||
+        data.user.telephone?.toLowerCase().includes(searchkeyword) ||
+        formatDate(data.hire_date).toLowerCase().includes(searchkeyword) ||
+        formatDate(data.created_at).toLowerCase().includes(searchkeyword) ||
+        formatDate(data.updated_at).toLowerCase().includes(searchkeyword) ||
+        data.creator?.name?.toLowerCase().includes(searchkeyword)
+    );
 
     const handleEdit = (record: any) => {
         setEditingStaff(record);
@@ -106,6 +119,7 @@ const StaffPage = () => {
     };
 
     const fetchStaff = async () => {
+        setLoading(true);
         try {
             const response = await axiosInstance.get<StaffList>('/staff', {
                 headers: {
@@ -151,21 +165,27 @@ const StaffPage = () => {
             key: 'email',
         },
         {
-            title: 'Hire Date',
+            title: 'Tgl Join',
             dataIndex: 'hire_date',
             key: 'hire_date',
         },
         {
-            title: 'Dibuat Pada',
+            title: 'Dibuat tgl',
             dataIndex: 'created_at',
             key: 'created_at',
             render: (_:any, record: Staff) => formatDate(record.created_at),
         },
         {
-            title: 'Diupdate pada',
+            title: 'Diubah tgl',
             dataIndex: 'updated_at',
             key: 'updated_at',
             render: (_:any, record: Staff) => formatDate(record.updated_at),
+        },
+        {
+            title: 'Dibuat oleh',
+            dataIndex: 'created_by',
+            key: 'created_by',
+            render: (_:any, record: Staff) => <p>{record.creator?.name}</p>
         },
         {
             title: 'Aksi',
@@ -182,17 +202,27 @@ const StaffPage = () => {
         },
     ];
 
+    const handleSearch = (value: string) => {
+        setSearchText(value.toLowerCase());
+    };
+
     
     if (error) return <Alert message={error} type="error" />;
 
     return (
         <DashboardLayout>
             <div>
-                <Title level={2}>Staff List</Title>
-                <Button type="primary" onClick={handleAdd} style={{ marginBottom: '20px' }}>
-                    Buat Staff Baru
-                </Button>
-                <Table dataSource={staff} columns={columns} loading={loading} rowKey={(record) => record.staff_id.toString()} />
+                <Title level={2}>Daftar Karyawan</Title>
+                <Space className='mb-4'>
+                <Input prefix={<SearchOutlined />} placeholder="Cari Daftar Karyawan" className="w-full" onChange={(e) => handleSearch(e.target.value)}/>
+                    <Button type="primary" onClick={handleAdd}>
+                        Buat Karyawan Baru
+                    </Button>
+                    <Button type="primary" onClick={fetchStaff} icon={<ReloadOutlined/>}>
+                            Reload
+                    </Button>
+                </Space>
+                <Table dataSource={filteredData} scroll={{x: 'max-content'}} columns={columns} loading={loading} rowKey={(record) => record.staff_id.toString()} />
             </div>
 
             <Modal
@@ -225,7 +255,7 @@ const StaffPage = () => {
                         <Input.Password />
                     </Form.Item>}
                     <Form.Item
-                        label="Hire Date"
+                        label="Tgl Join"
                         name="hire_date"
                         rules={[{ required: true, message: 'Please input Hire Date!' }]}
                     >

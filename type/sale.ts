@@ -20,7 +20,7 @@ export type Sale = {
     items: SaleItem[],
     taxes: SaleTax[],
     total_tax?: number|null;
-    is_lunas?: number|null;
+    status_vendor?: string;
 }
 
 export type SaleItem = {

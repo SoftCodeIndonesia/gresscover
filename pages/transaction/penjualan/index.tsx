@@ -153,20 +153,20 @@ const Transaction: React.FC = () => {
             align: 'center',
         },
         {
-            title: 'Lunas',
-            dataIndex:'is_lunas', 
-            key: 'is_lunas',
+            title: 'Status Vendor',
+            dataIndex:'status_vendor', 
+            key: 'status_vendor',
             align: 'center',
             onFilter: (value: boolean | Key, record: Sale) => {
                             
                 return true;
             },
             filters: [
-                {text: 'Lunas', value: '1'},
-                {text: 'Belum Lunas', value: '0'},
+                {text: 'Lunas', value: 'Lunas'},
+                {text: 'Belum Lunas', value: 'Belum Lunas'},
             ],
             filterSearch: true,
-            render: (_: any, record: Sale, index: number) => record.is_lunas ? <CheckOutlined/> : <CloseOutlined/>,
+            render: (_: any, record: Sale, index: number) => record.status_vendor == 'Belum Lunas' ? <Tag color="#f50">Belum Lunas</Tag> : <Tag color="#108ee9">Lunas</Tag>,
         },
         {
             title: 'Aksi',
@@ -291,7 +291,7 @@ const Transaction: React.FC = () => {
         }
     }
 
-    const handleUpdateStatusBulk = async (record: string[], status: string) => {
+    const handleUpdateStatusBulk = async (record: string[], status: string, is_vendor: boolean) => {
        
         setLoading(true);
         try {
@@ -302,8 +302,10 @@ const Transaction: React.FC = () => {
             }
 
             console.log(data);
+
+            const stringUrl = is_vendor ? '/sales/vendor_status' : '/sales/status_bulk'
             
-            const response = await axiosInstance.put(`/sales/status_bulk`, data);
+            const response = await axiosInstance.put(stringUrl, data);
 
             if(response.status == 200){
                 message.success('Berhasil!');
@@ -383,29 +385,23 @@ const Transaction: React.FC = () => {
     
 
     const onChangeRangePicker = (dates: [string, string]) => {
-       
+        var range: [string, string] = dates;
+
         if(dates[0] == '' && dates[1] == ''){
             const start = getStartAndEndOfMonth().startOfMonth;
             const end = getStartAndEndOfMonth().endOfMonth;
-            setCurrentEndDate(end);
-            setCurrentStartDate(start);
-
-            const request = {...request_param};
-            request.where = {...request.where, ...{
-                sale_date: ['between', [start, end]]
-            }}
-            setRequestParam(request);
-            getSales(request);
+            range = [start, end];
         }else{
-            const request = {...request_param};
-            request.where = {...request.where, ...{
-                sale_date: ['between', dates]
-            }}
-            setCurrentEndDate(dates[1]);
-            setCurrentStartDate(dates[0]);
-            setRequestParam(request);
-            getSales(request);
+            range = [`${range[0]} 00:00:00`, `${range[1]} 23:59:00`];
         }
+
+        setCurrentEndDate(range[1]);
+        setCurrentStartDate(range[0]);
+        const request = {...request_param};
+        
+        request.where['created_at'] = ['between', range];
+        setRequestParam(request);
+        getSales(request);
     }
 
     const getStatus = (status: string) => {
@@ -517,13 +513,25 @@ const Transaction: React.FC = () => {
                         <Select
                             placeholder="Ubah Status"
                             onChange={(e) => {
-                                handleUpdateStatusBulk(selectedRowKeys as string[], e);
+                                handleUpdateStatusBulk(selectedRowKeys as string[], e, false);
                             }}
                             options={[
                                 { value: 'sedang dikemas', label: 'Sedang Dikemas' },
                                 { value: 'dalam pengiriman', label: 'Dalam Pengiriman' },
                                 { value: 'pesanan terkirim', label: 'Pesanan Terkirim' },
-                                { value: 'lunas', label: 'Lunas' },
+                            ]}
+                            style={{width: 200}}
+                            allowClear
+                        >
+                        </Select>
+                        <Select
+                            placeholder="Ubah Status Vendor"
+                            onChange={(e) => {
+                                handleUpdateStatusBulk(selectedRowKeys as string[], e, true);
+                            }}
+                            options={[
+                                { value: 'Lunas', label: 'Lunas' },
+                                { value: 'Belum Lunas', label: 'Belum Lunas' },
                             ]}
                             style={{width: 200}}
                             allowClear
@@ -534,7 +542,7 @@ const Transaction: React.FC = () => {
                     }
                     
                 </Space>
-            <Row gutter={16} className="my-4" >
+            <Row gutter={16} className="my-8" >
                 <Col span={12} className="">
                     <Card><Statistic title="Total Penjualan" value={formatRupiah(summery.total_amount)} loading={loading} /></Card>
                 </Col>
@@ -543,40 +551,38 @@ const Transaction: React.FC = () => {
                     <Card><Statistic title="Total Barang Terjual" value={summery.total_item} loading={loading} /></Card>
                 </Col>
             </Row>
-            <Space className="flex justify-between my-4">
-                
-                <Space className="gap-3">
+            <Space className="gap-3 mb-4">
+                <p>Filter : </p>
                 <RangePicker 
-                        presets={[
-                            {
-                            label: <span aria-label="Current Time to End of Day">Now ~ EOD</span>,
-                            value: () => [dayjs(), dayjs().endOf('day')], // 5.8.0+ support function
-                            },
-                            ...rangePresets,
-                            
-                        ]}
-                        defaultPickerValue={[dayjs(currentStartDate), dayjs(currentEndDate)]}
-                        defaultValue={[dayjs(currentStartDate), dayjs(currentEndDate)]}
-                        onChange={(e, dateString) => onChangeRangePicker(dateString)} 
+                    presets={[
+                        {
+                        label: <span aria-label="Current Time to End of Day">Now ~ EOD</span>,
+                        value: () => [dayjs(), dayjs().endOf('day')], // 5.8.0+ support function
+                        },
+                        ...rangePresets,
+                        
+                    ]}
+                    defaultPickerValue={[dayjs(currentStartDate), dayjs(currentEndDate)]}
+                    defaultValue={[dayjs(currentStartDate), dayjs(currentEndDate)]}
+                    onChange={(e, dateString) => onChangeRangePicker(dateString)} 
 
-                        />
-                        <Button type="default" icon={<FileExcelFilled/>} onClick={onExport}>Export Ke Excel</Button>
-                        <Select
-                            defaultValue="10"
-                            style={{ width: 80 }}
-                            onChange={(e) => handelShowRecord(e)}
-                            options={[
-                                { value: '10', label: '10' },
-                                { value: '30', label: '30' },
-                                { value: '50', label: '50' },
-                                { value: '100', label: '100'},
-                            ]}
-                        />
-                        <Input placeholder="Cari Inventory" onChange={(e) => onSearch(e.target.value)} prefix={<SearchOutlined />}  />
-                </Space>
+                    />
+                    <Button type="default" icon={<FileExcelFilled/>} onClick={onExport}>Export Ke Excel</Button>
+                    <Select
+                        defaultValue="10"
+                        style={{ width: 80 }}
+                        onChange={(e) => handelShowRecord(e)}
+                        options={[
+                            { value: '10', label: '10' },
+                            { value: '30', label: '30' },
+                            { value: '50', label: '50' },
+                            { value: '100', label: '100'},
+                        ]}
+                    />
+                    <Input placeholder="Cari Daftar Penjualan" onChange={(e) => onSearch(e.target.value)} prefix={<SearchOutlined />}  />
             </Space>
             <Select
-                    className="mb-3"
+                    className="mb-4"
                     mode="multiple"
                     placeholder="Pilih kolom yang ingin ditampilkan"
                     defaultValue={checkedListColumn}
