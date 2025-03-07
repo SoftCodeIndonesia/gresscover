@@ -651,6 +651,7 @@ const AddTransactionSale: React.FC = () => {
 
     useEffect(() => {
         fetchLocation();
+        fetchPlatform();
         const sale_id = getCookie('sale_id');
         if(sale_id == undefined){
             setInitialTaxes();
