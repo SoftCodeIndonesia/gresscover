@@ -6,7 +6,7 @@ import axiosInstance from "@/utils/axiosInstance";
 import { Button, Form, Input, message, Select, Table, Modal, AutoComplete, AutoCompleteProps, TableColumnsType, Breadcrumb, Radio } from "antd";
 import { LayoutType } from "@/type/form.layout";
 
-import { MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons';
+import { DeleteFilled, MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import { handlePriceChange } from "@/utils/validate_price_change";
 import { RequestParam } from "@/type/request_param";
 import { Pagination } from "@/type/pagination";
@@ -93,7 +93,7 @@ const AddRetur: React.FC = () => {
             width: 200,
             render: (_: any, record: TableInventory, index: number) => (
                 <>
-                    <Form.Item name={['items', index, 'condition']}>
+                    <Form.Item name={['items', index, 'condition']} className="m-0">
                         <Radio.Group onChange={(value) => {
                                 
                                 // const parent: TableInventory = initialTable.filter((value) => value.key == record.key)[0];
@@ -109,9 +109,23 @@ const AddRetur: React.FC = () => {
                 </>
             ),
         },
+        {
+            title: "Aksi",
+            dataIndex: "",
+            render: (_: any, record: TableInventory, index: number) => (
+                <>
+                    <Button onClick={() => removeItem(record)}>
+                        <DeleteFilled/>
+                    </Button>
+                </>
+            ),
+        },
     ];
     
-    
+    const removeItem = (index: TableInventory) => {
+        const initial = initialTable.filter((value) => value.key != index.key);
+        setInitialTable(initial);
+    }
 
     const fetchSales = async (query: string) => {
        
@@ -180,10 +194,7 @@ const AddRetur: React.FC = () => {
             form.setFieldValue('items', initials);
         }
     }
-
     
-    
-
     const handleSubmit = async () => {
         setLoading(true);
         
@@ -212,6 +223,8 @@ const AddRetur: React.FC = () => {
         items.forEach(element => {
             console.log(element);
             if(element.item_retur_condition != 'completed'){
+                total_loss = total_loss + ((element.price??1) * element.quantity) + ((element.price??1) * element.quantity);
+            }else{
                 total_loss = total_loss + ((element.price??1) * element.quantity);
             }
         });

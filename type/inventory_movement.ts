@@ -4,6 +4,7 @@ import { User } from "./user";
 
 export type InventoryMovement = {
     id: string;
+    movement_id: string;
     product_name: string,
     product_photo: string,
     product_id: string;

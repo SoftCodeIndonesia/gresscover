@@ -5,6 +5,7 @@ import {
   DatabaseOutlined,
   ExclamationCircleFilled,
   FileDoneOutlined,
+  FileProtectOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -128,43 +129,48 @@ const DashboardLayout: React.FC<Props> = ({children}) => {
     },
     {
       key: '4',
-      icon: <DatabaseOutlined />,
-      label: 'Master',
-      children: [
-        { key: '4.1', label: <Link href="/items">Semua Item</Link> },
-        { key: '4.2', label: <Link href="/category">Kategori</Link> },
-        { key: '4.4', label: <Link href="/warehouse">Gudang</Link> },
-      ],
+      icon: <FileProtectOutlined />,
+      label: <Link href="/report">Laporan</Link>
     },
     {
       key: '5',
-      icon: <UserSwitchOutlined />,
-      label: 'Mejemen User',
+      icon: <DatabaseOutlined />,
+      label: 'Master',
       children: [
-        { key: '5.1', label: <Link href="/staff">User</Link>},
-        { key: '5.2', label: <Link href="/hak_akses">Managemen Hak Akses</Link>},
+        { key: '5.1', label: <Link href="/items">Semua Item</Link> },
+        { key: '5.2', label: <Link href="/category">Kategori</Link> },
+        { key: '5.4', label: <Link href="/warehouse">Gudang</Link> },
       ],
     },
     {
       key: '6',
+      icon: <UserSwitchOutlined />,
+      label: 'Mejemen User',
+      children: [
+        { key: '6.1', label: <Link href="/staff">User</Link>},
+        { key: '6.2', label: <Link href="/hak_akses">Managemen Hak Akses</Link>},
+      ],
+    },
+    {
+      key: '7',
       icon: <CalculatorOutlined />,
       label: <Link href="/tax">Daftar Potongan</Link>,
      
     },
     {
-      key: '7',
+      key: '8',
       icon: <ShopOutlined />,
       label: <Link href="/platform">Platform Penjualan</Link>,
      
     },
     {
-      key: '8',
+      key: '9',
       icon: <PercentageOutlined />,
       label: <Link href="/unit_converter">Konversi Satuan</Link>,
      
     },
     {
-      key: '9',
+      key: '10',
       icon: <SettingOutlined />,
       label: <Link href="/settings">Pengaturan</Link>,
     },

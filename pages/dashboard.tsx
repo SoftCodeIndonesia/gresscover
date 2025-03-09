@@ -1,4 +1,4 @@
-import { Card, Col, message, Row, Statistic } from "antd";
+import { Card, Col, DatePicker, message, Row, Statistic, TimeRangePickerProps } from "antd";
 import DashboardLayout from "./component/DashboardLayout";
 import { useEffect, useState } from "react";
 import { StatisticDashbaord } from "@/type/statistic";
@@ -7,10 +7,31 @@ import { formatRupiah } from "@/utils/format_rupiah";
 import InventoryPage from "./inventory";
 import InventoryTable from "./component/InventoryTable";
 import Title from "antd/es/typography/Title";
-
+import { getStartAndEndOfMonth } from "@/utils/date_utils";
+import dayjs from "dayjs";
+import SummeryLaba from "./component/SummeryLaba";
+import SummerySales from "./component/SummerySales";
+const { RangePicker } = DatePicker;
 const Dashboard = () => {
     const [statisticData, setStatistic] = useState<StatisticDashbaord>();
+    const [dataLaba, setLaba] = useState<{
+        laba_kotor: number,
+        total_pengeluaran: number,
+        laba_bersih: number,
+    }>({laba_bersih: 0, laba_kotor: 0, total_pengeluaran: 0});
+    const [currentStartDate, setCurrentStartDate] = useState<string>(getStartAndEndOfMonth().startOfMonth);
+    const [currentEndDate, setCurrentEndDate] = useState<string>(getStartAndEndOfMonth().endOfMonth);
     const [loading, setLoading] = useState<boolean>(false);
+    const [loadingLaba, setLoadingLaba] = useState<boolean>(false);
+    
+    const rangePresets: TimeRangePickerProps['presets'] = [
+        { label: 'Last 7 Days', value: [dayjs().add(-7, 'd'), dayjs()] },
+        { label: 'Last 14 Days', value: [dayjs().add(-14, 'd'), dayjs()] },
+        { label: 'Last 30 Days', value: [dayjs().add(-30, 'd'), dayjs()] },
+        { label: 'Last 90 Days', value: [dayjs().add(-90, 'd'), dayjs()] },
+    ];
+
+    
 
     const getStatistic = async () => {
         setLoading(true);
@@ -26,43 +47,66 @@ const Dashboard = () => {
         }
     }
 
+    const getLaba = async (dates: string[]) => {
+        setLoadingLaba(true);
+        try {
+            const response = await axiosInstance.post('/summery/laba', {date: dates});
+            if(response.status == 200){
+                setLaba(response.data.data);
+            }
+        } catch (error: any) {
+            message.error(`${error.response?.data?.message ?? error}`);
+        } finally {
+            setLoadingLaba(false);
+        }
+    }
+
+    const onChangeRangePicker = (dates: [string, string]) => {
+            
+        var range: [string, string] = dates;
+
+        if(dates[0] == '' && dates[1] == ''){
+            const start = getStartAndEndOfMonth().startOfMonth;
+            const end = getStartAndEndOfMonth().endOfMonth;
+            range = [start, end];
+        }else{
+            range = [`${range[0]} 00:00:00`, `${range[1]} 23:59:00`];
+        }
+
+        setCurrentEndDate(range[1]);
+        setCurrentStartDate(range[0]);
+        getLaba(range);
+    }
+
     useEffect(() => {
+        getLaba([currentStartDate, currentEndDate]);
         getStatistic();
     }, []);
 
     return (
         <DashboardLayout>
-            <Row gutter={16} >
-                <Col span={6} className="mb-3">
-                    <Card><Statistic title="Total Assets" value={formatRupiah(statisticData?.total_asset ?? 0)} loading={loading} /></Card>
+            <SummeryLaba/>
+            <Row gutter={16} className="mt-6">
+                <Col span={8} className="mb-3">
+                    <Card><Statistic title="Total Semua Assets" value={formatRupiah(statisticData?.total_asset ?? 0)} loading={loading} /></Card>
                 </Col>
                
-                <Col span={6} className="mb-3">
-                    <Card><Statistic title="Total Barang" value={statisticData?.total_barang ?? 0} loading={loading} /></Card>
+                <Col span={8} className="mb-3">
+                    <Card><Statistic title="Total Semua Barang" value={statisticData?.total_barang ?? 0} loading={loading} /></Card>
                     {/* <Statistic title="Account Balance (CNY)" value={112893} precision={2} /> */}
                     {/* <Button style={{ marginTop: 16 }} type="primary">
                         Recharge
                     </Button> */}
                 </Col>
-                <Col span={6} className="mb-3">
+                <Col span={8} className="mb-3">
                     <Card><Statistic title="Total Gudang" value={statisticData?.total_gudang ?? 0} loading={loading} /></Card>
                     {/* <Statistic title="Active Users" value={112893} loading /> */}
                 </Col>
-                <Col span={6} className="mb-3">
-                    <Card><Statistic title="Total Penjualan" valueStyle={{ color: '#3f8600' }} value={formatRupiah(statisticData?.total_penjualan ?? 0)} loading={loading} /></Card>
-                    {/* <Statistic title="Active Users" value={112893} loading /> */}
-                </Col>
-                <Col span={6} className="mb-3">
-                    <Card><Statistic title="Total Retur" valueStyle={{ color: '#cf1322' }} value={formatRupiah(statisticData?.total_retur ?? 0)} loading={loading} /></Card>
-                    {/* <Statistic title="Active Users" value={112893} loading /> */}
-                </Col>
-                <Col span={6} className="mb-3">
-                    <Card><Statistic title="Pengeluaran lainya" valueStyle={{ color: '#cf1322' }} value={formatRupiah(statisticData?.total_pengeluaran_lainya ?? 0)} loading={loading} /></Card>
-                    {/* <Statistic title="Active Users" value={112893} loading /> */}
-                </Col>
+                
+                
             </Row>
-            <Title level={4}>Daftar Gudang</Title>
-            <Row gutter={16} >
+            <p className="text-lg font-bold mt-6">Daftar Gudang</p>
+            <Row gutter={16} className="mt-6" >
                 {statisticData?.gudang.map((value: {name: string, total_barang: number, total_asset: number}) => (
                     <Col span={6} className="mb-3" key={name!}>
                         <Card>
@@ -76,9 +120,10 @@ const Dashboard = () => {
                     </Col>
                 ))}
             </Row>
-            <div className="my-4">
+            <div className="mt-4">
             <InventoryTable/>
             </div>
+            <SummerySales/>
         </DashboardLayout>
     )
 }

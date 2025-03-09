@@ -92,6 +92,7 @@ const AddTransactionSale: React.FC = () => {
     const [modalItem, setModalItem] = useState<boolean>(false);
 
     const [minimum, setMinimum] = useState<number>(0);
+    const [total_quantity, setTotalQuantity] = useState<number>(0);
 
     const [form] = Form.useForm();
 
@@ -156,9 +157,16 @@ const AddTransactionSale: React.FC = () => {
                     },
                 },
             });
-
+            sumTotalQuantity(newData);
             countTotalWithTax(initialTableTax, newData);
         }
+    }
+
+    const sumTotalQuantity = (data: TableInventory[]) => {
+        const subtotal = data.reduce((accumulator, currentValue) => {
+            return accumulator + (currentValue.quantity ?? 0); // Menjumlahkan nilai
+        }, 0);
+        setTotalQuantity(subtotal);
     }
 
     const sumSubtotal = (data: TableInventory[]) => {
@@ -181,7 +189,7 @@ const AddTransactionSale: React.FC = () => {
             fixed: 'left',
             
             render: (_: any, record: TableInventory, index: number) => (
-                <Form.Item name={['items', index, 'product_name']} rules={[{ required: true, message: 'Field is required' }]}>
+                <Form.Item name={['items', index, 'product_name']} rules={[{ required: true, message: 'Field is required' }]} className="m-0">
                     <AutoComplete
                         options={optionItem}
                         filterOption={true}
@@ -212,6 +220,7 @@ const AddTransactionSale: React.FC = () => {
                             newData[index].selling_price = selling_price;
                             setInitialTable(newData);
                             sumSubtotal(newData);
+                            sumTotalQuantity(newData);
                             countTotalWithTax(initialTableTax, newData);
                             form.setFieldValue('items', newData);
                         }
@@ -230,6 +239,7 @@ const AddTransactionSale: React.FC = () => {
                             setInitialTable(newData);
                             countTotalWithTax(initialTableTax, newData);
                             sumSubtotal(newData);
+                            sumTotalQuantity(newData);
                             form.setFieldValue('items', newData);
                         }
                     }} />
@@ -240,13 +250,15 @@ const AddTransactionSale: React.FC = () => {
             title: "Harga Jual",
             dataIndex: "selling_price",
             width: 200,
+            align: 'right',
             render: (_: any, record: TableInventory, index: number) => (
-                <Form.Item name={['items', index, 'selling_price']} rules={[{ required: true, message: 'Field is required' }]}>
-                    <Input placeholder="Masukan Harga Jual" value={formatRupiah(record.selling_price ?? 0.0)} onChange={(e) => {
+                <Form.Item className="m-0" name={['items', index, 'selling_price']} rules={[{ required: true, message: 'Field is required' }]}>
+                    <Input className="text-right" placeholder="Masukan Harga Jual" value={formatRupiah(record.selling_price ?? 0.0)} onChange={(e) => {
                         const newData = [...initialTable];
                         newData[index].selling_price = parseInt(handlePriceChange(e.target.value));
                         setInitialTable(newData);
-
+                        setSubtotal(countSubtotal(newData));
+                        countTotalWithTax(initialTableTax, newData);
                     }} />
                 </Form.Item>
             ),
@@ -394,6 +406,8 @@ const AddTransactionSale: React.FC = () => {
             'items': items,
             "total_amount_before_tax": subtotal,
             "total_amount_after_tax": total,
+            'total_quantity': total_quantity,
+            'total_sku': items.length,
         }
 
         console.log(data);
@@ -599,11 +613,12 @@ const AddTransactionSale: React.FC = () => {
                 });
 
                 form.setFieldValue('items', initials);
+                form.setFieldValue('taxes', taxes);
                 setInitialTableTax(taxes);
                 setInitialTable(initials);
                 setSubtotal(countSubtotal(initials));
                 // setTotal(responseData.data[0].total_amount_after_tax);
-                
+                sumTotalQuantity(initials);
                 countTotalWithTax(taxes, initials)
             }
 
@@ -758,7 +773,7 @@ const AddTransactionSale: React.FC = () => {
                             columns={columns} 
                             loading={loading} 
                             rowKey={(record) => record.key ?? ''} 
-                            rowSelection={rowSelection}
+                            // rowSelection={rowSelection}
                             pagination={false} 
                             dataSource={initialTable} 
                             footer={() => <Button type="text" color="blue" onClick={addNewLine}>Tambah Baris</Button>}
@@ -768,18 +783,31 @@ const AddTransactionSale: React.FC = () => {
                                 return (
                                 <>
                                     <Table.Summary.Row>
-                                        <Table.Summary.Cell index={(initialTable.length ?? 1) + 1} colSpan={3} align="right"><p className="font-bold">Subtotal</p></Table.Summary.Cell>
-                                        <Table.Summary.Cell index={(initialTable.length ?? 1) + 2} align="right">
+                                        <Table.Summary.Cell index={(initialTable.length ?? 1) + 1} colSpan={1} align="right"><p className="font-bold">Subtotal</p></Table.Summary.Cell>
+                                        <Table.Summary.Cell index={(initialTable.length ?? 1) + 2} align="center">
+                                            <p>{total_quantity}</p>
+                                        </Table.Summary.Cell>
+                                        <Table.Summary.Cell index={(initialTable.length ?? 1) + 3} align="right">
                                             <p>{formatRupiah(subtotal)}</p>
                                         </Table.Summary.Cell>
                                     </Table.Summary.Row>
                                     {initialTableTax.map((value: Tax, index: number) => {
-                                        return <Table.Summary.Row key={index}>
-                                                    <Table.Summary.Cell index={index} colSpan={3} align="right"><Button type="text" danger onClick={() => removeTaxes(value)}><CloseCircleOutlined/></Button> <p className="font-bold">{value.name}</p></Table.Summary.Cell>
-                                                    <Table.Summary.Cell index={index} align="right">
+                                        return <Table.Summary.Row key={index} className="text-right">
+                                            <Table.Summary.Cell  index={(initialTableTax.length ?? 2) + 1}  colSpan={1} align="right">
+                                                <div className="flex text-right flex-1 items-center justify-end">
+                                                    <Button type="text" danger onClick={() => removeTaxes(value)}><CloseCircleOutlined/></Button> 
+                                                    <p className="font-bold">{value.name}</p>
+                                                </div>
+                                            </Table.Summary.Cell>
+                                                    <Table.Summary.Cell index={(initialTableTax.length ?? 1) + 1} align="center" >
                                                         
-                                                    <Form.Item name={['taxes', index, 'value']}>
-                                                    <Input addonAfter={
+                                                    </Table.Summary.Cell>
+                                                    
+                                                    
+                                                    <Table.Summary.Cell index={(initialTableTax.length ?? 3) + 1} align="right"  >
+                                                        
+                                                    <Form.Item name={['taxes', index, 'value']} className="m-0">
+                                                    <Input style={{margin: 0}} addonAfter={
                                                         
                                                         <Select  onChange={(value) => {
                                                             const newData = [...initialTableTax];
@@ -810,7 +838,10 @@ const AddTransactionSale: React.FC = () => {
                                                 </Table.Summary.Row>
                                     })}
                                     <Table.Summary.Row>
-                                        <Table.Summary.Cell index={(initialTable.length ?? 1) + 3} colSpan={3} align="right"><p className="font-bold">Total</p></Table.Summary.Cell>
+                                        <Table.Summary.Cell index={(initialTable.length ?? 1) + 3} colSpan={1} align="right"><p className="font-bold">Total</p></Table.Summary.Cell>
+                                        <Table.Summary.Cell index={(initialTable.length ?? 1) + 2} align="center">
+                                            <p>{total_quantity}</p>
+                                        </Table.Summary.Cell>
                                         <Table.Summary.Cell index={(initialTable.length ?? 1) + 4} align="right">
                                             <p>{formatRupiah(total)}</p>
                                         </Table.Summary.Cell>

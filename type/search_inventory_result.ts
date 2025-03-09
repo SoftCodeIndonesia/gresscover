@@ -1,0 +1,17 @@
+export type SearchInventoryResult = {
+    product_id: string,
+    unit_id: string,
+    harga_beli: number,
+    harga_jual: number,
+    location_name: string,
+    sku_induk: string,
+    quantity: number,
+    product_name: string,
+    inventory_id: string,
+    quantity_unit: number,
+    unit_name: string,
+    sku: string,
+    barcode: string,
+    nilai_asset: number,
+    minimum: number,
+}

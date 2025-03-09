@@ -1,6 +1,7 @@
 import { Key, useEffect, useState } from "react";
 import DashboardLayout from "../../component/DashboardLayout";
 import { Pagination } from "@/type/pagination";
+import { InventoryMovement } from "@/type/inventory_movement";
 import { Button, Card, Col, DatePicker, Image, Input, Pagination as PaginationTable, Popconfirm, Row, Select, Space, Statistic, Table, TableColumnsType, TableProps, Tag, TimeRangePickerProps, Typography, message } from "antd";
 import {
     FileExcelFilled,
@@ -22,9 +23,8 @@ import { formatRupiah } from "@/utils/format_rupiah";
 import { getLocation } from "@/utils/get_filters";
 import { Location } from "@/type/location";
 import dayjs from "dayjs";
-import { Movement } from "@/type/movement";
 
-type OnChange = NonNullable<TableProps<Movement>['onChange']>;
+type OnChange = NonNullable<TableProps<InventoryMovement>['onChange']>;
 type Filters = Parameters<OnChange>[1];
 
 type GetSingle<T> = T extends (infer U)[] ? U : never;
@@ -32,9 +32,9 @@ type Sorts = GetSingle<Parameters<OnChange>[2]>;
 
 const { RangePicker } = DatePicker;
 
-const MovementOut: React.FC = () => {
+const BarangMasuk: React.FC = () => {
     const router = useRouter();
-    const [outs, setData] = useState<Pagination<Movement>>({
+    const [outs, setData] = useState<Pagination<InventoryMovement>>({
         current_page: 0,
         data: [],
         last_page: 1,
@@ -49,7 +49,7 @@ const MovementOut: React.FC = () => {
         limit: 10,
         page: 1,
         where: {
-            type: ["in", ["out"]]
+            type: ["in", ["in", "adjustment"]]
         },
         orderBy: {
             created_at: 'desc',
@@ -61,12 +61,15 @@ const MovementOut: React.FC = () => {
     const [currentStartDate, setCurrentStartDate] = useState<string>(getStartAndEndOfMonth().startOfMonth);
     const [currentEndDate, setCurrentEndDate] = useState<string>(getStartAndEndOfMonth().endOfMonth);
 
-    const showStatus = (_: any, record: Movement, index: number) => {
-        if(record.is_payment == 'Lunas'){
-            return <Tag color="success">Lunas</Tag>;
-        }else if(record.is_payment == 'Belum Lunas'){
-            return <Tag color="processing">Belum Lunas</Tag>;
+    const showStatus = (_: any, record: InventoryMovement, index: number) => {
+        if(record.status == 'completed'){
+            return <Tag color="success">SELESAI</Tag>;
+        }else if(record.status == 'pending'){
+            return <Tag color="processing">PENDING</Tag>;
+        }else if(record.status == 'reject'){
+            return <Tag color="red">REJECT</Tag>;
         }
+
       
     }
 
@@ -77,7 +80,7 @@ const MovementOut: React.FC = () => {
         { label: 'Last 90 Days', value: [dayjs().add(-90, 'd'), dayjs()] },
     ];
 
-    const column:TableColumnsType<Movement> = [
+    const column:TableColumnsType<InventoryMovement> = [
         {
             title: 'No',
             dataIndex: '',
@@ -85,11 +88,59 @@ const MovementOut: React.FC = () => {
             render: (_: any, record: any, index: number) => <p>{(outs.current_page - 1) * 10 + index + 1}</p>,
         },
         {
+            title: 'Product',
+            dataIndex: '',
+            key: 'product_name',
+            render: (_: any, record: InventoryMovement, index: number) => <p>{record.product_name}</p>,
+        },
+        {
+            title: 'SKU',
+            dataIndex: 'sku',
+            key: 'sku',
+        },
+        {
+            title: 'Barcode',
+            dataIndex: 'barcode',
+            key: 'barcode',
+        },
+        {
+            title: 'Sumber',
+            dataIndex: 'reference',
+            key: 'reference',
+            render: (_: any, record: InventoryMovement, index: number) => checkSource(record),
+            onFilter: (value: boolean | Key, record: InventoryMovement) => {
+                
+                return true;
+            },
+            filters: [
+                {
+                    text: 'Mutasi',
+                    value: 'inventory',
+                },
+                {
+                    text: 'Retur',
+                    value: 'retur',
+                },
+                {
+                    text: 'Penukaran Barang',
+                    value: 'exchange',
+                }
+            ],
+            filterSearch: true,
+        },
+        {
+            title: 'Quantity',
+            dataIndex: '',
+            key: 'quantity',
+            sorter: true,
+            render: (_: any, record: InventoryMovement, index: number) => <p>{record.quantity} {record.unit_name}</p>
+        },
+        {
             title: 'Gudang',
             dataIndex: '',
             key: 'location_to',
-            render: (_: any, record: Movement, index: number) => <p>{record.location_name ?? ''}</p>,
-            onFilter: (value: boolean | Key, record: Movement) => {
+            render: (_: any, record: InventoryMovement, index: number) => <p>{record.location_to ?? ''}</p>,
+            onFilter: (value: boolean | Key, record: InventoryMovement) => {
                 
                 return true;
             },
@@ -100,99 +151,65 @@ const MovementOut: React.FC = () => {
             filterSearch: true,
         },
         {
-            title: 'Total SKU',
-            dataIndex: 'total_sku',
-            key: 'total_sku',
-            sorter: true,
-            render: (_: any, record: Movement, index: number) => <p>{record.total_sku}</p>
-        },
-        {
-            title: 'QTY',
-            dataIndex: 'total_item',
-            key: 'total_item',
-            sorter: true,
-            render: (_: any, record: Movement, index: number) => <p>{record.total_item}</p>
-        },
-        {
-            title: 'Total Harga Beli',
-            dataIndex: 'total_buying_price',
-            key: 'total_buying_price',
-            sorter: true,
-            render: (_: any, record: Movement, index: number) => <p>{formatRupiah(record.total_buying_price)}</p>
-        },
-        {
-            title: 'Total Harga Jual',
-            dataIndex: 'total_selling_price',
-            key: 'total_selling_price',
-            sorter: true,
-            render: (_: any, record: Movement, index: number) => <p>{formatRupiah(record.total_selling_price)}</p>
-        },
-        // {
-        //     title: 'Status Vendor',
-        //     dataIndex: 'is_payment',
-        //     key: 'is_payment',
-        //     render: showStatus,
-        //     onFilter: (value: boolean | Key, record: Movement) => {
+            title: 'Status',
+            dataIndex: '',
+            key: 'status',
+            render: showStatus,
+            onFilter: (value: boolean | Key, record: InventoryMovement) => {
                 
-        //         return true;
-        //     },
-        //     filters: [
-        //         {
-        //             text: 'Lunas',
-        //             value: '1',
-        //         },
-        //         {
-        //             text: 'Belum Lunas',
-        //             value: '0',
-        //         },
-        //     ],
-        //     filterSearch: true,
-        // },
-        {
-            title: 'Tanggal Pembayaran',
-            dataIndex: 'payment_date',
-            key: 'payment_date',
-            render: (_: any, record: Movement, index: number) => <p>{ record.is_payment == 'Belum Lunas' ? '-' : formatDate(record.payment_date)}</p>,
-            sorter: true,
+                return true;
+            },
+            filters: [
+                {
+                    text: 'Pending',
+                    value: 'pending',
+                },
+                {
+                    text: 'Selesai',
+                    value: 'completed',
+                },
+                {
+                    text: 'Reject',
+                    value: 'reject',
+                },
+            ],
+            filterSearch: true,
         },
         {
-            title: 'Tanggal Keluar',
-            dataIndex: 'date',
-            key: 'date',
+            title: 'Tanggal',
+            dataIndex: '',
+            key: 'created_at',
             sorter: true,
-            render: (_: any, record: Movement, index: number) => <p>{formatDate(record.date)}</p>
+            render: (_: any, record: InventoryMovement, index: number) => <p>{formatDate(record.created_at)}</p>
         },
         {
             title: 'Update',
             dataIndex: 'updated_at',
             key: 'updated_at',
             sorter: true,
-            render: (_: any, record: Movement, index: number) => <p>{formatDate(record.updated_at)}</p>
+            render: (_: any, record: InventoryMovement, index: number) => <p>{formatDate(record.updated_at)}</p>
         },
         {
             title: 'Dibuat oleh',
             dataIndex: 'created_by',
             key: 'created_by',
-            render: (_: any, record: Movement, index: number) => <p>{record.created_by}</p>
+            render: (_: any, record: InventoryMovement, index: number) => <p>{record.created_by}</p>
         },
        
         {
             title: 'Operasi',
             key: 'action',
-            render: (text: any, record: Movement) => (
+            render: (text: any, record: InventoryMovement) => (
                 <>
-                    <EditButton label='' href="out/add" onClick={() => {
-                        setCookie('type', 'out');
-                        setCookie('movement_id', record.movement_id);
-                    }}/>
-                    <ViewButton label=''  href={`/inventory/out/${record.movement_id}`} />
-                    <DeleteButton label='' onComfirm={() => handleDelete([record.movement_id])} okText='Hapus' cancelText='Batal' />
+                    <EditButton label='' href="in/add" onClick={() => setCookie('movement_id', [record.id])}/>
+                    <ViewButton label=''  href={`/inventory/in/${record.id}`} />
+                    <DeleteButton label='' onComfirm={() => handleDelete([record.id])} okText='Hapus' cancelText='Batal' />
                 </>
             ),
         },
     ]
 
-    const onChange: TableProps<Movement>['onChange'] = (pagination, filters, sorter, extra) => {
+    const onChange: TableProps<InventoryMovement>['onChange'] = (pagination, filters, sorter, extra) => {
         // console.log('params', pagination, filters, sorter, extra);
         // console.log(sorter);
 
@@ -204,7 +221,17 @@ const MovementOut: React.FC = () => {
                 [sort.columnKey.toString()]: sort.order == "ascend" ? 'ASC' : 'DESC' 
             }
         }
-        var filterColumn = {type: ["in", ["out"]]};
+        var filterColumn = {};
+        for(let column in filters){
+            if(filters[column] != null){
+                filterColumn = {...filterColumn, ...{
+                    [column]: ['in', filters[column]],
+                }};
+            }
+            
+        }
+
+        var filterColumn = {};
         for(let column in filters){
             if(filters[column] != null){
                 filterColumn = {...filterColumn, ...{
@@ -222,6 +249,23 @@ const MovementOut: React.FC = () => {
         fetch(request)
     };
 
+    const checkSource = (source: InventoryMovement) => {
+        
+        switch (source.reference) {
+            case 'inventory':
+                return <p>Mutasi</p>
+            case 'retur':
+                return <p>Retur</p>
+            case 'exchange':
+                return <p>Penukaran barang</p>
+            case 'sales':
+                return <p>Penjualan</p>
+            default:
+                return <p>-</p>
+        }
+        
+    }
+
     const handleEdit = (ids: String[]) => {
         const inventory_id = setCookie('movement_id', ids);
         // router.push('/inventory/add');
@@ -236,7 +280,7 @@ const MovementOut: React.FC = () => {
 
         setLoading(true);
         try {
-            const response = await axiosInstance.post(`/movement/destroy`, {"data": ids});
+            const response = await axiosInstance.post(`/movement_del`, {"data": ids});
             if(response.status == 200){
                 message.success('Item Telah Dihapus!');
                 fetch(requestParam);
@@ -254,7 +298,7 @@ const MovementOut: React.FC = () => {
     const fetch = async (request: NewRequestParam) => {
         setLoading(true);
         try {
-            const response = await axiosInstance.post('/movement/search', request);
+            const response = await axiosInstance.post('/movement_search', request);
             if(response.status == 200){
                 // console.log(response.data.data.data);
 
@@ -301,7 +345,7 @@ const MovementOut: React.FC = () => {
         setSelectedRowKeys(newSelectedRowKeys);
     };
     
-    const rowSelection: TableRowSelection<Movement> = {
+    const rowSelection: TableRowSelection<InventoryMovement> = {
         selectedRowKeys,
         onChange: onSelectChange,
     };
@@ -312,7 +356,7 @@ const MovementOut: React.FC = () => {
         request.type = 'export';
         setLoading(true);
         try {
-            const response = await axiosInstance.post('/movement/search', request, {
+            const response = await axiosInstance.post('/movement_search', request, {
                 responseType: 'blob',
             });
             // Buat URL untuk file yang di-download
@@ -323,7 +367,7 @@ const MovementOut: React.FC = () => {
             link.href = url;
             const date = new Date;
 
-            link.setAttribute('download', `rekap_barang_masuk_${date.getDate()}_${date.getMonth()}_${date.getFullYear()}.xlsx`); // Nama file yang akan di-download
+            link.setAttribute('download', `daftar_barang_masuk_${date.getDate()}_${date.getMonth()}_${date.getFullYear()}.xlsx`); // Nama file yang akan di-download
             document.body.appendChild(link);
 
             // Klik link untuk memulai download
@@ -372,13 +416,13 @@ const MovementOut: React.FC = () => {
 
     return (
         <DashboardLayout>
-            <Title level={2}>Daftar Barang Keluar</Title>
+            <Title level={2}>Daftar Barang Masuk</Title>
             <Space className="gap-3">
                 <Button icon={<ReloadOutlined/>} type="default" onClick={() => fetch(requestParam)} >Reload</Button>
-                <Button icon={<PlusOutlined/>} type="primary" href="/inventory/out/add" onClick={() => {deleteCookie('movement_id');setCookie('type', 'out');}} >Tambah</Button>
+                <Button icon={<PlusOutlined/>} type="primary" href="/inventory/in/add" onClick={() => {deleteCookie('movement_id');setCookie('type', 'in');}} >Tambah</Button>
                 {/* <Button icon={<FileExcelFilled/>} color="green" variant="solid" onClick={onExport} className="my-3" >Export Ke Excel</Button> */}
                 {selectedRowKeys.length > 0 && <Popconfirm
-                    title="Yakin Ingin Menghapus Data Barang Keluar?"
+                    title="Yakin Ingin Menghapus Data Inventory?"
                     description="Data yang sudah dihapus tidak akan bisa di kembalikan!"
                     onConfirm={() => handleDelete(selectedRowKeys as string[])}
                     onCancel={() => {}}
@@ -394,7 +438,7 @@ const MovementOut: React.FC = () => {
                 </Col>
                
                 <Col span={12} >
-                    <Card><Statistic title="Total Barang Keluar" value={summary.total_item} loading={loading} /></Card>
+                    <Card><Statistic title="Total Barang Masuk" value={summary.total_item} loading={loading} /></Card>
                 </Col>
             </Row>
             <Space className="flex gap-3 items-center mb-4">
@@ -423,10 +467,10 @@ const MovementOut: React.FC = () => {
                         { value: '100', label: '100'},
                     ]}
                 />
-                <Input placeholder="Cari Data Barang Masuk" onChange={(e) => onSearch(e.target.value)} prefix={<SearchOutlined />}  />
+                <Input placeholder="Cari Inventory" onChange={(e) => onSearch(e.target.value)} prefix={<SearchOutlined />}  />
             </Space>
-            <Table<Movement> onChange={onChange}
-                showSorterTooltip={{ target: 'sorter-icon' }} columns={column} scroll={{ x: 'max-content'}}  dataSource={outs!.data} rowSelection={rowSelection} pagination={false} rowKey={(record) => record.movement_id} loading={loading} />
+            <Table<InventoryMovement> onChange={onChange}
+                showSorterTooltip={{ target: 'sorter-icon' }} columns={column} scroll={{ x: 'max-content'}}  dataSource={outs!.data} rowSelection={rowSelection} pagination={false} rowKey={(record) => record.id} loading={loading} />
             <div className="flex justify-end my-4">
             <PaginationTable onChange={paginateClick} defaultCurrent={outs.current_page} defaultPageSize={requestParam.limit} total={outs.total} />
             </div>
@@ -434,4 +478,4 @@ const MovementOut: React.FC = () => {
     );
 }
 
-export default MovementOut;
+export default BarangMasuk;

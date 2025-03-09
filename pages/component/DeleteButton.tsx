@@ -15,7 +15,7 @@ interface ButtonComponentProp {
 const DeleteButton: React.FC<ButtonComponentProp> = ({onComfirm, label, titleConfirm, okText, cancelText, disable}) => {
     return (
         <Popconfirm
-            title={titleConfirm ?? "Are you sure to delete this data?"}
+            title={titleConfirm ?? "Apakah Kamu Yakin Ingin Menghapus Data Ini?"}
             onConfirm={onComfirm}
             okText={okText ?? "Yes"}
             cancelText={cancelText ?? "No"}

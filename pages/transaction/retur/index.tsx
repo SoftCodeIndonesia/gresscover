@@ -214,6 +214,7 @@ const ReturPage: React.FC = () => {
                 message.success('Berhasil!');
                 // router.back();
                 getRetur();
+                setSelectedRowKeys([]);
             }else{
                 message.error(response.statusText);
             }

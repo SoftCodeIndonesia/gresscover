@@ -21,6 +21,10 @@ export type Sale = {
     taxes: SaleTax[],
     total_tax?: number|null;
     status_vendor?: string;
+    total_quantity?: number,
+    total_sku?: number,
+    has_retur?: number,
+    quantity_retur?: number,
 }
 
 export type SaleItem = {

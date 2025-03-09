@@ -31,7 +31,7 @@ type GetSingle<T> = T extends (infer U)[] ? U : never;
 type Sorts = GetSingle<Parameters<OnChange>[2]>;
 
 const { RangePicker } = DatePicker;
-const Transaction: React.FC = () => {
+const SummerySales: React.FC = () => {
 
     const [request_param, setRequestParam] = useState<NewRequestParam>({
         table: 'sales',
@@ -553,8 +553,19 @@ const Transaction: React.FC = () => {
     }, []);
 
     return (
-        <DashboardLayout>
-            <Space className="gap-3 w-full">
+        <>
+            <p className="mt-6 font-bold text-lg">Laporan Penjualan</p>
+            
+            <Row gutter={16} className="mt-6" >
+                <Col span={12} className="">
+                    <Card><Statistic title="Total Penjualan" value={formatRupiah(summery.total_amount)} loading={loading} /></Card>
+                </Col>
+               
+                <Col span={12} className="">
+                    <Card><Statistic title="Total Barang Terjual" value={summery.total_item} loading={loading} /></Card>
+                </Col>
+            </Row>
+            <Space className="gap-3 w-full mt-6">
                     <Button icon={<PlusOutlined/>} type="primary" href="penjualan/add" onClick={() => deleteCookie('sale_id')} >Tambah</Button>
                     <Button icon={<ReloadOutlined/>} type="default" onClick={() => getSales(request_param)} >Reload</Button>
                     {selectedRowKeys.length > 0 && <>
@@ -587,17 +598,8 @@ const Transaction: React.FC = () => {
                     
                     }
                     
-                </Space>
-            <Row gutter={16} className="my-8" >
-                <Col span={12} className="">
-                    <Card><Statistic title="Total Penjualan" value={formatRupiah(summery.total_amount)} loading={loading} /></Card>
-                </Col>
-               
-                <Col span={12} className="">
-                    <Card><Statistic title="Total Barang Terjual" value={summery.total_item} loading={loading} /></Card>
-                </Col>
-            </Row>
-            <Space className="gap-3 mb-4">
+            </Space>
+            <Space className="gap-3 mt-6">
                 <p>Filter : </p>
                 <RangePicker 
                     presets={[
@@ -627,24 +629,14 @@ const Transaction: React.FC = () => {
                     />
                     <Input placeholder="Cari Daftar Penjualan" onChange={(e) => onSearch(e.target.value)} prefix={<SearchOutlined />}  />
             </Space>
-            <Select
-                    className="mb-4"
-                    mode="multiple"
-                    placeholder="Pilih kolom yang ingin ditampilkan"
-                    defaultValue={checkedListColumn}
-                    onChange={handleColumnChange}
-                    style={{ width: '100%' }}
-                    options={availableColumns.map((value) => ({label: value.title, value: value.key}))}
-                    >
-            </Select>
-            <Table columns={filteredColumns} onChange={onChange}
+            <Table className="mt-6" columns={availableColumns} onChange={onChange}
                 showSorterTooltip={{ target: 'sorter-icon' }} scroll={{ x: 'max-content'}} rowSelection={rowSelection} dataSource={sales?.data} rowKey={(record) => record.sale_id!} pagination={false} />
             <div className="flex my-3 justify-end">
                 <AntPagination onChange={onChangePagination} defaultCurrent={sales?.current_page} total={sales?.total} />
             </div>
-        </DashboardLayout>
+        </>
     );
 }
 
-export default Transaction;
+export default SummerySales;
 

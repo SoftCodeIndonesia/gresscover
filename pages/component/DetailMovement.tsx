@@ -58,7 +58,7 @@ const DetailMovement: React.FC<PropsMovementDetail> = ({movement, title}) => {
                 <Card.Grid hoverable={false} style={gridStyle}><p>{movement?.user?.name ?? ''}</p></Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>Dibuat Tgl</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}><p>{movement != undefined ? formatDate(movement.created_at) : '-'}</p></Card.Grid>
-            </Card>
+        </Card>
     );
 }
 

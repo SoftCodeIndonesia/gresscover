@@ -76,9 +76,14 @@ const InventoryTable: React.FC = () => {
         'no',
         'product_name',
         'sku',
+        'barcode',
+        'parent_sku',
         'quantity_unit',
+        'unit_name',
         'location_name',
+        'harga_beli',
         'harga_jual',
+        'nilai_asset',
         
     ]);
     const [request_param, setRequestParam] = useState<SearchInventory>({
