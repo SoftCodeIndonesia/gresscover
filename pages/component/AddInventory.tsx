@@ -637,8 +637,9 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
             unit_name: '',
             // children: [],
         }));
-        setInitialTable(tableInit);
         form.setFieldValue('items', tableInit);
+        setInitialTable(tableInit);
+        
     }
     
     const newLine = () => {
@@ -732,8 +733,15 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
 
 
     const fetchLocationOption = async () => {
-        const response = await getLocation();
-        setLocation(response as unknown as Location[]);
+        const response = await getLocation() as unknown as Location[]
+        setLocation(response);
+        const result = response.map((data: Location) => {
+                            return {
+                                value: `${data.location_id}`,
+                                label: `${data.name}`,
+                            }
+                        })
+        setOptionsLocation(result);
     }
 
     useEffect(() => {
@@ -777,11 +785,12 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
                 <Card title={`Form Tambah ${type == 'in' ? 'Barang Masuk' : 'Barang Keluar'}`} className="mb-6">
                     <div className="flex gap-6">
                         <div className="flex flex-col flex-1 pr-6">
-                            <Form.Item label="Pilih Gudang" name={'location_id'} rules={[{ required: true, message: 'Pilih Gudang Terlebih Dahulu!' }]}>
+                            <Form.Item label="Pilih Gudang" name="location_id" rules={[{ required: true, message: 'Pilih Gudang Terlebih Dahulu!' }]}>
                                 <Select onChange={(e) => {
                                     form.setFieldValue('location_name', locations.filter((value) => value.location_id = e)[0].name);
-                                }}>
-                                    {locations.map((location) => <Select.Option key={location.location_id} value={location.location_id}>{location.name}</Select.Option>)}
+                                }}
+                                options={optionsLocation}
+                                >
                                 </Select>
                             </Form.Item>
                             <Form.Item
@@ -795,8 +804,12 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
                         </div>
                         <div className="flex flex-col flex-1 px-6">
                             {type == 'in' && <>
-                                <Form.Item label="Status Pembayaran" name={'is_payment'} rules={[{ required: true, message: 'Pilih Status Pembayaran Terlebih Dahulu!' }]}>
-                                <Radio.Group onChange={(e) => setPayment(e.target.value)}>
+                                <Form.Item label="Status Pembayaran" name="is_payment" rules={[{ required: true, message: 'Pilih Status Pembayaran Terlebih Dahulu!' }]}>
+                                <Radio.Group onChange={(e) => {
+                                    console.log(locations);
+                                    setPayment(e.target.value);
+                                    console.log(locations);
+                                }}>
                                     <Radio value="1"> Lunas </Radio>
                                     <Radio value="0"> Belum Lunas </Radio>
                                 </Radio.Group>
