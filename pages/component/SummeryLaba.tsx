@@ -193,11 +193,11 @@ const SummeryLaba: React.FC = () => {
             <p className="text-lg font-bold">Laporan Laba</p>
             <Row gutter={16} className="mt-6">
                 <Col span={12} className="">
-                    <Card><Statistic title="Laba Bersih" valueStyle={{ color: '#3f8600' }} value={formatRupiah(summery.laba_bersih)} loading={loading} /></Card>
+                    <Card><Statistic title="Laba Bersih" valueStyle={{ color: '#3f8600' }} value={formatRupiah(summery.laba_bersih ?? 0)} loading={loading} /></Card>
                 </Col>
                 
                 <Col span={12} className="">
-                    <Card><Statistic title="Laba Kotor" valueStyle={{ color: '#cf1322' }} value={summery.laba_kotor} loading={loading} /></Card>
+                    <Card><Statistic title="Laba Kotor" valueStyle={{ color: '#cf1322' }} value={summery.laba_kotor ?? 0} loading={loading} /></Card>
                 </Col>
             </Row>
             <Space className="gap-3 my-6">

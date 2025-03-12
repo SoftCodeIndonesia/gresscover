@@ -121,7 +121,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
             newData[index].sku = item.sku;
             newData[index].quantity = 1;
             newData[index].before_stok = item.quantity_unit;
-            newData[index].after_stok = type == 'in' ? item.quantity_unit + 1 : item.quantity_unit - 1; 
+            newData[index].after_stok = type == 'in' ? Number(item.quantity_unit) + 1 : item.quantity_unit - 1; 
             newData[index].cost = item.harga_beli;
             newData[index].selling_price = item.harga_jual;
             newData[index].minimum = item.minimum;
@@ -185,17 +185,18 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
             title: "Nama",
             dataIndex: "nama",
             fixed: 'left',
+            width: '300',
             render: (_: any, record: TableInventory, index: number) => (
                 <Form.Item name={['items', index, 'product_name']} rules={[{ required: true, message: 'Product Tidak Ditemukan!' }]} className="m-0">
                     <AutoComplete
-                        showSearch={false}
+                        showSearch={true}
                             value={record.product_name}
                             options={optionItem}
-                            filterOption={true}
-                            style={{ width: 200 }}
+                            filterOption={false}
+                            style={{ width: 300 }}
                             onSelect={(value, option) => onSelectItem(value, option, index)}
                             onSearch={fetchItems}
-                            onChange={(e) => onSelectItem(e, {}, index)}
+                            
                             placeholder="Cari/Pilih Product"
                         />
                 </Form.Item>
@@ -238,7 +239,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
                             }
                         }else{
                             newData[index].quantity = parseInt(handlePriceChange(e.target.value));
-                                newData[index].after_stok = type == 'in' ? newData[index].before_stok + newData[index].quantity : newData[index].before_stok - newData[index].quantity;
+                                newData[index].after_stok = Number(newData[index].before_stok) + Number(newData[index].quantity);
                                 setInitialTable(newData);
                                 sumTotalAmount(newData);
                         }
@@ -262,7 +263,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
                     <AutoComplete
                         value={record.unit_name}
                         options={optionUnit}
-                        filterOption={false}
+                        filterOption={true}
                         style={{ width: 100 }}
                         onChange={(value) => onSelectItemUOM(value, {}, index)}
                         onSelect={(value, option) => onSelectItemUOM(value, option, index)}
@@ -354,20 +355,22 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
                 table: 'product',
                 type: 'search',
                 keyword: query,
-                where: {location_name: ["in", [form.getFieldValue('location_name')]]}
+                where: {location_id: ["in", [form.getFieldValue('location_id')]]}
             }
-            const response = await axiosInstance.post(`/inventory/search`, querySearch);
+            const response = await axiosInstance.post(`/items/search`, querySearch);
             if(response.status == 200){
-                const items: SearchInventoryResult[] = response.data.data.data.data;
+                const items: SearchInventoryResult[] = response.data.data;
                 
                 if(items.length > 0){
                     const result = items?.map((data: SearchInventoryResult) => {
                         return {
                             value: `${data.product_name}`,
-                            label: `${data.product_name}`,
+                            label: `${data.product_name} - ${data.barcode}`,
                             object: data,
+                            key: `${data.product_id}`,
                         }
                     })
+                    console.log(result);
                     setOptionsItem(result);
                 }else{
                     setOptionsItem([]);
@@ -465,7 +468,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
     }
 
     const handleSubmit = async () => {
-        setLoading(true);
+        // setLoading(true);
         const dataInitital: any[] | undefined = [];
         var totalItem = 0;
         initialTable.forEach((element, index) => {
@@ -485,7 +488,6 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
             }
         });
 
-        console.log(dataInitital);
 
         const data = {
             movement_id: form.getFieldValue('movement_id'),

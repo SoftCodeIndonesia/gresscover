@@ -3,7 +3,7 @@ import { Item, ItemUnit } from "@/type/item";
 import { Location } from "@/type/location";
 import DashboardLayout from "../../component/DashboardLayout";
 import axiosInstance from "@/utils/axiosInstance";
-import { Image,Button, Divider, Form, Input, message, Select, Space, Table, Modal, Checkbox, AutoComplete, AutoCompleteProps, TableColumnsType } from "antd";
+import { Image,Button, Divider, Form, Input, message, Select, Space, Table, Modal, Checkbox, AutoComplete, AutoCompleteProps, TableColumnsType, Radio } from "antd";
 import { LayoutType } from "@/type/form.layout";
 
 import { CloseCircleOutlined, PlusOutlined } from '@ant-design/icons';
@@ -14,9 +14,10 @@ import Title from "antd/es/typography/Title";
 import { TableRowSelection } from "antd/es/table/interface";
 import { object, record } from "zod";
 import { handlePriceChange } from "@/utils/validate_price_change";
-import { RequestParam } from "@/type/request_param";
+import { NewRequestParam, RequestParam } from "@/type/request_param";
 import { Pagination } from "@/type/pagination";
 import { DefaultOptionType } from "antd/es/select";
+import { SearchInventoryResult } from "@/type/search_inventory_result";
 
 interface TableInventory {
     key: React.Key, 
@@ -64,6 +65,7 @@ const MutasiBarang = () => {
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
 
     const [minimum, setMinimum] = useState<number>(0);
+    const [withVarian, setWithVarian] = useState<string>();
 
     const [form] = Form.useForm();
 
@@ -232,44 +234,23 @@ const MutasiBarang = () => {
                 setInitialTableVarian(newData);
     
             }else{
-                const item: Item = option.object;
+                const item: SearchInventoryResult = option.object;
                 const newData = [...initialTableVarian];
-    
-                newData[index].product_name = item.name;
+                
+                newData[index].product_name = item.product_name;
                 newData[index].product_id = item.product_id;
                 newData[index].sku = item.sku;
                 newData[index].stok = 0;
                 newData[index].quantity = 1;
                 newData[index].type = 'mutation';
-                newData[index].cost = parseInt(item?.cost);
-                newData[index].selling_price = parseInt(item.price);
-                newData[index].minimum = item.min_stock_quantity;
+                newData[index].cost = item?.harga_beli;
+                newData[index].selling_price = item.harga_jual;
+                newData[index].minimum = item.minimum;
                 newData[index].unit_id = item.unit_id ?? '';
                 newData[index].unit_name = item.unit_name ?? '';
                 newData[index].parent_id = parent_active?.product_id ?? null;
-                // if(item.item?.unit?.max_value != null && item.item?.unit?.max_value > 0){
-                //     newData[index].children = Array.from({ length: item.item?.unit?.max_value }, (_, indexKey) => ({
-                //         key: `${index}_${indexKey}`, 
-                //         product_name: null, 
-                //         product_id: null, 
-                //         stok: 12, 
-                //         sku: "", 
-                //         selling_price: 0.0, 
-                //         cost: 0.0, 
-                //         quantity: 1,
-                //         minimum: 1,
-                //         checked: false,
-                //         location_id: '',
-                //         location_name: '',
-                //         cost_string: '0.0',
-                //         selling_price_string: '0.0',
-                //         unit_id: '',
-                //         unit_name: '',
-                //         children: [],
-                //     }))
-                // }
-    
-                console.log(newData[index]);
+                console.log(newData);
+                form.setFieldValue('varian', newData);
     
                 setInitialTableVarian(newData);
     
@@ -283,80 +264,29 @@ const MutasiBarang = () => {
                 setInitialTable(newData);
     
             }else{
-                const item: Inventory = option.object;
+                const item: SearchInventoryResult = option.object;
                 const newData = [...initialTable];
     
-                newData[index].product_name = item.item?.name;
-                newData[index].product_id = item.item?.product_id;
-                newData[index].sku = item.item?.sku;
-                newData[index].stok = item.quantity;
+                newData[index].product_name = item.product_name;
+                newData[index].product_id = item.product_id;
+                newData[index].sku = item.sku;
+                newData[index].stok = item.quantity_unit;
                 newData[index].quantity = 1;
-                newData[index].last_stok = item.quantity - 1 ;
+                newData[index].last_stok = item.quantity_unit - 1 ;
                 newData[index].type = 'mutation';
-                newData[index].cost = parseInt(item.item?.cost);
-                newData[index].selling_price = item.price;
-                newData[index].minimum = item.minimum_stock;
-                newData[index].unit_id = item.item?.unit_id ?? '';
-                newData[index].unit_name = item.item?.unit_name ?? '';
-                newData[index].location_id = item.location?.location_id ?? '';
-                newData[index].location_name = item.location?.name ?? '';
-                newData[index].unit_max_multiplier = item.unit?.max_value ?? 1;
-                newData[index].key = `index_${index}${item.inventory_id}${item.location_id}${item.item.product_id}`
+                newData[index].cost = item.harga_beli;
+                newData[index].selling_price = item.harga_jual;
+                newData[index].minimum = item.minimum;
+                newData[index].unit_id = item.unit_id;
+                newData[index].unit_name = item.unit_name;
+                newData[index].location_id = item.location_id ?? '';
+                newData[index].location_name = item.location_name;
+                newData[index].unit_max_multiplier = item.unit_max_multiplier ?? 1;
+                newData[index].key = `index_${index}${item.inventory_id}${item.location_id}${item.product_id}`
 
-                // const dataChildren:TableInventory[] = item.item.children.map((value: Item, index: number) => {
-                //     return {
-                //         key: `${value.product_id}`, 
-                //         product_name: value.name, 
-                //         product_id: value.product_id, 
-                //         location_name: '', 
-                //         location_id: '', 
-                //         stok: 0, 
-                //         last_stok: 1,
-                //         quantity: 1, 
-                //         sku: value.sku, 
-                //         unit_max_multiplier: item.unit?.max_value ?? 1,
-                //         selling_price: parseInt(value.price), 
-                //         selling_price_string: value.price.toString(), 
-                //         cost: parseInt(value.cost), 
-                //         cost_string: value.cost.toString(), 
-                //         minimum: value.min_stock_quantity,
-                //         checked: false,
-                //         unit_id: value.unit_id,
-                //         unit_name: value.unit_name,
-                //         parent_id: value.parent_id,
-                //         reference: 'inventory',
-                //         reference_id:item.inventory_id,
-                //         type: 'in',
-                //         items: []
-                //     };
-                // });
-
-                // newData[index].items = dataChildren,
-
-                // if(item.item?.unit?.max_value != null && item.item?.unit?.max_value > 0){
-                //     newData[index].children = Array.from({ length: item.item?.unit?.max_value }, (_, indexKey) => ({
-                //         key: `${index}_${indexKey}`, 
-                //         product_name: null, 
-                //         product_id: null, 
-                //         stok: 12, 
-                //         sku: "", 
-                //         selling_price: 0.0, 
-                //         cost: 0.0, 
-                //         quantity: 1,
-                //         minimum: 1,
-                //         checked: false,
-                //         location_id: '',
-                //         location_name: '',
-                //         cost_string: '0.0',
-                //         selling_price_string: '0.0',
-                //         unit_id: '',
-                //         unit_name: '',
-                //         children: [],
-                //     }))
-                // }
-    
                 console.log(newData[index]);
     
+                form.setFieldValue('items',newData);
                 setInitialTable(newData);
     
             }
@@ -380,15 +310,18 @@ const MutasiBarang = () => {
                 fixed: 'left',
                 width: 300,
                 render: (_: any, record: TableInventory, index: number) => (
-                    <AutoComplete
-                        showSearch
-                        options={optionItem}
-                        filterOption={true}
-                        style={{ width: 300 }}
-                        onSelect={(value, option) => onSelectItem(value, option, index, true)}
-                        onSearch={(value) => fetchItems(value, true, parent_active!)}
-                        placeholder="Cari/Pilih Varian"
-                    />
+                    <Form.Item name={['varian', index, 'product_name']} rules={[{ required: true, message: 'Product Tidak Boleh Kosong!' }]} className="m-0">
+                        <AutoComplete
+                            showSearch
+                            options={optionItem}
+                            filterOption={true}
+                            style={{ width: 300 }}
+                            onSelect={(value, option) => onSelectItem(value, option, index, true)}
+                            onSearch={(value) => fetchItems(value, true, parent_active!)}
+                            placeholder="Cari/Pilih Varian"
+                        />
+                    </Form.Item>
+                    
                 ),
             },
            
@@ -397,7 +330,8 @@ const MutasiBarang = () => {
                 dataIndex: "location",
                 width: 200,
                 render: (_: any, record: TableInventory, index: number) => (
-                    <AutoComplete
+                    <Form.Item name={['varian', index, 'location_name']} rules={[{ required: true, message: 'Product Tidak Boleh Kosong!' }]} className="m-0">
+                        <AutoComplete
                             showSearch
                             placeholder={'Cari/Tambahkan Gudang Baru'}
                             style={{ width: 200 }}
@@ -409,6 +343,8 @@ const MutasiBarang = () => {
                             notFoundContent={null}
                             options={optionsLocation}
                         />
+                    </Form.Item>
+                    
                 ),
             },
             {
@@ -417,12 +353,10 @@ const MutasiBarang = () => {
                 dataIndex: "sku",
                 width: 150,
                 render: (_: any, record: TableInventory, index: number) => (
-                    <Input placeholder="Masukan SKU Product" value={record.sku ?? ''} onChange={(e) => {
-                        const newData = [...initialTableVarian];
-                        newData[index].sku = e.target.value;
-                        setInitialTableVarian(newData);
-    
-                    }} />
+                    <Form.Item name={['varian', index, 'sku']} rules={[{ required: true, message: 'SKU Tidak Boleh Kosong!' }]} className="m-0">
+                        <Input placeholder={`${record.sku} Masukan SKU Product`} disabled value={record.sku!} />
+                    </Form.Item>
+                    
                 ),
             },
             {
@@ -444,6 +378,7 @@ const MutasiBarang = () => {
                              newData[index].quantity = parseInt(handlePriceChange(e.target.value));
                             newData[index].last_stok = (record.stok ?? 0) + newData[index].quantity;
                         }
+                        form.setFieldValue('varian', newData);
                         setInitialTableVarian(newData);
     
                     }} />
@@ -463,16 +398,10 @@ const MutasiBarang = () => {
                 dataIndex: "unit",
                 width: 150,
                 render: (_: any, record: TableInventory, index: number) => (
-                    <AutoComplete
-                            value={record.unit_name}
-                            options={optionUnit}
-                            filterOption={false}
-                            style={{ width: 100 }}
-                            onChange={(value) => onSelectItemUOM(value, {}, index, true)}
-                            onSelect={(value, option) => onSelectItemUOM(value, option, index, true)}
-                            onSearch={fetchUOM}
-                            placeholder="Cari/Buat UOM"
-                        />
+                    <Form.Item name={['varian', index, 'unit_name']} rules={[{ required: true, message: 'Product Tidak Boleh Kosong!' }]} className="m-0">
+                        <Input placeholder="Masukan stok" type="number" disabled value={record.unit_name ?? ''} />
+                    </Form.Item>
+                    
                 ),
             },
             {
@@ -516,14 +445,17 @@ const MutasiBarang = () => {
                 dataIndex: "nama",
                 fixed: 'left',
                 render: (_: any, record: TableInventory, index: number) => (
-                    <AutoComplete
-                        options={optionItem}
-                        filterOption={true}
-                        style={{ width: 200 }}
-                        onSelect={(value, option) => onSelectItem(value, option, index)}
-                        onSearch={(value) => fetchItems(value,false, record)}
-                        placeholder="Cari/Pilih Product"
-                    />
+                    <Form.Item name={['items', index, 'product_name']} rules={[{ required: true, message: 'Product Tidak Boleh Kosong!' }]} className="m-0">
+                        <AutoComplete
+                            options={optionItem}
+                            filterOption={true}
+                            style={{ width: 200 }}
+                            onSelect={(value, option) => onSelectItem(value, option, index)}
+                            onSearch={(value) => fetchItems(value,false, record)}
+                            placeholder="Cari/Pilih Product"
+                        />
+                    </Form.Item>
+                    
                 ),
             },
             {
@@ -531,8 +463,9 @@ const MutasiBarang = () => {
                 dataIndex: "location",
                 width: 150,
                 render: (_: any, record: TableInventory, index: number) => (
-                    <AutoComplete
-                         
+                    <Form.Item name={['items', index, 'location_name']} rules={[{ required: true, message: 'Product Tidak Boleh Kosong!' }]} className="m-0">
+                        <AutoComplete
+                            disabled={withVarian == "1"}
                             showSearch={false}
                             placeholder={'Cari/Tambahkan Gudang Baru'}
                             style={{ width: 150 }}
@@ -545,6 +478,8 @@ const MutasiBarang = () => {
                             notFoundContent={null}
                             options={optionsLocation}
                         />
+                    </Form.Item>
+                    
 
                 ),
             },
@@ -554,12 +489,10 @@ const MutasiBarang = () => {
                 dataIndex: "sku",
                 width: 150,
                 render: (_: any, record: TableInventory, index: number) => (
-                    <Input placeholder="Masukan SKU Product" value={record.sku ?? ''} onChange={(e) => {
-                        const newData = [...initialTable];
-                        newData[index].sku = e.target.value;
-                        setInitialTable(newData);
-    
-                    }} />
+                    <Form.Item name={['items', index, 'sku']} rules={[{ required: true, message: 'Product Tidak Boleh Kosong!' }]} className="m-0">
+                        <Input placeholder="Masukan SKU Product" value={record.sku ?? ''} disabled/>
+                    </Form.Item>
+                    
                 ),
             },
             {
@@ -609,7 +542,7 @@ const MutasiBarang = () => {
                 dataIndex: "unit",
                 width: 150,
                 render: (_: any, record: TableInventory, index: number) => (
-                    <Input placeholder="UOM"  max={record.stok ?? 1} value={record.unit_name ?? ''} readOnly />
+                    <Input placeholder="UOM" disabled max={record.stok ?? 1} value={record.unit_name ?? ''} readOnly />
                 ),
             },
             {
@@ -617,7 +550,7 @@ const MutasiBarang = () => {
                 dataIndex: "",
                 fixed: 'right',
                 render: (_: any, record: TableInventory, index: number) => (
-                    <Button type="text" className="text-blue-500" onClick={() => {
+                    <Button type="text" disabled={withVarian === "0"} className="text-blue-500" onClick={() => {
                         if(record.product_id != null){
                             setupVarian(record)
                         }
@@ -677,6 +610,7 @@ const MutasiBarang = () => {
     // }
 
     const checkAllQuantity = (input: number, id?: string) => {
+        console.log(parent_active?.unit_max_multiplier);
         const max = (parent_active?.unit_max_multiplier ?? 1)  * (parent_active?.quantity ?? 1);
 
         var currentAllQuantity = 0;
@@ -696,26 +630,15 @@ const MutasiBarang = () => {
     const fetchItems = async (query: string, is_varian?: boolean, record?: TableInventory, index?: number) => {
         
         try {
-            const querySearch: RequestParam = is_varian ? {
+            const querySearch: NewRequestParam = is_varian ? {
                 limit: 100,
                 page: 1,
                 table: 'product',
-                search: {
-                    value: query,
-                    column: [
-                        "name",
-                        "sku",
-                        "barcode",
-                        "unit_name"
-                    ]
+                keyword: query,
+                where: {
+                    parent_sku: ["in", [record?.sku]],
                 },
-                where: [
-                    {
-                        parent_id: record?.product_id,
-                    }
-                ],
-                request_column: [],
-                request_column_relation: [],
+                type: "search",
                 // whereHas: {
                 //     "location": {
                 //         "location_id": form.getFieldValue('reference_id')
@@ -725,35 +648,28 @@ const MutasiBarang = () => {
                 limit: 100,
                 page: 1,
                 table: 'inventory',
-                search_relation: {
-                    item: {
-                        value: query,
-                        column: [
-                            "name",
-                            "sku",
-                            "barcode",
-                            "unit_name"
-                        ]
-                    }
+                keyword: query,
+                where: {
+                    location_id: ["in", [form.getFieldValue('reference_id')]],
                 },
-                request_column: [],
-                request_column_relation: ["item", "location", "item.unit", "item.children", "unit"],
-                whereHas: {
-                    "location": {
-                        "location_id": form.getFieldValue('reference_id')
-                    }
-                }
+                type: "search",
             }
-            const response = await axiosInstance.post(`/search`, querySearch);
+
+            var path = '/items/search';
+            if(is_varian){
+                path = '/items/search';
+            }
+
+            const response = await axiosInstance.post(path, querySearch);
             if(response.status == 200){
                 if(is_varian){
-                    const items: Pagination<Item> = response.data.data;
+                    const items: SearchInventoryResult[] = response.data.data;
                 
-                    if(items.data.length > 0){
-                        const result = items.data?.map((data: Item) => {
+                    if(items.length > 0){
+                        const result = items?.map((data: SearchInventoryResult) => {
                             return {
-                                value: `${data?.name}-${data?.sku}`,
-                                label: `${data?.name}-${data?.sku}`,
+                                value: `${data?.product_name}-${data?.barcode}`,
+                                label: `${data?.product_name}-${data?.barcode}`,
                                 object: data,
                             }
                         })
@@ -762,14 +678,18 @@ const MutasiBarang = () => {
                         setOptionsItem([]);
                     }
                 }else{
-                    const items: Pagination<Inventory> = response.data.data;
+                    const items: SearchInventoryResult[] = response.data.data;
                 
-                    if(items.data.length > 0){
-                        const result = items.data?.map((data: Inventory) => {
-                            return {
-                                value: `${data.item?.name}-${data.item?.sku}`,
-                                label: `${data.item?.name}-${data.item?.sku}`,
-                                object: data,
+                    if(items.length > 0){
+                        
+                        const result: {value: string, label: string, object: any}[] = []; 
+                        items.forEach((data: SearchInventoryResult) => {
+                            if(data.quantity_unit > 0){
+                                result.push({
+                                    value: `${data.product_name}-${data.barcode}`,
+                                    label: `${data.product_name}-${data.barcode}`,
+                                    object: data,
+                                });
                             }
                         })
                         setOptionsItem(result);
@@ -917,8 +837,7 @@ const MutasiBarang = () => {
     }
 
     const onSelect = async (value: string, option: any, index: number, is_varian?: boolean, item?: TableInventory) => {
-        console.log(option);
-        console.log(is_varian);
+      
         if(option.object == undefined){
             
             var location: Location = {
@@ -944,7 +863,7 @@ const MutasiBarang = () => {
                 newData[index].reference = 'inventory';
 
                 
-
+                
                 setInitialTableVarian(newData);
             }else{
                 const newData = [...initialTable];
@@ -1018,8 +937,8 @@ const MutasiBarang = () => {
                 newData[index].location_id = dataItem.location_id;
                 newData[index].location_name = dataItem.name;
                 
-                console.log(newData);
-        
+                
+                form.setFieldValue('varian', newData);
                 setInitialTableVarian(newData);
 
                 
@@ -1029,7 +948,7 @@ const MutasiBarang = () => {
 
                 newData[index].location_id = location.location_id;
                 newData[index].location_name = location.name;
-                console.log(item);
+                
                 if(item != undefined && item!.items.length > 0){
                     const dataChildren:TableInventory[] = item?.items.map((valueChild: TableInventory, index: number) => {
                         return {
@@ -1041,7 +960,7 @@ const MutasiBarang = () => {
     
                     newData[index].items = dataChildren;
                 }
-        
+                form.setFieldValue('items', newData);
                 setInitialTable(newData);
             }
 
@@ -1165,21 +1084,37 @@ const MutasiBarang = () => {
             if(element.product_id == parent_active?.product_id){
                 const to_input: TableInventory[] = initialTableVarian.filter((value) => value.sku != null)
 
-                element.items = to_input.map((value) => {
-                    const data = {
-                        ...value,
-                        reference_id: parent_active?.inventory_id,
+                if(to_input.length > 0){
+                    element.items = to_input.map((value) => {
+                        const data = {
+                            ...value,
+                            reference_id: parent_active?.inventory_id,
+                            
+                        }
                         
-                    }
-                    
-                    return data;
-                })
+                        return data;
+                    })
+                }
             }
         });
 
-        setInitialTable(parent);
+        var valid = 1;
 
-        closeModal();
+        parent.forEach(element => {
+            if(withVarian == "1" && element.items.length == 0){
+                valid = 0;
+            }
+        });
+
+        
+        if(valid == 1){
+            form.setFieldValue('items', parent);
+            setInitialTable(parent);
+
+            closeModal();
+        }else{
+            message.error('Masukan Product Variasi Terlebih Dahulu!');
+        }
     }
 
     const addNewVarian = () => {
@@ -1208,12 +1143,12 @@ const MutasiBarang = () => {
             reference_id: parent_active?.inventory_id,
             reference: 'inventory',
         }]
-
+        form.setFieldValue('varian', newData);
         setInitialTableVarian(newData);
     }
     
     const setInitialTableData = () => {
-        setInitialTable(Array.from({ length: 1 }, (_, index) => ({
+        const initial = Array.from({ length: 1 }, (_, index) => ({
             key: `${index}`, 
             product_name: null, 
             product_id: null, 
@@ -1235,7 +1170,9 @@ const MutasiBarang = () => {
             unit_name: '',
             parent_id: null,
             items: [],
-        })));
+        }));
+        form.setFieldValue('items', initial);
+        setInitialTable(initial);
        
     }
 
@@ -1308,11 +1245,13 @@ const MutasiBarang = () => {
             parent_id: null,
             items: [],
         });
+        form.setFieldValue('varian', data);
         setInitialTable(data);
     }
     
 
     useEffect(() => {
+        
         setInitialTableData();
         initialTableVarianData();
         fetchInitialLocation();
@@ -1331,68 +1270,82 @@ const MutasiBarang = () => {
                 onFinish={handleSubmit}
                 disabled={loading}
             >
-                <Form.Item className="flex-1" label="Lokasi Awal Gudang" name='reference_name' rules={[{ required: true, message: 'Bagian ini tidak boleh kosong!' }]} >
-                    <Select 
-                        placeholder="Pilih Lokasi Awal Gudang"
-                        options={locations.map((value) => {
-                            return {
-                                value: value.location_id,
-                                label: value.name,
-                                object: value,
-    
-                            }
-                        })}
-                        onSelect={(value, option) => {
-                            
-                            if(option.object == undefined){
-                                form.setFieldsValue({
-                                    reference_id: value,
-                                    reference: 'inventory',
-                                    reference_name: value,
-                                })
-                            }else{
-                                const location: Location = option.object;
-                                form.setFieldsValue({
-                                    reference_id: location.location_id,
-                                    reference: 'inventory',
-                                    reference_name: location.name,
-                                })
-                            }
-
-                            setShowTabel(true);
-                        }}
-                    ></Select>
-                    
-                    {/* <AutoComplete
-                            showSearch
-                            className="w-full"
-                            placeholder={'Cari/Tambahkan Gudang Baru'}
-                            defaultActiveFirstOption={false}
-                            suffixIcon={null}
-                            style={{width: '50%'}}
-                            filterOption={false}
-                            onSearch={(value) => fetchLocation(value)}
-                            notFoundContent={null}
-                            options={optionsLocation}
+                <div className="flex flex-col w-1/2">
+                    <Form.Item className="flex-1" label="Lokasi Awal Gudang" name='reference_name' rules={[{ required: true, message: 'Bagian ini tidak boleh kosong!' }]} >
+                        <Select 
+                            placeholder="Pilih Lokasi Awal Gudang"
+                            options={locations.map((value) => {
+                                return {
+                                    value: value.location_id,
+                                    label: value.name,
+                                    object: value,
+        
+                                }
+                            })}
                             onSelect={(value, option) => {
+                                
                                 if(option.object == undefined){
                                     form.setFieldsValue({
                                         reference_id: value,
-                                        reference: 'gudang',
+                                        reference: 'inventory',
                                         reference_name: value,
                                     })
                                 }else{
                                     const location: Location = option.object;
                                     form.setFieldsValue({
                                         reference_id: location.location_id,
-                                        reference: 'gudang',
+                                        reference: 'inventory',
                                         reference_name: location.name,
                                     })
                                 }
-                            }}
-                    /> */}
-                </Form.Item>
 
+                                if(withVarian != null){
+                                    setShowTabel(true);
+                                }
+                            }}
+                        ></Select>
+                        
+                        {/* <AutoComplete
+                                showSearch
+                                className="w-full"
+                                placeholder={'Cari/Tambahkan Gudang Baru'}
+                                defaultActiveFirstOption={false}
+                                suffixIcon={null}
+                                style={{width: '50%'}}
+                                filterOption={false}
+                                onSearch={(value) => fetchLocation(value)}
+                                notFoundContent={null}
+                                options={optionsLocation}
+                                onSelect={(value, option) => {
+                                    if(option.object == undefined){
+                                        form.setFieldsValue({
+                                            reference_id: value,
+                                            reference: 'gudang',
+                                            reference_name: value,
+                                        })
+                                    }else{
+                                        const location: Location = option.object;
+                                        form.setFieldsValue({
+                                            reference_id: location.location_id,
+                                            reference: 'gudang',
+                                            reference_name: location.name,
+                                        })
+                                    }
+                                }}
+                        /> */}
+                    </Form.Item>
+                    <Form.Item label="Dengan Varian?" name={"with_varian"} rules={[{ required: true, message: 'Bagian ini tidak boleh kosong!' }]}>
+                        <Radio.Group onChange={(e) => {
+                            setWithVarian(e.target.value);
+                            if(form.getFieldValue('reference_id') != null){
+                                setShowTabel(true);
+                            }
+                        }}>
+                            <Radio value="1"> Ya  </Radio>
+                            <Radio value="0"> Tidak </Radio>
+                        </Radio.Group>
+                    </Form.Item>
+                </div>
                 {/* {( selectedRowKeys.length > 0 && <div className="flex py-3 justify-between items-center">
                     <Space className="flex justify-end">
                         <p className="text-sm">Atur Sekaligus</p>

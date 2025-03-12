@@ -69,14 +69,7 @@ const DetailInventoryIn = () => {
             sorter: (a:InventoryMovement, b:InventoryMovement) => a.quantity - b.quantity,
             render: (_: any, record: InventoryMovement, index: number) => <p>{record.quantity} {record.unit_name}</p>
         },
-        {
-            title: 'Harga Beli Satuan',
-            dataIndex: 'cost',
-            key: 'cost',
-            align: 'right',
-            sorter: (a:InventoryMovement, b:InventoryMovement) => a.cost ?? 0 - (b.cost ?? 0),
-            render: (_: any, record: InventoryMovement, index: number) => <p>{formatRupiah(record.cost ?? 0)}</p>
-        },
+        
         {
             title: 'Harga Jual Satuan',
             dataIndex: 'amount',
@@ -94,7 +87,7 @@ const DetailInventoryIn = () => {
             render: (_: any, record: InventoryMovement, index: number) => <p>{formatRupiah(record.amount * record.quantity)}</p>
         },
         {
-            title: 'Harga Beli',
+            title: 'Harga Beli Satuan',
             dataIndex: 'cost',
             key: 'cost',
             align: 'right',

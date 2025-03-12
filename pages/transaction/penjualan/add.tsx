@@ -818,7 +818,7 @@ const AddTransactionSale: React.FC = () => {
                                                             }
                                                             newData[index].unit_value = value;
 
-                                                            console.log(newData);
+                                                            form.setFieldValue('taxes', newData);
                                                             setInitialTableTax(newData);
                                                             countTotalWithTax(newData, initialTable);
                                                         }} value={value.unit_value}>

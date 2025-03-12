@@ -14,12 +14,13 @@ import Title from "antd/es/typography/Title";
 import { TableRowSelection } from "antd/es/table/interface";
 import { object } from "zod";
 import { handlePriceChange } from "@/utils/validate_price_change";
-import { RequestParam } from "@/type/request_param";
+import { NewRequestParam, RequestParam } from "@/type/request_param";
 import { Pagination } from "@/type/pagination";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { deleteCookie, getCookie } from "cookies-next";
 import { InventoryMovement } from "@/type/inventory_movement";
+import { SearchInventoryResult } from "@/type/search_inventory_result";
 
 interface TableInventory {
     key: React.Key, 
@@ -93,44 +94,26 @@ const AddInventory: React.FC = () => {
             setInitialTable(newData);
 
         }else{
-            const item: Item = option.object;
+            const item: SearchInventoryResult = option.object;
             const newData = [...initialTable];
 
-            newData[index].product_name = item.name;
+            newData[index].product_name = item.product_name;
             newData[index].product_id = item.product_id;
             newData[index].sku = item.sku;
             newData[index].quantity = 1;
             newData[index].before_stok = 0;
             newData[index].after_stok = 1;
-            newData[index].cost = parseInt(item.cost);
-            newData[index].selling_price = parseInt(item.price);
-            newData[index].minimum = item.min_stock_quantity;
-            newData[index].unit_id = item.unit?.type_id ?? '',
-            newData[index].unit_name = item.unit?.name ?? '';
+            newData[index].cost = item.harga_beli;
+            newData[index].selling_price = item.harga_jual;
+            newData[index].minimum = item.minimum;
+            newData[index].unit_id = item.unit_id;
+            newData[index].unit_name = item.unit_name;
 
-            // if(item.unit?.max_value != null && item.unit?.max_value > 0){
-            //     newData[index].children = Array.from({ length: item.unit?.max_value }, (_, index) => ({
-            //         key: index, 
-            //         product_name: null, 
-            //         product_id: null, 
-            //         stok: 0.0, 
-            //         sku: "", 
-            //         selling_price: 0.0, 
-            //         cost: 0.0, 
-            //         minimum: 1,
-            //         checked: false,
-            //         location_id: '',
-            //         location_name: '',
-            //         cost_string: '0.0',
-            //         selling_price_string: '0.0',
-            //         unit_id: '',
-            //         unit_name: '',
-            //         children: [],
-            //     }))
-            // }
+           
 
             console.log(newData[index]);
 
+            form.setFieldValue('items', newData);
             setInitialTable(newData);
 
         }
@@ -187,17 +170,22 @@ const AddInventory: React.FC = () => {
             fixed: 'left',
             width: 300,
             render: (_: any, record: TableInventory, index: number) => (
-                <AutoComplete
-                showSearch
-                        value={record.product_name}
-                        options={optionItem}
-                        filterOption={false}
-                        style={{ width: 300 }}
-                        onSelect={(value, option) => onSelectItem(value, option, index)}
-                        onSearch={fetchItems}
-                        onChange={(e) => onSelectItem(e, {}, index)}
-                        placeholder="Cari/Pilih Product"
-                    />
+                <>
+                    <Form.Item name={['items', index, 'product_id']} className="m-0 min-h-0" rules={[{ required: true, message: 'Product Tidak Boleh Kosong!' }]}><Input hidden  className="min-h-0"/></Form.Item>
+                    <Form.Item name={['items', index, 'product_name']} className="m-0">
+                        <AutoComplete
+                            showSearch
+                            value={record.product_name}
+                            options={optionItem}
+                            filterOption={false}
+                            style={{ width: 300 }}
+                            onSelect={(value, option) => onSelectItem(value, option, index)}
+                            onSearch={fetchItems}
+                            onChange={(e) => onSelectItem(e, {}, index)}
+                            placeholder="Cari/Pilih Product"
+                        />
+                    </Form.Item>
+                </>
             ),
         },
         {
@@ -205,19 +193,20 @@ const AddInventory: React.FC = () => {
             fixed: 'left',
             dataIndex: "sku",
             render: (_: any, record: TableInventory, index: number) => (
-                <Input placeholder="Masukan SKU Product" value={record.sku ?? ''} onChange={(e) => {
-                    const newData = [...initialTable];
-                    newData[index].sku = e.target.value;
-                    setInitialTable(newData);
-
-                }} />
+                <Form.Item name={['items', index,'sku']} rules={[{ required: true, message: 'SKU Tidak Boleh Kosong!' }]} className="m-0"><Input placeholder="Masukan SKU Product" value={record.sku ?? ''} disabled/></Form.Item>
             ),
         },
         {
             title: "Gudang",
             dataIndex: "location",
             render: (_: any, record: TableInventory, index: number) => (
-                <AutoComplete
+                <>
+
+                <Form.Item name={['items', index, 'location_id']} rules={[{ required: true, message: 'Gudang Tidak Boleh Kosong!' }]} className="m-0 min-h-0">
+                    <Input hidden className="min-h-0"/>
+                </Form.Item>
+                <Form.Item name={['items', index, 'location_name']} className="m-0">
+                    <AutoComplete
                         showSearch
                         value={record.location_name}
                         placeholder={'Cari/Tambahkan Gudang Baru'}
@@ -225,12 +214,14 @@ const AddInventory: React.FC = () => {
                         defaultActiveFirstOption={false}
                         suffixIcon={null}
                         filterOption={false}
-                        onSearch={(value) => fetchLocation(value)}
+                        onSearch={(value) => fetchLocation(value, record)}
                         onSelect={(value, option) => onSelect(value, option, index, record)}
-                        onChange={(value, option) => onSelect(value, {}, index, record)}
                         notFoundContent={null}
                         options={optionsLocation}
                     />
+                </Form.Item>
+
+                </>
             ),
         },
         
@@ -238,14 +229,14 @@ const AddInventory: React.FC = () => {
             title: "STOK Sekarang",
             dataIndex: "",
             render: (_: any, record: TableInventory, index: number) => (
-                <Input placeholder="Masukan stok"  value={record.before_stok ?? 0} min={1}  disabled={true}/>
+                <Input placeholder="Masukan stok" className="m-0"  value={record.before_stok ?? 0} min={1}  disabled={true}/>
             ),
         },
         {
             title: "STOK Masuk",
             dataIndex: "stok",
             render: (_: any, record: TableInventory, index: number) => (
-                <Input placeholder="Masukan stok"  value={record.quantity ?? 1} min={1}  onChange={(e) => {
+                <Input placeholder="Masukan stok" className="m-0" value={record.quantity ?? 1} min={1}  onChange={(e) => {
                     const newData = [...initialTable];
                     newData[index].quantity = parseInt(handlePriceChange(e.target.value));
                     newData[index].after_stok = newData[index].before_stok + newData[index].quantity;
@@ -265,52 +256,49 @@ const AddInventory: React.FC = () => {
             title: "Satuan",
             dataIndex: "unit",
             render: (_: any, record: TableInventory, index: number) => (
-                <AutoComplete
-                        value={record.unit_name}
-                        options={optionUnit}
-                        filterOption={false}
-                        style={{ width: 100 }}
-                        onChange={(value) => onSelectItemUOM(value, {}, index)}
-                        onSelect={(value, option) => onSelectItemUOM(value, option, index)}
-                        onSearch={fetchUOM}
-                        placeholder="Cari/Pilih Product"
-                    />
+                <Form.Item name={['items', index, 'unit_name']} className="m-0" rules={[{ required: true, message: 'Satuan Tidak Boleh Kosong!' }]}><Input placeholder="Masukan satuan" /></Form.Item>
             ),
         },
         {
             title: "Harga Beli",
             dataIndex: "cost",
             render: (_: any, record: TableInventory, index: number) => (
-                <Input placeholder="Masukan COST" value={formatRupiah(record.cost ?? 0.0)} onChange={(e) => {
-                    const newData = [...initialTable];
-                    newData[index].cost = parseInt(handlePriceChange(e.target.value));
-                    setInitialTable(newData);
+                <Form.Item name={['items', index, 'cost']} className="m-0" rules={[{ required: true, message: 'Harga Beli Tidak Boleh Kosong!' }]}>
+                    <Input placeholder="Masukan COST" value={formatRupiah(record.cost ?? 0.0)} onChange={(e) => {
+                        const newData = [...initialTable];
+                        newData[index].cost = parseInt(handlePriceChange(e.target.value));
+                        setInitialTable(newData);
 
-                }} />
+                    }} />
+                </Form.Item>
             ),
         },
         {
             title: "Harga Jual",
             dataIndex: "selling_price",
             render: (_: any, record: TableInventory, index: number) => (
-                <Input placeholder="Masukan Harga Jual" value={formatRupiah(record.selling_price ?? 0.0)} onChange={(e) => {
+                <Form.Item name={['items', index, 'selling_price']} className="m-0" rules={[{ required: true, message: 'Harga Jual Tidak Boleh Kosong!' }]}>
+                    <Input placeholder="Masukan Harga Jual"  value={formatRupiah(record.selling_price ?? 0.0)} onChange={(e) => {
                     const newData = [...initialTable];
                     newData[index].selling_price = parseInt(handlePriceChange(e.target.value));
                     setInitialTable(newData);
 
                 }} />
+                </Form.Item>
             ),
         },
         {
             title: "Minimum Stok",
             dataIndex: "minimum",
             render: (_: any, record: TableInventory, index: number) => (
-                <Input placeholder="Masukan Minimum Stok" value={record.minimum ?? 0.0} onChange={(e) => {
+                <Form.Item name={['items', index, 'minimum']} className="m-0">
+                    <Input placeholder="Masukan Minimum Stok" value={record.minimum ?? 0.0} onChange={(e) => {
                     const newData = [...initialTable];
                     newData[index].minimum = parseInt(e.target.value);
                     setInitialTable(newData);
 
                 }} />
+                </Form.Item>
             ),
         },
     ];
@@ -341,40 +329,28 @@ const AddInventory: React.FC = () => {
     const fetchItems = async (query: string) => {
        
         try {
-            const querySearch: RequestParam = {
+            const querySearch: NewRequestParam = {
                 limit: 100,
                 page: 1,
                 table: 'product',
-                search: {
-                    column: [
-                        'name',
-                        'sku',
-                    ],
-                    value: query,
-                },
-                request_column: ["name", "sku", "stock_quantity", "cost", "min_stock_quantity", "price", "unit_id", "product_id"],
-                request_column_relation: ["unit"]
+                keyword: query,
+                type: "search",
             }
-            const response = await axiosInstance.post(`/search`, querySearch);
+            const response = await axiosInstance.post(`/items/search`, querySearch);
             if(response.status == 200){
-                const items: Pagination<Item> = response.data.data;
+                const items: SearchInventoryResult[] = response.data.data;
                 
-                if(items.data.length > 0){
-                    const result = items.data?.map((data: Item) => {
+                if(items.length > 0){
+                    const result = items?.map((data: SearchInventoryResult) => {
                         return {
-                            value: `${data.name}-${data.sku}`,
-                            label: `${data.name}-${data.sku}`,
+                            value: `${data.product_name}-${data.barcode}`,
+                            label: `${data.product_name}-${data.barcode}`,
                             object: data,
                         }
                     })
                     setOptionsItem(result);
                 }else{
-                    setOptionsItem([
-                        {
-                            value: `${query}`,
-                            label: `Tambahkan ${query}`,
-                        }
-                    ]);
+                    setOptionsItem([]);
                 }
             }else{
                 message.error(response.data.message);
@@ -428,14 +404,18 @@ const AddInventory: React.FC = () => {
         }
     }
 
-    const fetchLocation = async (search: string,) => {
+    const fetchLocation = async (search: string, record: TableInventory) => {
         try {
-            const response = await axiosInstance.get(`/location?name=${search}`);
+            const request = {
+                product_id: record.product_id,
+                keyword: search,
+            };
+            const response = await axiosInstance.post(`/inventory/location`, request);
             if(response.status == 200){
-                const locationResult: Location[] = response.data.data;
+                const locationResult: {product_name: string|null, location_id: string, name: string, quantity: number}[] = response.data.data;
                 
                 if(locationResult.length > 0){
-                    const result = locationResult.map((data: Location) => {
+                    const result = locationResult.map((data: {product_name: string|null, location_id: string, name: string, quantity: number}) => {
                         return {
                             value: data.name,
                             label: data.name,
@@ -445,12 +425,7 @@ const AddInventory: React.FC = () => {
                     })
                     setOptionsLocation(result);
                 }else{
-                    setOptionsLocation([
-                        {
-                            value: `${search}`,
-                            label: `Tambahkan ${search}`,
-                        }
-                    ]);
+                    setOptionsLocation([]);
                 }
 
             }
@@ -474,7 +449,7 @@ const AddInventory: React.FC = () => {
         console.log(dataInitital);
 
         try {
-            const response = await axiosInstance.post('/inventory', {'type': 'in', 'data': dataInitital });
+            const response = await axiosInstance.post('/inventory/initial', {'movement_type': 'in', 'data': dataInitital });
             if(response.status == 200){
                 message.success(`${response?.data?.message}`)
                 setInitialTableData();
@@ -506,89 +481,24 @@ const AddInventory: React.FC = () => {
                 setInitialTable(newData);
     
             }else{
-                const item: Location = option.object;
-                // setLoading(true);
+                const item: {product_name: string|null, location_id: string, name: string, quantity: number} = option.object;
 
                 const newData = [...initialTable];
-
-                try {
-                    const querySearch: RequestParam = {
-                        limit: 100,
-                        page: 1,
-                        table: 'inventory',
-                        where: [
-                            {
-                                location_id: item?.location_id,
-                                
-                            },
-                            {
-                                product_id: record?.product_id,
-                            }
-                        ],
-                        request_column: ["inventory_id","quantity"],
-                        request_column_relation: [],
-                        // whereHas: {
-                        //     "location": {
-                        //         "location_id": form.getFieldValue('reference_id')
-                        //     }
-                        // }
-                    };
-
-                    const response = await axiosInstance.post('/search', querySearch);
-                    if(response.status == 200){
-                        const items: Pagination<Inventory> = response.data.data;
-
-                        if(items.data.length > 0){
-                            const inventory: Inventory = items.data[0];
-                            newData[index].quantity = record.quantity;
-                            newData[index].before_stok = inventory.quantity;
-                            newData[index].after_stok = inventory.quantity + (record.quantity ?? 0);
-                            newData[index].type = 'in';
-                            
-                        }else{
-                            newData[index].type = 'adjustment';
-                        }
-                    }
-                } catch (error: any) {
-                    console.log(error);
-                } finally {
-                    setLoading(false);
-                }
-    
+                newData[index].quantity = record.quantity;
+                newData[index].before_stok = item.quantity;
+                newData[index].after_stok = item.quantity + (record.quantity ?? 0);
+                newData[index].type = 'in';
                 newData[index].location_id = item.location_id;
                 newData[index].location_id = item.location_id;
                 newData[index].location_name = item.name;
-    
-                // if(item.unit?.max_value != null && item.unit?.max_value > 0){
-                //     newData[index].children = Array.from({ length: item.unit?.max_value }, (_, index) => ({
-                //         key: index, 
-                //         product_name: null, 
-                //         product_id: null, 
-                //         stok: 0.0, 
-                //         sku: "", 
-                //         selling_price: 0.0, 
-                //         cost: 0.0, 
-                //         minimum: 1,
-                //         checked: false,
-                //         location_id: '',
-                //         location_name: '',
-                //         cost_string: '0.0',
-                //         selling_price_string: '0.0',
-                //         unit_id: '',
-                //         unit_name: '',
-                //         children: [],
-                //     }))
-                // }
-    
-                console.log(newData[index]);
-    
+                form.setFieldValue('items', newData);
                 setInitialTable(newData);
     
             }
     };
     
     const setInitialTableData = () => {
-        setInitialTable(Array.from({ length: 4 }, (_, index) => ({
+        const initial = Array.from({ length: 1 }, (_, index) => ({
             key: index, 
             product_name: null, 
             product_id: null, 
@@ -607,7 +517,10 @@ const AddInventory: React.FC = () => {
             unit_id: '',
             unit_name: '',
             // children: [],
-        })));
+        }));
+
+        form.setFieldValue('items', initial);
+        setInitialTable(initial);
     }
     
     const newLine = () => {
@@ -632,12 +545,14 @@ const AddInventory: React.FC = () => {
             unit_name: '',
             // children: [],
         });
+
+        form.setFieldValue('items', table);
         setInitialTable(table);
     }
 
     const getUpdateData = async () => {
-        const cookie = getCookie('movement_id');
-        console.log('coockie', cookie);
+        const cookie = getCookie('id');
+       
         if(cookie == undefined){
             return;
         }
@@ -657,7 +572,7 @@ const AddInventory: React.FC = () => {
                 setInitialTable(inventory.map((value, index) => {
                     return {
                         key: index, 
-                        movement_id: value.id,
+                        id: value.id,
                         product_name: value.product_name ?? '', 
                         product_id: value.product_id, 
                         quantity: value.quantity, 
@@ -688,7 +603,7 @@ const AddInventory: React.FC = () => {
     } 
 
     useEffect(() => {
-        const cookie = getCookie('movement_id');
+        const cookie = getCookie('id');
         
         if(cookie == undefined){
             setInitialTableData();

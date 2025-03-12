@@ -182,7 +182,7 @@ const InventoryTable: React.FC = () => {
             title: 'Harga Beli',
             dataIndex:'harga_beli', 
             key: 'harga_beli',
-            render: (_:any, record: SearchInventoryResult) => <p>{formatRupiah(record.harga_jual)}</p>,
+            render: (_:any, record: SearchInventoryResult) => <p>{formatRupiah(record.harga_beli)}</p>,
             sorter: true,
         },
         {
@@ -479,7 +479,7 @@ const InventoryTable: React.FC = () => {
 
     return (
         <>
-            <Table<SearchInventoryResult> columns={filteredColumns} onChange={onChange}
+            <Table<SearchInventoryResult> columns={availableColumns} onChange={onChange}
                 showSorterTooltip={{ target: 'sorter-icon' }} scroll={{ x: 'max-content'}} pagination={false} loading={loading} rowSelection={rowSelection} dataSource={inventories?.data} rowKey={(record) => record.inventory_id} />
             <div className="flex my-3 justify-end">
                 <AntPagination onChange={onChangePagination} defaultCurrent={inventories?.current_page} total={inventories?.total} />

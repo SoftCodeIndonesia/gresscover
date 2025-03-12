@@ -229,6 +229,7 @@ const InventoryPage: React.FC = () => {
             render: (_: any, item: SearchInventoryResult) => (
                 <>
                   
+                  {/* <EditButton label=''  onClick={() => setCookie('id', [item.inventory_id])}/> */}
                   <ViewButton label=''  onClick={() => router.push('inventory/' + item.inventory_id)}/>
                   <DeleteButton label='' onComfirm={() => handleDelete([item.inventory_id])} okText='Hapus' cancelText='Batal' />
                 </>
