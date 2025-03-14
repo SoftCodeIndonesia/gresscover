@@ -42,7 +42,7 @@ const SummeryLaba: React.FC = () => {
             dataIndex: 'bulan',
             key: 'bulan',
             fixed: 'left',
-            render: (_: any, record: Report, index: number) => <p>{formatDateOnlyMonthAndYear(record.bulan)}</p>
+            render: (_: any, record: Report, index: number) => <p>{record.bulan}</p>
         },
         {
             title: 'Total Penjualan',
@@ -134,9 +134,11 @@ const SummeryLaba: React.FC = () => {
 
             if(response.status == 200){
                 const reports: Report[] = response.data.data;
-                const summery = reports.pop();
+                if(reports.length > 0){
+                    const summery = reports[reports.length - 1];
+                    setSummery(summery!);   
+                }
                 setReports(reports);
-                setSummery(summery!);
             }else{
                 message.error(response.statusText);
             }
@@ -192,12 +194,20 @@ const SummeryLaba: React.FC = () => {
         <>
             <p className="text-lg font-bold">Laporan Laba</p>
             <Row gutter={16} className="mt-6">
-                <Col span={12} className="">
-                    <Card><Statistic title="Laba Bersih" valueStyle={{ color: '#3f8600' }} value={formatRupiah(summery.laba_bersih ?? 0)} loading={loading} /></Card>
+
+                <Col span={8} className="">
+                    <Card><Statistic title="Laba Kotor" valueStyle={{ color: '#cf1322' }} value={summery?.laba_kotor ?? 0} loading={loading} /></Card>
+                </Col>
+
+
+                <Col span={8} className="">
+                    <Card><Statistic title="Total Pengeluaran" valueStyle={{ color: '#cf1322' }} value={formatRupiah(summery?.total_pengeluaran ?? 0)} loading={loading} /></Card>
                 </Col>
                 
-                <Col span={12} className="">
-                    <Card><Statistic title="Laba Kotor" valueStyle={{ color: '#cf1322' }} value={summery.laba_kotor ?? 0} loading={loading} /></Card>
+                
+
+                <Col span={8} className="">
+                    <Card><Statistic title="Laba Bersih" valueStyle={{ color: '#3f8600' }} value={formatRupiah(summery?.laba_bersih ?? 0)} loading={loading} /></Card>
                 </Col>
             </Row>
             <Space className="gap-3 my-6">

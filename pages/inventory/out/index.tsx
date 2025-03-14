@@ -87,7 +87,7 @@ const MovementOut: React.FC = () => {
         {
             title: 'Gudang',
             dataIndex: '',
-            key: 'location_to',
+            key: 'location_name',
             render: (_: any, record: Movement, index: number) => <p>{record.location_name ?? ''}</p>,
             onFilter: (value: boolean | Key, record: Movement) => {
                 
@@ -114,18 +114,11 @@ const MovementOut: React.FC = () => {
             render: (_: any, record: Movement, index: number) => <p>{record.total_item}</p>
         },
         {
-            title: 'Total Harga Beli',
-            dataIndex: 'total_buying_price',
-            key: 'total_buying_price',
-            sorter: true,
-            render: (_: any, record: Movement, index: number) => <p>{formatRupiah(record.total_buying_price)}</p>
-        },
-        {
-            title: 'Total Harga Jual',
-            dataIndex: 'total_selling_price',
-            key: 'total_selling_price',
-            sorter: true,
-            render: (_: any, record: Movement, index: number) => <p>{formatRupiah(record.total_selling_price)}</p>
+            title: 'Catatan',
+            dataIndex: 'note',
+            key: 'note',
+            // sorter: true,
+            // render: (_: any, record: Movement, index: number) => <p>{formatRupiah(record.total_buying_price)}</p>
         },
         // {
         //     title: 'Status Vendor',
@@ -148,13 +141,13 @@ const MovementOut: React.FC = () => {
         //     ],
         //     filterSearch: true,
         // },
-        {
-            title: 'Tanggal Pembayaran',
-            dataIndex: 'payment_date',
-            key: 'payment_date',
-            render: (_: any, record: Movement, index: number) => <p>{ record.is_payment == 'Belum Lunas' ? '-' : formatDate(record.payment_date)}</p>,
-            sorter: true,
-        },
+        // {
+        //     title: 'Tanggal Pembayaran',
+        //     dataIndex: 'payment_date',
+        //     key: 'payment_date',
+        //     render: (_: any, record: Movement, index: number) => <p>{ record.is_payment == 'Belum Lunas' ? '-' : formatDate(record.payment_date)}</p>,
+        //     sorter: true,
+        // },
         {
             title: 'Tanggal Keluar',
             dataIndex: 'date',

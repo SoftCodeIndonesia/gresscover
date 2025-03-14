@@ -1,4 +1,5 @@
 import { Category } from "./category";
+import { ProductImage } from "./product_image";
 import { User } from "./user";
 
   
@@ -7,6 +8,7 @@ export type Item = {
     photo: string;
     name: string;
     category_id: string;
+    category_name: string;
     sku: string;
     barcode: string;
     price: string;
@@ -27,6 +29,7 @@ export type Item = {
     overall_quantity?: number,
     children: Item[],
     user?: User,
+    product_images?: ProductImage[],
 };
 
 export type ItemUnit = {

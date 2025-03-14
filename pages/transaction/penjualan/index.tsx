@@ -438,6 +438,8 @@ const Transaction: React.FC = () => {
     const onChangeRangePicker = (dates: [string, string]) => {
         var range: [string, string] = dates;
 
+        console.log(range);
+
         if(dates[0] == '' && dates[1] == ''){
             const start = getStartAndEndOfMonth().startOfMonth;
             const end = getStartAndEndOfMonth().endOfMonth;
@@ -450,7 +452,7 @@ const Transaction: React.FC = () => {
         setCurrentStartDate(range[0]);
         const request = {...request_param};
         
-        request.where['created_at'] = ['between', range];
+        request.where['sale_date'] = ['between', range];
         setRequestParam(request);
         getSales(request);
     }

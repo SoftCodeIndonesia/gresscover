@@ -164,6 +164,11 @@ const Transaction: React.FC = () => {
             sorter: true,
         },
         {
+            title: 'Catatan',
+            dataIndex: 'text',
+            key: 'text',
+        },
+        {
             title: 'Terakhir Di Ubah',
             dataIndex: 'updated_at',
             key: 'updated_at',

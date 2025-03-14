@@ -171,9 +171,10 @@ const AddInventory: React.FC = () => {
             width: 300,
             render: (_: any, record: TableInventory, index: number) => (
                 <>
-                    <Form.Item name={['items', index, 'product_id']} className="m-0 min-h-0" rules={[{ required: true, message: 'Product Tidak Boleh Kosong!' }]}><Input hidden  className="min-h-0"/></Form.Item>
-                    <Form.Item name={['items', index, 'product_name']} className="m-0">
+                    <Form.Item name={['items', index, 'product_id']} style={{minHeight: 0}} className="m-0 min-h-0" rules={[{ required: true, message: 'Product Tidak Boleh Kosong!' }]}><Input style={{minHeight: 0}} hidden  className="min-h-0"/></Form.Item>
+                    <Form.Item name={['items', index, 'product_name']} className="m-0 min-h-0">
                         <AutoComplete
+                            className="min-h-0"
                             showSearch
                             value={record.product_name}
                             options={optionItem}
@@ -610,6 +611,9 @@ const AddInventory: React.FC = () => {
         }else{
             getUpdateData();
         }
+
+        
+        
     }, []);
 
 
@@ -670,7 +674,12 @@ const AddInventory: React.FC = () => {
                         <Button type="primary" htmlType="submit" loading={loading}>Kirim</Button>
                 </Form.Item>
             </Form>
-              
+            <style jsx global>{`
+                .ant-form-item-control-input {
+                    min-height: 0px !important;
+                }
+               
+            `}</style>
         </DashboardLayout>
     );
 }

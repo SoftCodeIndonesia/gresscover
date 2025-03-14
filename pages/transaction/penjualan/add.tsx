@@ -419,14 +419,9 @@ const AddTransactionSale: React.FC = () => {
                if(slug){
                 fetchEditData();
                }else{
-                 setInitialTableData();
-                    setInitialTableTax([{
-                        name: 'Admin',
-                        max_value: 0,
-                        tax_id: null,
-                        unit_value: 'percent',
-                        value: 0,
-                    }]);
+                    setInitialTaxes();
+                    setInitialTableData();
+                    setInitialForm();
                     setTotal(0);
                     setSubtotal(0);
                     form.resetFields();
@@ -746,7 +741,7 @@ const AddTransactionSale: React.FC = () => {
                                     {label: 'Sedang Dikemas', value: 'sedang dikemas'},
                                     {label: 'Dalam Pengiriman', value: 'dalam pengiriman'},
                                     {label: 'Pesanan Terkirim', value: 'pesanan terkirim'},
-                                    {label: 'Retur', value: 'retur'},
+                                    
                                 ]}
                                 onChange={(value) => {console.log(value)}}
                                 allowClear={false}

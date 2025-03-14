@@ -10,6 +10,7 @@ import { Breadcrumb, Card, Input, message, Spin, Table, TableColumnsType, Tag } 
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { SearchOutlined } from "@ant-design/icons"
+import Link from "next/link";
 const gridStyle: React.CSSProperties = {
     width: '50%',
     textAlign: 'left',
@@ -163,6 +164,8 @@ const DetailInventoryIn = () => {
                 />
             </Spin>
             <Card title={`Detail `} loading={loading}>
+                <Card.Grid hoverable={false} style={gridStyle}>Dokumen</Card.Grid>
+                <Card.Grid hoverable={false} style={gridStyle}>{movement?.image != null ? <Link href={`${process.env.NEXT_PUBLIC_API_URI}/storage/${movement?.image}`} className="text-blue-500" target="__blank">Lihat Dokumen</Link> : 'Tidak Ada Dokumen' }</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>Gudang</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>{movement?.location_name}</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>QTY</Card.Grid>

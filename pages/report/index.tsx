@@ -42,7 +42,7 @@ const ReportPage: React.FC = () => {
             dataIndex: 'bulan',
             key: 'bulan',
             fixed: 'left',
-            render: (_: any, record: Report, index: number) => <p>{formatDateOnlyMonthAndYear(record.bulan)}</p>
+            render: (_: any, record: Report, index: number) => <p>{record.bulan}</p>
         },
         {
             title: 'Total Penjualan',
@@ -134,9 +134,11 @@ const ReportPage: React.FC = () => {
 
             if(response.status == 200){
                 const reports: Report[] = response.data.data;
-                const summery = reports.pop();
-                setReports(reports);
-                setSummery(summery!);
+                if(reports.length > 0){
+                    const summery = reports[reports.length - 1];
+                    setSummery(summery!);   
+                }
+                setReports(reports);;
             }else{
                 message.error(response.statusText);
             }
@@ -204,11 +206,11 @@ const ReportPage: React.FC = () => {
             />
             <Row gutter={16} className="mt-6">
                 <Col span={12} className="">
-                    <Card><Statistic title="Laba Bersih" valueStyle={{ color: '#3f8600' }} value={formatRupiah(summery.laba_bersih)} loading={loading} /></Card>
+                    <Card><Statistic title="Laba Bersih" valueStyle={{ color: '#3f8600' }} value={formatRupiah(summery?.laba_bersih ?? 0)} loading={loading} /></Card>
                 </Col>
                 
                 <Col span={12} className="">
-                    <Card><Statistic title="Laba Kotor" valueStyle={{ color: '#cf1322' }} value={summery.laba_kotor} loading={loading} /></Card>
+                    <Card><Statistic title="Laba Kotor" valueStyle={{ color: '#cf1322' }} value={summery?.laba_kotor ?? 0} loading={loading} /></Card>
                 </Col>
             </Row>
             <Space className="gap-3 my-6">

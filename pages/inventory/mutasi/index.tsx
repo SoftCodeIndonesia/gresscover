@@ -2,7 +2,7 @@ import { Key, useEffect, useState } from "react";
 import DashboardLayout from "../../component/DashboardLayout";
 import { Pagination } from "@/type/pagination";
 import { InventoryMovement } from "@/type/inventory_movement";
-import { Button, Image, Input, Select, Space, Table, TableProps, Typography, message, Pagination as AntPagination, DatePicker, TimeRangePickerProps, TableColumnsType } from "antd";
+import { Button, Image, Input, Select, Space, Table, TableProps, Typography, message, Pagination as AntPagination, DatePicker, TimeRangePickerProps, TableColumnsType, Popconfirm } from "antd";
 import {
     EyeFilled,
     FileExcelFilled,
@@ -23,6 +23,7 @@ import DeleteButton from "@/pages/component/DeleteButton";
 import ViewButton from "@/pages/component/ViewButton";
 import dayjs from "dayjs";
 import { Location } from "@/type/location";
+import { TableRowSelection } from "antd/es/table/interface";
 
 type OnChange = NonNullable<TableProps<Mutation>['onChange']>;
 type Filters = Parameters<OnChange>[1];
@@ -32,7 +33,7 @@ type Sorts = GetSingle<Parameters<OnChange>[2]>;
 
 const { RangePicker } = DatePicker;
 const MutasiBarang: React.FC = () => {
-
+    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [outs, setData] = useState<Pagination<Mutation>>({
         current_page: 0,
         data: [],
@@ -198,6 +199,16 @@ const MutasiBarang: React.FC = () => {
         }
     }
 
+    const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
+        console.log('selectedRowKeys changed: ', newSelectedRowKeys);
+        setSelectedRowKeys(newSelectedRowKeys);
+    };
+
+    const rowSelection: TableRowSelection<Mutation> = {
+        selectedRowKeys,
+        onChange: onSelectChange,
+    };
+
 
     const getLocationUtils = async () => {
         getLocation().then((response) => {
@@ -292,7 +303,7 @@ const MutasiBarang: React.FC = () => {
     const handleDelete = async (string: string[]) => {
         setLoading(true);
         try {
-            const response = await axiosInstance.post('/search_del', {data: string, table: 'mutations'});
+            const response = await axiosInstance.post('/mutations/del', {data: string, table: 'mutations'});
             if(response.status == 200){
                 fetch(requestParam);
             }
@@ -348,8 +359,18 @@ const MutasiBarang: React.FC = () => {
             <Title level={2}>Daftar Mutasi</Title>
             <Space className="flex flex-col items-start">
                 <Space className="gap-2">
-                    <Button icon={<ReloadOutlined/>} type="default" onClick={() => fetch(requestParam)} >Reload</Button>
                     <Button icon={<PlusOutlined/>} href="mutasi/add" type="primary" >Buat Mutasi</Button>
+                    <Button icon={<ReloadOutlined/>} type="default" onClick={() => fetch(requestParam)} >Reload</Button>
+                    {selectedRowKeys.length > 0 && <Popconfirm
+                        title="Yakin Ingin Menghapus Data Mutasi?"
+                        description="Data yang sudah dihapus tidak akan bisa di kembalikan!"
+                        onConfirm={() => handleDelete(selectedRowKeys as string[])}
+                        onCancel={() => {}}
+                        okText="Yes"
+                        cancelText="No"
+                    >
+                        <Button type="primary" danger>Hapus</Button>
+                    </Popconfirm>}
                 </Space>
                 <Space className="flex gap-3 items-center my-4">
                     <p className="font-normal">Filter : </p>
@@ -381,7 +402,7 @@ const MutasiBarang: React.FC = () => {
                 </Space>
             </Space>
             <Table columns={column} onChange={onChange}
-                showSorterTooltip={{ target: 'sorter-icon' }} scroll={{x: 'max-content'}}  dataSource={outs!.data} pagination={false} rowKey={(record) => record.mutation_id} loading={loading} />
+                showSorterTooltip={{ target: 'sorter-icon' }} scroll={{x: 'max-content'}}  dataSource={outs!.data} rowSelection={rowSelection} pagination={false} rowKey={(record) => record.mutation_id} loading={loading} />
                 <div className="flex my-3 justify-end">
                 <AntPagination onChange={onChangePagination} defaultCurrent={outs?.current_page} total={outs?.total} />
             </div>

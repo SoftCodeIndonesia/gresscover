@@ -33,4 +33,5 @@ export type InventoryMovement = {
     location_to?: string,
     created_by?: string,
     user?: User,
+    
 }

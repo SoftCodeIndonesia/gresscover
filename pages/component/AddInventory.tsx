@@ -3,10 +3,10 @@ import { Item, ItemUnit } from "@/type/item";
 import { Location } from "@/type/location";
 import DashboardLayout from "../component/DashboardLayout";
 import axiosInstance from "@/utils/axiosInstance";
-import { Image,Button, Divider, Form, Input, message, Select, Space, Table, Modal, Checkbox, AutoComplete, AutoCompleteProps, TableColumnsType, Breadcrumb, DatePicker, Radio, Card } from "antd";
+import { Image,Button, Divider, Form, Input, message, Select, Space, Table, Modal, Checkbox, AutoComplete, AutoCompleteProps, TableColumnsType, Breadcrumb, DatePicker, Radio, Card, Upload, UploadFile, UploadProps } from "antd";
 import { LayoutType } from "@/type/form.layout";
 
-import { CloseCircleOutlined, PlusOutlined } from '@ant-design/icons';
+import { CloseCircleOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
 import { formatRupiah } from "@/utils/format_rupiah";
 import { CheckboxChangeEvent } from "antd/es/checkbox";
 import { Inventory } from "@/type/inventory";
@@ -27,6 +27,9 @@ import TextArea from "antd/es/input/TextArea";
 import { toFormatLaravel } from "@/utils/date_utils";
 import { SearchInventoryResult } from "@/type/search_inventory_result";
 import { Movement } from "@/type/movement";
+
+
+
 
 interface TableInventory {
     key: React.Key, 
@@ -75,6 +78,37 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
     const [total_amount, setTotalAmount] = useState<number>(0);
     const [type, setType] = useState<string|null>(null);
     const [payment, setPayment] = useState<string>("0");
+    
+    const [fileList, setFileList] = useState<UploadFile[]>([
+        
+    ]);
+
+    const handleChange: UploadProps['onChange'] = (info) => {
+        let newFileList = [...info.fileList];
+    
+        // 1. Limit the number of uploaded files
+        // Only to show two recent uploaded files, and old ones will be replaced by the new
+        newFileList = newFileList.slice(-1);
+    
+        // // 2. Read from response and show file link
+        newFileList = newFileList.map((file) => {
+          if (file.response) {
+            // Component will show file.url as link
+            file.url = file.response.url;
+          }
+          return file;
+        });
+    
+        setFileList(newFileList);
+    };
+
+    const props = {
+        // action: 'https://660d2bd96ddfa2943b33731c.mockapi.io/api/upload',
+        onChange: handleChange,
+        multiple: false,
+    };
+
+    
 
     const router = useRouter();
 
@@ -466,9 +500,21 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
         });
         setTotalAmount(total);
     }
+// const formData = new FormData();
+        // formData.append('movement_id', form.getFieldValue('movement_id'));
+        // formData.append('movement_type', form.getFieldValue('type'));
+        // formData.append('date', toFormatLaravel(form.getFieldValue('date')));
+        // formData.append('is_payment', form.getFieldValue('is_payment'));
+        // formData.append('payment_date', toFormatLaravel(form.getFieldValue('payment_date')));
+        // formData.append('location_id', form.getFieldValue('location_id'));
+        // formData.append('location_name', form.getFieldValue('location_name'));
+        // formData.append('total_item', totalItem.toString());
+        // formData.append('total_amount', total_amount.toString());
+        // formData.append('data', initialTable);
+        
 
     const handleSubmit = async () => {
-        // setLoading(true);
+        setLoading(true);
         const dataInitital: any[] | undefined = [];
         var totalItem = 0;
         initialTable.forEach((element, index) => {
@@ -488,23 +534,39 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
             }
         });
 
+        
+        const formData = new FormData();
 
-        const data = {
-            movement_id: form.getFieldValue('movement_id'),
-            movement_type: form.getFieldValue('type'),
-            date: toFormatLaravel(form.getFieldValue('date')),
-            is_payment: form.getFieldValue('is_payment'),
-            payment_date: toFormatLaravel(form.getFieldValue('payment_date')),
-            location_id: form.getFieldValue('location_id'),
-            location_name: form.getFieldValue('location_name'),
-            total_item: totalItem,
-            total_amount: total_amount,
-            data: initialTable,
+        if(form.getFieldValue('movement_id') != undefined){
+
+            formData.append('movement_id', form.getFieldValue('movement_id') ?? null);
         }
-        console.log(data);
+        formData.append('movement_type', form.getFieldValue('type'));
+        formData.append('date', toFormatLaravel(form.getFieldValue('date')));
+        formData.append('is_payment', form.getFieldValue('is_payment'));
+        formData.append('payment_date', toFormatLaravel(form.getFieldValue('payment_date')));
+        formData.append('location_id', form.getFieldValue('location_id'));
+        formData.append('location_name', form.getFieldValue('location_name'));
+        formData.append('total_item', totalItem.toString());
+        formData.append('total_amount', total_amount.toString());
+        formData.append('data', JSON.stringify(dataInitital));
+        
+        if(fileList.length > 0 && !fileList[0].url){
+            formData.append('image', fileList[0].originFileObj as Blob);
+        }else if(fileList.length > 0){
+            formData.append('image', fileList[0].name);
+        }
+
+        
+
+
 
         try {
-            const response = await axiosInstance.post('/inventory', data);
+            const response = await axiosInstance.post('/inventory', formData, {
+                headers: {
+                    "Content-Type": 'multipart/form-data',
+                }
+            });
             if(response.status == 200){
                 message.success(`${response?.data?.message}`)
                 setInitialTableData();
@@ -709,6 +771,18 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
                         // children: [],
                     };
                 });
+
+                if(movemnetData.image != null){
+                    setFileList([
+                        {
+                            uid: '-1',
+                            name: `${movemnetData.original_name}.${movemnetData.extension}`, // Nama file dari API
+                            status: 'done',
+                            url: `${process.env.NEXT_PUBLIC_API_URI}/storage/${movemnetData?.image}`, // URL file dari API
+                        },
+                    ]);
+                }
+
                 form.setFieldValue('items', item);
 
                 const type = getCookie('type');
@@ -787,6 +861,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
                 <Card title={`Form Tambah ${type == 'in' ? 'Barang Masuk' : 'Barang Keluar'}`} className="mb-6">
                     <div className="flex gap-6">
                         <div className="flex flex-col flex-1 pr-6">
+                        
                             <Form.Item label="Pilih Gudang" name="location_id" rules={[{ required: true, message: 'Pilih Gudang Terlebih Dahulu!' }]}>
                                 <Select onChange={(e) => {
                                     form.setFieldValue('location_name', locations.filter((value) => value.location_id = e)[0].name);
@@ -803,14 +878,24 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
                             >
                                 <DatePicker defaultValue={dayjs()} width={`100%`} />
                             </Form.Item>
+                            <Form.Item
+                                label="Dokumen Tambahan (Nota Pembayaran, Bukti Penerimaan, dll)"
+                                name="image"
+                                style={{width: '100%'}}
+                            >
+                                <Upload {...props} fileList={fileList}>
+                                    <Button icon={<UploadOutlined />}>Klik Untuk Upload</ Button>
+                                </Upload>
+                            </Form.Item>
+                            
                         </div>
                         <div className="flex flex-col flex-1 px-6">
                             {type == 'in' && <>
                                 <Form.Item label="Status Pembayaran" name="is_payment" rules={[{ required: true, message: 'Pilih Status Pembayaran Terlebih Dahulu!' }]}>
                                 <Radio.Group onChange={(e) => {
-                                    console.log(locations);
+                                    
                                     setPayment(e.target.value);
-                                    console.log(locations);
+                                    
                                 }}>
                                     <Radio value="1"> Lunas </Radio>
                                     <Radio value="0"> Belum Lunas </Radio>
@@ -843,6 +928,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
                 </div> )}
                 
                 <Table 
+                className="mb-4"
                     columns={columns} 
                     loading={loading} 
                     rowKey={(record) => record.key ?? ''} 
@@ -863,6 +949,8 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
                         );
                     }}
                 />
+
+               
 
                 <Form.Item className="mt-4 flex gap-3 ">
                         <Button type="link" className="mr-3" onClick={back}>Batal</Button>

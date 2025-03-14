@@ -87,7 +87,7 @@ const MovementIn: React.FC = () => {
         {
             title: 'Gudang',
             dataIndex: '',
-            key: 'location_to',
+            key: 'location_name',
             render: (_: any, record: Movement, index: number) => <p>{record.location_name ?? ''}</p>,
             onFilter: (value: boolean | Key, record: Movement) => {
                 
@@ -156,11 +156,11 @@ const MovementIn: React.FC = () => {
             sorter: true,
         },
         {
-            title: 'Tanggal Keluar',
+            title: 'Tanggal Dibuat',
             dataIndex: 'date',
             key: 'date',
             sorter: true,
-            render: (_: any, record: Movement, index: number) => <p>{formatDate(record.date)}</p>
+            render: (_: any, record: Movement, index: number) => <p>{formatDate(record.created_at)}</p>
         },
         {
             title: 'Update',

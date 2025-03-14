@@ -85,6 +85,9 @@ const Items = () => {
             title: 'SKU',
             dataIndex: 'sku',
             key: 'sku',
+            render: (_: any, record: Item) => <Link passHref className="text-blue-500" href={`items/${record.product_id}`}>
+                {record.sku}
+            </Link>
         },
         {
             title: 'Barcode',
@@ -114,13 +117,18 @@ const Items = () => {
         },
         {
             title: 'Kategori',
-            dataIndex: ['category', 'name'],
-            key: 'category',
+            dataIndex: 'category_name',
+            key: 'category_name',
         },
         {
             title: 'SKU Induk',
             dataIndex: 'sku_induk',
             key: 'sku_induk',
+        },
+        {
+            title: 'Minimum Stok',
+            dataIndex: 'min_stock_quantity',
+            key: 'min_stock_quantity',
         },
         {
             title: 'Tgl Dibuat',
@@ -138,9 +146,7 @@ const Items = () => {
             key: 'action',
             render: (text: any, record: Item) => (
                 <div className='flex gap-3 items-center'>
-                    <Link passHref href={`items/${record.product_id}`}>
-                        Detail
-                    </Link>
+                    
                     <Button type='link' className="text-yellow-500" onClick={() => handleEdit(record.product_id)}>Edit</Button>
                     <Popconfirm title="Hapus Item" cancelText="Batal" onConfirm={() => handleDelete([record.product_id!])} okText="Hapus" description={`Anda Yakin Ingin Menghapus Item Ini?`}>
 

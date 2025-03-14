@@ -1,6 +1,6 @@
 import { Permission } from "@/type/permission";
 import axiosInstance from "@/utils/axiosInstance";
-import { Button, Checkbox, Input, message, Space, Table } from "antd";
+import { Button, Checkbox, Input, message, Space, Table, Tree, TreeDataNode } from "antd";
 import React, { useEffect, useState } from "react";
 import {
     ReloadOutlined,
@@ -9,6 +9,7 @@ import {
 import { CheckboxChangeEvent } from "antd/es/checkbox";
 import { useRouter } from "next/router";
 import { title } from "process";
+import { MenuSide } from "@/type/menu";
 
 type HakAksesProps = {
     id: number,
@@ -21,7 +22,9 @@ const HakAkses: React.FC<HakAksesProps> = ({id, permissions}) => {
     const [searchText, setSearchText] = useState('');
     const [tmp_permission, givePermission] = useState<string[]>([]);
     const [slug, setSlug] = useState<string | undefined>(undefined);
-    
+    const [menu_item, setMenuItem] = useState<MenuSide>([]);
+    const [treeData, setTraaData] = useState<TreeDataNode[]>([]);
+    const [defaultCheckedKeys, setDefaultCheckedKey] = useState<string[]>([]);
 
     const router = useRouter();
 
@@ -90,19 +93,44 @@ const HakAkses: React.FC<HakAksesProps> = ({id, permissions}) => {
         }
     }
 
+    
 
-    const fetchPermissions = async () => {
+    const getMenus = async () => {
         isLoading(true);
         try {
-            const response = await axiosInstance.get('/permission');
-            if(response.status == 200){
-                setPermissions(response.data.data);
-            }else{
-                message.error("Gagal Mengambil Data Permission");
-            }
-        } catch (error) {
-            message.error("Gagal Mengambil Data Permission");
-        }finally {
+          const response = await axiosInstance.get('/menus');
+          if(response.status == 200){
+            const menus: MenuSide = response.data.data.data;
+            const user_permission: number[] = response.data.data.user_permissions;
+            const tree = menus.map((value) => {
+                return {
+                    title: value.name,
+                    key: value.key,
+                    children: [...Object.entries(value.permissions).map(([key, value]) => ({
+                        key: key,
+                        title: value,
+                        
+                    })), ...value.children.map((child) => {
+                        return {
+                            title: child.name,
+                            key: child.key,
+                            children: Object.entries(child.permissions).map(([key, value]) => ({
+                                key: key,
+                                title: value
+                            }))
+                        }
+                    }), ],
+                }
+            });
+            console.log(tree);
+            console.log(user_permission.map((value) => (value.toString())));
+            setTraaData(tree);
+            setDefaultCheckedKey(user_permission.map((value) => (value.toString())));
+            setMenuItem(menus);
+          }
+        } catch (error: any) {
+          message.error(`${error?.response?.data?.message ?? error}`);
+        } finally {
             isLoading(false);
         }
     }
@@ -110,24 +138,34 @@ const HakAkses: React.FC<HakAksesProps> = ({id, permissions}) => {
     useEffect(() => {
         if (router.isReady) {
             setSlug(router.query.slug as string);
+            getMenus();
         }
         
     }, [router.isReady, router.query.slug]);
 
     useEffect(() => {
-        fetchPermissions();
-        console.log(permissions);
         givePermission([...permissions.map((data) => data.name)]);
     },[])
+
+
 
     return (
         <div>
             <Space style={{ marginBottom: 16 }}>
-                <Input prefix={<SearchOutlined />} placeholder="Cari Hak Akses" onChange={(e) => handleSearch(e.target.value)}/>
-                <Button type="primary" htmlType="button" onClick={fetchPermissions} loading={loading} icon={<ReloadOutlined />}>Reload</Button>
+                {/* <Input prefix={<SearchOutlined />} placeholder="Cari Hak Akses" onChange={(e) => handleSearch(e.target.value)}/> */}
+                <Button type="primary" htmlType="button" onClick={getMenus} loading={loading} icon={<ReloadOutlined />}>Reload</Button>
                 <Button className="bg-green-600 hover:bg-green-500 active:bg-green-500 focus:bg-green-500 text-white" htmlType="button" disabled={tmp_permission.length == 0} onClick={submitPermission} loading={loading}>Simpan</Button>
             </Space>
-            <Table columns={columns} loading={loading} dataSource={filteredData} rowKey={(record) => record.id.toString()} />
+            {/* <Table columns={columns} loading={loading} dataSource={filteredData} rowKey={(record) => record.id.toString()} /> */}
+            <Tree
+                checkable
+                // defaultExpandedKeys={['0-0-0', '0-0-1']}
+                defaultSelectedKeys={defaultCheckedKeys}
+                defaultCheckedKeys={defaultCheckedKeys}
+                // onSelect={onSelect}
+                // onCheck={onCheck}
+                treeData={treeData}
+            />
         </div>
     )
 }
