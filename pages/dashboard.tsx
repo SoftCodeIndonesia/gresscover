@@ -11,6 +11,7 @@ import { getStartAndEndOfMonth } from "@/utils/date_utils";
 import dayjs from "dayjs";
 import SummeryLaba from "./component/SummeryLaba";
 import SummerySales from "./component/SummerySales";
+import { hasPermission } from "@/utils/permission_utils";
 const { RangePicker } = DatePicker;
 const Dashboard = () => {
     const [statisticData, setStatistic] = useState<StatisticDashbaord>();
@@ -23,7 +24,10 @@ const Dashboard = () => {
     const [currentEndDate, setCurrentEndDate] = useState<string>(getStartAndEndOfMonth().endOfMonth);
     const [loading, setLoading] = useState<boolean>(false);
     const [loadingLaba, setLoadingLaba] = useState<boolean>(false);
-    
+    const [has_report, setReportPermission] = useState<boolean>(false);
+    const [has_inventories, setInventoryPermission] = useState<boolean>(false);
+    const [has_sales, setSalesPermission] = useState<boolean>(false);
+
     const rangePresets: TimeRangePickerProps['presets'] = [
         { label: 'Last 7 Days', value: [dayjs().add(-7, 'd'), dayjs()] },
         { label: 'Last 14 Days', value: [dayjs().add(-14, 'd'), dayjs()] },
@@ -47,19 +51,7 @@ const Dashboard = () => {
         }
     }
 
-    const getLaba = async (dates: string[]) => {
-        setLoadingLaba(true);
-        try {
-            const response = await axiosInstance.post('/summery/laba', {date: dates});
-            if(response.status == 200){
-                setLaba(response.data.data);
-            }
-        } catch (error: any) {
-            message.error(`${error.response?.data?.message ?? error}`);
-        } finally {
-            setLoadingLaba(false);
-        }
-    }
+   
 
     const onChangeRangePicker = (dates: [string, string]) => {
             
@@ -75,18 +67,22 @@ const Dashboard = () => {
 
         setCurrentEndDate(range[1]);
         setCurrentStartDate(range[0]);
-        getLaba(range);
+        
     }
 
     useEffect(() => {
-        getLaba([currentStartDate, currentEndDate]);
+        setReportPermission(hasPermission('akses laporan'));
+        setInventoryPermission(hasPermission('akses semua barang'));
+        setSalesPermission(hasPermission('akses semua penjualan'));
+        
         getStatistic();
     }, []);
 
     return (
         <DashboardLayout>
-            <SummeryLaba/>
-            <Row gutter={16} className="mt-6">
+            {has_report && <SummeryLaba/>}
+            {has_inventories && <>
+                <Row gutter={16} className="mt-6">
                 <Col span={8} className="mb-3">
                     <Card><Statistic title="Total Semua Assets" value={formatRupiah(statisticData?.total_asset ?? 0)} loading={loading} /></Card>
                 </Col>
@@ -104,8 +100,7 @@ const Dashboard = () => {
                 </Col>
                 
                 
-            </Row>
-            <p className="text-lg font-bold mt-6">Daftar Gudang</p>
+            </Row> <p className="text-lg font-bold mt-6">Daftar Gudang</p>
             <Row gutter={16} className="mt-6" >
                 {statisticData?.gudang.map((value: {name: string, total_barang: number, total_asset: number}) => (
                     <Col span={6} className="mb-3" key={name!}>
@@ -123,7 +118,9 @@ const Dashboard = () => {
             <div className="mt-4">
             <InventoryTable/>
             </div>
-            <SummerySales/>
+            </>}
+            
+            {has_sales && <SummerySales/>}
         </DashboardLayout>
     )
 }

@@ -18,6 +18,7 @@ type AuthResponse = {
         taxes: Tax[],
         settings: GroupSetting[],
     };
+    permission: string[],
     access_token: string;
     token_type: string;
 };
@@ -50,6 +51,7 @@ const LoginPage = () => {
 
                 localStorage.setItem("taxs", JSON.stringify(data.user.taxes))
                 localStorage.setItem("settings", JSON.stringify(data.user.settings))
+                localStorage.setItem("permissions", JSON.stringify(data.permission));
 
                 window.location.href = '/dashboard';
             }else if(response.status == 401){

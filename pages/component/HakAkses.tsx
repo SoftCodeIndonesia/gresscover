@@ -1,6 +1,6 @@
 import { Permission } from "@/type/permission";
 import axiosInstance from "@/utils/axiosInstance";
-import { Button, Checkbox, Input, message, Space, Table, Tree, TreeDataNode } from "antd";
+import { Button, Checkbox, Input, message, Space, Table, Tree, TreeDataNode, TreeProps } from "antd";
 import React, { useEffect, useState } from "react";
 import {
     ReloadOutlined,
@@ -76,10 +76,11 @@ const HakAkses: React.FC<HakAksesProps> = ({id, permissions}) => {
     const submitPermission = async () => {
         isLoading(true);
         try {
-            const response = await axiosInstance.post(`permission/${id}/give-permissions`, {'permissions': tmp_permission});
+            const response = await axiosInstance.post(`permission/${id}/give-permissions`, {'permissions': defaultCheckedKeys});
             
             if(response.status == 200){
                 message.success('Berhasil Memperbarui Hak Akses!');
+                window.location.reload();
             }else{
                 message.error('Gagal Memperbarui Hak Akses!');
             }
@@ -96,7 +97,7 @@ const HakAkses: React.FC<HakAksesProps> = ({id, permissions}) => {
     const getMenus = async () => {
         isLoading(true);
         try {
-          const response = await axiosInstance.get('/menus');
+          const response = await axiosInstance.get('/permission/' + id);
           if(response.status == 200){
             const menus: MenuSide = response.data.data.data;
             const user_permission: number[] = response.data.data.user_permissions;
@@ -104,11 +105,11 @@ const HakAkses: React.FC<HakAksesProps> = ({id, permissions}) => {
                 return {
                     title: value.name,
                     key: value.key,
-                    children: [...Object.entries(value.permissions).map(([key, value]) => ({
+                    children:value.children.length == 0 ? [...Object.entries(value.permissions).map(([key, value]) => ({
                         key: key,
                         title: value,
                         
-                    })), ...value.children.map((child) => {
+                    }))] : [...value.children.map((child) => {
                         return {
                             title: child.name,
                             key: child.key,
@@ -133,6 +134,10 @@ const HakAkses: React.FC<HakAksesProps> = ({id, permissions}) => {
         }
     }
 
+    const onCheck: TreeProps['onCheck'] = (checkedKeys, info) => {
+        setDefaultCheckedKey(checkedKeys as string[]);
+      };
+
     useEffect(() => {
         if (router.isReady) {
             setSlug(router.query.slug as string);
@@ -152,18 +157,18 @@ const HakAkses: React.FC<HakAksesProps> = ({id, permissions}) => {
             <Space style={{ marginBottom: 16 }}>
                 {/* <Input prefix={<SearchOutlined />} placeholder="Cari Hak Akses" onChange={(e) => handleSearch(e.target.value)}/> */}
                 <Button type="primary" htmlType="button" onClick={getMenus} loading={loading} icon={<ReloadOutlined />}>Reload</Button>
-                <Button className="bg-green-600 hover:bg-green-500 active:bg-green-500 focus:bg-green-500 text-white" htmlType="button" disabled={tmp_permission.length == 0} onClick={submitPermission} loading={loading}>Simpan</Button>
+                <Button className="bg-green-600 hover:bg-green-500 active:bg-green-500 focus:bg-green-500 text-white" htmlType="button" onClick={submitPermission} loading={loading}>Simpan</Button>
             </Space>
             {/* <Table columns={columns} loading={loading} dataSource={filteredData} rowKey={(record) => record.id.toString()} /> */}
-            <Tree
+            {!loading && <Tree
                 checkable
                 // defaultExpandedKeys={['0-0-0', '0-0-1']}
                 defaultSelectedKeys={defaultCheckedKeys}
                 defaultCheckedKeys={defaultCheckedKeys}
                 // onSelect={onSelect}
-                // onCheck={onCheck}
+                onCheck={onCheck}
                 treeData={treeData}
-            />
+            />}
         </div>
     )
 }
