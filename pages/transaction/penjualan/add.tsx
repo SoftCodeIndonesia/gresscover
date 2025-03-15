@@ -14,7 +14,7 @@ import Title from "antd/es/typography/Title";
 import { TableRowSelection } from "antd/es/table/interface";
 import { object } from "zod";
 import { handlePriceChange } from "@/utils/validate_price_change";
-import { RequestParam } from "@/type/request_param";
+import { NewRequestParam, RequestParam } from "@/type/request_param";
 import { Pagination } from "@/type/pagination";
 import Column from "antd/es/table/Column";
 import { Tax } from "@/type/tax";
@@ -53,6 +53,22 @@ interface TableInventory {
     sale_item_id?: string,
     sale_id?: string,
     // children: TableInventory[],
+}
+
+type SearchInventoryResult = {
+    harga_beli: number,
+    harga_jual: number,
+    location_name: string,
+    sku_induk: string,
+    quantity: number,
+    product_name: string,
+    inventory_id: string,
+    quantity_unit: number,
+    unit_name: string,
+    sku: string,
+    barcode: string,
+    nilai_asset: number,
+    minimum: number,
 }
 
 const formItemLayout = {
@@ -126,23 +142,17 @@ const AddTransactionSale: React.FC = () => {
 
     const onSelectItem = (value: string, option: any, index: number) => {
         console.log(option);
-        if(option.object == undefined){
+        if(option.object != undefined){
 
-            const newData = [...initialTable];
-            newData[index].product_name = value;
-            setInitialTable(newData);
-
-        }else{
-            const item: Inventory = option.object;
+            const item: SearchInventoryResult = option.object;
             const newData = [...initialTable];
 
             newData[index].product_name = value;
-            newData[index].product_id = item.item.product_id;
-            newData[index].sku = item.item.sku;
+            newData[index].sku = item.sku;
             newData[index].stok = item.quantity;
-            newData[index].cost = parseInt(item.item?.cost);
-            newData[index].price = item.price;
-            newData[index].selling_price = item.price * 1;
+            newData[index].cost = item.harga_beli;
+            newData[index].price = item.harga_jual;
+            newData[index].selling_price = item.harga_jual * 1;
             newData[index].quantity = 1;
             newData[index].inventory_id = item.inventory_id;
 
@@ -153,12 +163,13 @@ const AddTransactionSale: React.FC = () => {
             form.setFieldsValue({
                 items: {
                     [index]: {
-                        selling_price: item.price * 1,
+                        selling_price: item.harga_jual * 1,
                     },
                 },
             });
             sumTotalQuantity(newData);
             countTotalWithTax(initialTableTax, newData);
+
         }
     }
 
@@ -192,7 +203,7 @@ const AddTransactionSale: React.FC = () => {
                 <Form.Item name={['items', index, 'product_name']} rules={[{ required: true, message: 'Field is required' }]} className="m-0">
                     <AutoComplete
                         options={optionItem}
-                        filterOption={true}
+                        filterOption={false}
                         style={{ width: '100%' }}
                         // onChange={(value) => onSelectItem(value, {}, index)}
                         onSelect={(value, option) => onSelectItem(value, option, index)}
@@ -263,6 +274,19 @@ const AddTransactionSale: React.FC = () => {
                 </Form.Item>
             ),
         },
+        {
+            title: "Hapus",
+            dataIndex: "",
+            width: 10,
+            align: 'right',
+            render: (_: any, record: TableInventory, index: number) => (
+                <Button onClick={() => {
+                    const newData = [...initialTable]
+                    newData.splice(index, 1);
+                    setInitialTable(newData)
+                }}><DeleteOutlined/></Button>
+            ),
+        },
     ];
 
    
@@ -270,44 +294,25 @@ const AddTransactionSale: React.FC = () => {
     const fetchItems = async (query: string, index: number) => {
        
         try {
-            const querySearch: RequestParam = {
+            const querySearch: NewRequestParam = {
                 limit: 100,
                 page: 1,
                 table: 'inventory',
-                request_column_relation: ["item", "location", "item.parent"],
-                search_relation: {
-                    item: {
-                        column: [
-                            "name",
-                            "sku"
-                        ],
-                        value: query
-                    },
-                    "item.parent": {
-                        column: [
-                            "name",
-                            "sku"
-                        ],
-                        value: query
-                    }
-                },
-                where: [
-                    {
-                        quantity: [">", 0]
-                    },
-                    {
-                        location_id: form.getFieldValue('location_id'),
-                    }
-                ],
-                request_column: [],
+                keyword: query,
+                type: 'search',
+                where: {
+                    location_id: form.getFieldValue('location_id'),
+                    quantity: ['>', 0],
+                }
                
             }
-            const response = await axiosInstance.post(`/search`, querySearch);
+            const response = await axiosInstance.post(`/inventory/search`, querySearch);
             if(response.status == 200){
-                const items: Pagination<Inventory> = response.data.data;
+                const items: Pagination<SearchInventoryResult> = response.data.data.data;
                 
+                console.log(items);
                 if(items.data.length > 0){
-                    const result = items.data?.map((data: Inventory) => {
+                    const result = items.data?.map((data: SearchInventoryResult) => {
                         return {
                             value: `${data.product_name}`,
                             label: `${data.product_name}`,
@@ -315,6 +320,7 @@ const AddTransactionSale: React.FC = () => {
                             
                         }
                     })
+                    
                     setOptionsItem(result);
                 }else{
                     setOptionsItem([]);
@@ -785,15 +791,18 @@ const AddTransactionSale: React.FC = () => {
                                         <Table.Summary.Cell index={(initialTable.length ?? 1) + 3} align="right">
                                             <p>{formatRupiah(subtotal)}</p>
                                         </Table.Summary.Cell>
+                                        <Table.Summary.Cell index={(initialTableTax.length ?? 1) + 4} align="center" >
+                                                        
+                                                    </Table.Summary.Cell>
                                     </Table.Summary.Row>
                                     {initialTableTax.map((value: Tax, index: number) => {
                                         return <Table.Summary.Row key={index} className="text-right">
-                                            <Table.Summary.Cell  index={(initialTableTax.length ?? 2) + 1}  colSpan={1} align="right">
-                                                <div className="flex text-right flex-1 items-center justify-end">
-                                                    <Button type="text" danger onClick={() => removeTaxes(value)}><CloseCircleOutlined/></Button> 
-                                                    <p className="font-bold">{value.name}</p>
-                                                </div>
-                                            </Table.Summary.Cell>
+                                                    <Table.Summary.Cell  index={(initialTableTax.length ?? 2) + 1}  colSpan={1} align="right">
+                                                        <div className="flex text-right flex-1 items-center justify-end">
+                                                            <Button type="text" danger onClick={() => removeTaxes(value)}><CloseCircleOutlined/></Button> 
+                                                            <p className="font-bold">{value.name}</p>
+                                                        </div>
+                                                    </Table.Summary.Cell>
                                                     <Table.Summary.Cell index={(initialTableTax.length ?? 1) + 1} align="center" >
                                                         
                                                     </Table.Summary.Cell>
@@ -830,6 +839,9 @@ const AddTransactionSale: React.FC = () => {
                                                     }} />
                                                     </Form.Item>
                                                     </Table.Summary.Cell>
+                                                    <Table.Summary.Cell index={(initialTableTax.length ?? 4) + 1} align="center" >
+                                                        
+                                                    </Table.Summary.Cell>
                                                 </Table.Summary.Row>
                                     })}
                                     <Table.Summary.Row>
@@ -840,6 +852,9 @@ const AddTransactionSale: React.FC = () => {
                                         <Table.Summary.Cell index={(initialTable.length ?? 1) + 4} align="right">
                                             <p>{formatRupiah(total)}</p>
                                         </Table.Summary.Cell>
+                                        <Table.Summary.Cell index={(initialTableTax.length ?? 1) + 5} align="center" >
+                                                        
+                                                    </Table.Summary.Cell>
                                     </Table.Summary.Row>
                                 </>
                                 );

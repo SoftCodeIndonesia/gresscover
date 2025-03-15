@@ -1,12 +1,13 @@
 import { Key, useEffect, useState } from "react";
 import DashboardLayout from "../../component/DashboardLayout";
 import { Pagination } from "@/type/pagination";
-import { Button, Card, Col, DatePicker, Image, Input, Pagination as PaginationTable, Popconfirm, Row, Select, Space, Statistic, Table, TableColumnsType, TableProps, Tag, TimeRangePickerProps, Typography, message } from "antd";
+import { Button, Card, Col, DatePicker, Dropdown, Image, Input, Pagination as PaginationTable, Popconfirm, Row, Select, Space, Statistic, Table, TableColumnsType, TableProps, Tag, TimeRangePickerProps, Typography, message } from "antd";
 import {
     FileExcelFilled,
     PlusOutlined,
     ReloadOutlined,
     SearchOutlined,
+    SettingFilled,
 } from '@ant-design/icons';
 import { NewRequestParam, RequestParam } from "@/type/request_param";
 import axiosInstance from "@/utils/axiosInstance";
@@ -23,6 +24,7 @@ import { getLocation } from "@/utils/get_filters";
 import { Location } from "@/type/location";
 import dayjs from "dayjs";
 import { Movement } from "@/type/movement";
+import Link from "next/link";
 
 type OnChange = NonNullable<TableProps<Movement>['onChange']>;
 type Filters = Parameters<OnChange>[1];
@@ -180,13 +182,55 @@ const MovementIn: React.FC = () => {
             title: 'Operasi',
             key: 'action',
             render: (text: any, record: Movement) => (
+                // <>
+                //     <EditButton label='' href="in/add" onClick={() => {
+                //         setCookie('type', 'in');
+                //         setCookie('movement_id', record.movement_id);
+                //     }}/>
+                //     <ViewButton label=''  href={`/inventory/in/${record.movement_id}`} />
+                //     <DeleteButton label='' onComfirm={() => handleDelete([record.movement_id])} okText='Hapus' cancelText='Batal' />
+                // </>
                 <>
-                    <EditButton label='' href="in/add" onClick={() => {
-                        setCookie('type', 'in');
-                        setCookie('movement_id', record.movement_id);
-                    }}/>
-                    <ViewButton label=''  href={`/inventory/in/${record.movement_id}`} />
-                    <DeleteButton label='' onComfirm={() => handleDelete([record.movement_id])} okText='Hapus' cancelText='Batal' />
+                    <Dropdown menu={{
+                    items:[
+                        {
+                            key: '2',
+                            label: (
+                                <Link href={`/inventory/in/${record.movement_id}`}>Lihat Detail</Link>
+                            ),
+                        },
+                        {
+                            key: '3',
+                            label: 'Lihat Nota',
+                            disabled: record.image == null,
+                            onClick: () => {
+                                window.open(`${process.env.NEXT_PUBLIC_API_URI}/storage/${record?.image}`, '__blank');
+                            }
+                        },
+                        {
+                            key: '4',
+                            label: <Link onClick={() => {
+                                setCookie('type', 'in');
+                                setCookie('movement_id', record.movement_id);
+                            }} href={`in/add`}>Edit</Link>,
+                            onClick: () => {
+                                setCookie('type', 'in');
+                                setCookie('movement_id', record.movement_id);
+                                router.push('in/add');
+                            },
+                            
+                            
+                        },
+                        {
+                            key: '5',
+                            label: (
+                                <DeleteButton label='Hapus' onComfirm={() => handleDelete([record.movement_id])} okText='Hapus' cancelText='Batal' />
+                            ),
+                        },
+                    ]
+                }}>
+                    <SettingFilled />
+                </Dropdown>
                 </>
             ),
         },

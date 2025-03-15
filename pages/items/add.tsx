@@ -164,6 +164,7 @@ const AddItem = () => {
                     'category_id': data.category_id != "null" ? data.category_id : '',
                     'cost': parseInt(data.cost),
                     'price': parseInt(data.price),
+                    'sku_induk': data.parent?.sku,
                     'sku': data.sku,
                     'min_quantity': data.min_stock_quantity,
                     'photo': data.photo,
@@ -456,7 +457,7 @@ const AddItem = () => {
                         <Input placeholder="Masukan Harga Jual" type="number" />
                     </Form.Item>
                     
-                    <Form.Item className="flex-1" label="SKU Induk" name="Masukan SKU Induk jika varian">
+                    <Form.Item className="flex-1" label="SKU Induk" name="sku_induk">
                     <AutoComplete
                                 showSearch
                                 value={form.getFieldValue('sku_induk')}

@@ -64,8 +64,6 @@ const HakAkses: React.FC<HakAksesProps> = ({id, permissions}) => {
     ]
 
 
-    
-
 
     const changeCheckbox = (e: CheckboxChangeEvent) => {
         givePermission((prev) =>

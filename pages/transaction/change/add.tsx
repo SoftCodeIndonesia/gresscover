@@ -71,7 +71,7 @@ const ExchangeAdd: React.FC = () => {
             fixed: 'left',
             // width: 200,
             render: (_: any, record: TableInventory, index: number) => (
-                <Form.Item name={['items', index, 'product_name']} rules={[{ required: true, message: 'Bidang ini tidak boleh kosong!' }]}>
+                <Form.Item name={['items', index, 'product_name']} rules={[{ required: true, message: 'Bidang ini tidak boleh kosong!' }]} className="m-0">
                     <AutoComplete
                         
                             options={optionItem}
@@ -106,7 +106,7 @@ const ExchangeAdd: React.FC = () => {
             fixed: 'left',
             // width: 200,
             render: (_: any, record: TableInventory, index: number) => (
-                <Form.Item name={['items', index, 'product_name_to']} rules={[{ required: true, message: 'Bidang ini tidak boleh kosong!' }]}>
+                <Form.Item name={['items', index, 'product_name_to']} className="m-0" rules={[{ required: true, message: 'Bidang ini tidak boleh kosong!' }]}>
                     <AutoComplete
                         options={optionItem}
                         filterOption={false}
@@ -152,7 +152,7 @@ const ExchangeAdd: React.FC = () => {
             width: 200,
             render: (_: any, record: TableInventory, index: number) => (
                 <>
-                <Form.Item label="" name={['items', index, 'condition']} rules={[{ required: true, message: 'Kondisi barang Harus Di Pilih' }]}>
+                <Form.Item label="" className="m-0" name={['items', index, 'condition']} rules={[{ required: true, message: 'Kondisi barang Harus Di Pilih' }]}>
                     <Radio.Group onChange={(value) => {
                         // const parent: TableInventory = initialTable.filter((value) => value.key == record.key)[0];
                         const newData = [...initialTable];

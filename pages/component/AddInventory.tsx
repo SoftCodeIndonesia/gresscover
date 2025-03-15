@@ -396,16 +396,43 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
                 const items: SearchInventoryResult[] = response.data.data;
                 
                 if(items.length > 0){
-                    const result = items?.map((data: SearchInventoryResult) => {
-                        return {
-                            value: `${data.product_name}`,
-                            label: `${data.product_name} - ${data.barcode}`,
-                            object: data,
-                            key: `${data.product_id}`,
-                        }
-                    })
-                    console.log(result);
-                    setOptionsItem(result);
+                    
+                    if(type == 'in'){
+                        const result = items?.map((data: SearchInventoryResult) => {
+                            return {
+                                value: `${data.product_name}`,
+                                label: `${data.product_name} - ${data.barcode}`,
+                                object: data,
+                                key: `${data.product_id}`,
+                            }
+                        })
+                        setOptionsItem(result);
+                    }else{
+
+                        const toSet: {
+                            value: string,
+                            label: string,
+                            object: SearchInventoryResult,
+                            key: string,
+                        }[] = [];
+
+                        items.forEach((data: SearchInventoryResult) => {
+                            if(data.quantity > 0){
+                                toSet.push({
+                                    value: `${data.product_name}`,
+                                    label: `${data.product_name} - ${data.barcode}`,
+                                    object: data,
+                                    key: `${data.product_id}`,
+                                });
+                            }
+                        });
+
+                        // var setItem = res
+
+                        setOptionsItem(toSet);
+                    }
+                    
+                    
                 }else{
                     setOptionsItem([]);
                 }
@@ -514,24 +541,22 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
         
 
     const handleSubmit = async () => {
-        setLoading(true);
+        // setLoading(true);
         const dataInitital: any[] | undefined = [];
         var totalItem = 0;
         initialTable.forEach((element, index) => {
-            if(element.quantity! > 0){
-                element.location_id = form.getFieldValue('location_id');
-                element.location_name = form.getFieldValue('location_name');
-                
+            element.location_id = form.getFieldValue('location_id');
+            element.location_name = form.getFieldValue('location_name');
+            
 
-                const formItems: TableInventory[] = form.getFieldValue('items');
+            const formItems: TableInventory[] = form.getFieldValue('items');
 
-                element.unit_id = formItems[index].unit_id;
-                element.unit_name = formItems[index].unit_name;
+            element.unit_id = formItems[index].unit_id;
+            element.unit_name = formItems[index].unit_name;
 
-                totalItem += element.quantity!;
+            totalItem += element.quantity!;
 
-                dataInitital.push({...element});
-            }
+            dataInitital.push({...element});
         });
 
         
@@ -542,6 +567,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
             formData.append('movement_id', form.getFieldValue('movement_id') ?? null);
         }
         formData.append('movement_type', form.getFieldValue('type'));
+        formData.append('note', form.getFieldValue('note') ?? '');
         formData.append('date', toFormatLaravel(form.getFieldValue('date')));
         formData.append('is_payment', form.getFieldValue('is_payment'));
         formData.append('payment_date', toFormatLaravel(form.getFieldValue('payment_date')));
@@ -817,6 +843,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
                                 label: `${data.name}`,
                             }
                         })
+                        console.log(result);
         setOptionsLocation(result);
     }
 
@@ -863,8 +890,19 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
                         <div className="flex flex-col flex-1 pr-6">
                         
                             <Form.Item label="Pilih Gudang" name="location_id" rules={[{ required: true, message: 'Pilih Gudang Terlebih Dahulu!' }]}>
-                                <Select onChange={(e) => {
-                                    form.setFieldValue('location_name', locations.filter((value) => value.location_id = e)[0].name);
+                                <Select disabled={form.getFieldValue('location_id')} onChange={(e) => {
+                                    
+                                    
+                                    var location_selected: Location|null = null;
+
+                                    locations.forEach(element => {
+                                        if(element.location_id == e){
+                                            location_selected = element;
+                                        }
+                                    });
+                                    
+
+                                    form.setFieldValue('location_name', location_selected!.name);
                                 }}
                                 options={optionsLocation}
                                 >

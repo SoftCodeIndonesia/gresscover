@@ -25,6 +25,8 @@ export type Sale = {
     total_sku?: number,
     has_retur?: number,
     quantity_retur?: number,
+    total_harga_beli?: number,
+    profit?: number,
 }
 
 export type SaleItem = {

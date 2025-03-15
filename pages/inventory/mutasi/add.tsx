@@ -1099,6 +1099,7 @@ const MutasiBarang = () => {
         });
 
         var valid = 1;
+        var validLocation = 1;
 
         parent.forEach(element => {
             if(withVarian == "1" && element.items.length == 0){
@@ -1106,15 +1107,33 @@ const MutasiBarang = () => {
             }
         });
 
-        
-        if(valid == 1){
-            form.setFieldValue('items', parent);
-            setInitialTable(parent);
+        parent.forEach(element => {
+            if(withVarian == "1"){
+                console.log(element.items);
+                element.items.forEach(element => {
+                    
+                    if(element.location_id == ""){
+                        validLocation = 0;
+                    }
+                });
+            }
+        });
 
-            closeModal();
+
+        if(validLocation == 0){
+            message.error('Pilih Gudang Tujuan Terlebih Dahulu!');
         }else{
-            message.error('Masukan Product Variasi Terlebih Dahulu!');
+            if(valid == 1){
+                form.setFieldValue('items', parent);
+                setInitialTable(parent);
+    
+                closeModal();
+            }else{
+                message.error('Masukan Product Variasi Terlebih Dahulu!');
+            }
         }
+        
+        
     }
 
     const addNewVarian = () => {

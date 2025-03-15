@@ -45,58 +45,65 @@ const ReportPage: React.FC = () => {
             render: (_: any, record: Report, index: number) => <p>{record.bulan}</p>
         },
         {
-            title: 'Total Penjualan',
+            title: 'Subtotal Penjualan',
             dataIndex: 'penjualan',
             key: 'penjualan',
-            fixed: 'left',
-            render: (_: any, record: Report, index: number) => <p className="text-green-500">{formatRupiah(record.penjualan)}</p>
+            fixed: 'right',
+            render: (_: any, record: Report, index: number) => <p className="text-green-500 text-right">{formatRupiah(record.penjualan)}</p>
         },
         {
-            title: 'Total Pemasukan',
-            dataIndex: 'total_pemasukan',
-            key: 'total_pemasukan',
-            fixed: 'left',
-            render: (_: any, record: Report, index: number) => <p className="text-green-500">{formatRupiah(record.total_pemasukan)}</p>
+            title: 'Subtotal Harga Beli Penjualan',
+            dataIndex: 'modal',
+            key: 'modal',
+            fixed: 'right',
+            render: (_: any, record: Report, index: number) => <p className="text-green-500 text-right">{formatRupiah(record.modal)}</p>
+        },
+        {
+            title: 'Pemasukan Lainya',
+            dataIndex: 'pemasukan_lainya',
+            key: 'pemasukan_lainya',
+            // fixed: 'left',
+            render: (_: any, record: Report, index: number) => <p className="text-green-500 text-right">{formatRupiah(record.pemasukan_lainnya)}</p>
         },
         {
             title: 'Laba Kotor',
             dataIndex: 'laba_kotor',
             key: 'laba_kotor',
-            fixed: 'left',
-            render: (_: any, record: Report, index: number) => <p className="text-red-500">{formatRupiah(record.laba_kotor)}</p>
+            // fixed: 'left',
+            render: (_: any, record: Report, index: number) => <p className="text-blue-500 text-right">{formatRupiah(record.laba_kotor)}</p>
         },
         
         {
             title: 'Retur',
             dataIndex: 'retur',
             key: 'retur',
-            render: (_: any, record: Report, index: number) => <p className="text-red-500">{formatRupiah(record.retur)}</p>
+            render: (_: any, record: Report, index: number) => <p className="text-red-500 text-right">{formatRupiah(record.retur)}</p>
         },
         {
             title: 'Penukaran',
             dataIndex: 'penukaran',
             key: 'penukaran',
-            render: (_: any, record: Report, index: number) => <p className="text-red-500">{formatRupiah(record.penukaran)}</p>
+            render: (_: any, record: Report, index: number) => <p className="text-red-500 text-right">{formatRupiah(record.penukaran)}</p>
         },
        
         {
             title: 'Pengeluaran Lainya',
             dataIndex: 'pengeluaran_lainnya',
             key: 'pengeluaran_lainnya',
-            render: (_: any, record: Report, index: number) => <p className="text-red-500">{formatRupiah(record.pengeluaran_lainnya)}</p>
+            render: (_: any, record: Report, index: number) => <p className="text-red-500 text-right">{formatRupiah(record.pengeluaran_lainnya)}</p>
         },
         {
             title: 'Total Pengeluaran',
             dataIndex: 'total_pengeluaran',
             key: 'total_pengeluaran',
-            render: (_: any, record: Report, index: number) => <p className="text-red-500">{formatRupiah(record.total_pengeluaran)}</p>
+            render: (_: any, record: Report, index: number) => <p className="text-red-500 text-right">{formatRupiah(record.total_pengeluaran)}</p>
         },
         {
             title: 'Laba Bersih',
             dataIndex: 'laba_bersih',
             key: 'laba_bersih',
             fixed: 'left',
-            render: (_: any, record: Report, index: number) => <p className="text-green-500">{formatRupiah(record.laba_bersih)}</p>
+            render: (_: any, record: Report, index: number) => <p className="text-green-500 text-right">{formatRupiah(record.laba_bersih)}</p>
         },
     ]
 

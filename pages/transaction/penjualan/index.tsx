@@ -121,6 +121,20 @@ const Transaction: React.FC = () => {
             sorter: true,
             render: (_: any, record: Sale, index: number) => <p >{formatRupiah(record.total_amount_after_tax ?? 0)}</p>,
         },
+        {
+            title: 'Total Harga Belii',
+            dataIndex:'total_harga_beli', 
+            key: 'total_harga_beli',
+            sorter: true,
+            render: (_: any, record: Sale, index: number) => <p >{formatRupiah(record.total_harga_beli ?? 0)}</p>,
+        },
+        {
+            title: 'Profit',
+            dataIndex:'profit', 
+            key: 'profit',
+            sorter: true,
+            render: (_: any, record: Sale, index: number) => <p >{formatRupiah(record.profit ?? 0)}</p>,
+        },
         
         {
             title: 'Platform',
