@@ -173,10 +173,7 @@ const DetailInventoryOut = () => {
                 <Card.Grid hoverable={false} style={gridStyle}>{formatRupiah(movement?.total_amount ?? 0)}</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>Total Harga Jual</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>{formatRupiah(total_harga_jual)}</Card.Grid>
-                <Card.Grid hoverable={false} style={gridStyle}>Pembayaran</Card.Grid>
-                <Card.Grid hoverable={false} style={gridStyle}>{showStatus(movement?.is_payment!)}</Card.Grid>
-                <Card.Grid hoverable={false} style={gridStyle}>Pembayaran</Card.Grid>
-                <Card.Grid hoverable={false} style={gridStyle}>{movement?.is_payment == 0 ? "-" : formatDate(movement?.payment_date!)}</Card.Grid>
+              
                 <Card.Grid hoverable={false} style={gridStyle}>Dibuat Tgl</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}><p>{movement != undefined ? formatDate(movement.created_at) : '-'}</p></Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>Dibuat Oleh</Card.Grid>

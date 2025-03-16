@@ -814,6 +814,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
                 const type = getCookie('type');
 
                 form.setFieldsValue({
+                    note: movemnetData.note,
                     location_id: movemnetData.location_id,
                     location_name: movemnetData.location_name,
                     date: dayjs(movemnetData.date),

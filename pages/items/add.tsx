@@ -166,6 +166,7 @@ const AddItem = () => {
                     'price': parseInt(data.price),
                     'sku_induk': data.parent?.sku,
                     'sku': data.sku,
+                    'parent_id': data.parent_id,
                     'min_quantity': data.min_stock_quantity,
                     'photo': data.photo,
                     'unit_id': data.unit_id,

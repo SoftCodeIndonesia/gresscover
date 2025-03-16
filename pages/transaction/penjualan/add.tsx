@@ -167,6 +167,7 @@ const AddTransactionSale: React.FC = () => {
                     },
                 },
             });
+
             sumTotalQuantity(newData);
             countTotalWithTax(initialTableTax, newData);
 
@@ -184,10 +185,13 @@ const AddTransactionSale: React.FC = () => {
         let subtotal = 0;
 
         data.forEach((value) => {
-            if(value.product_id != null){
+            // console.log(value);
+            if(value.inventory_id != null){
                 subtotal = Number(subtotal) + Number((value.selling_price ?? 0));
             }
         })
+
+        
 
         setSubtotal(subtotal);
     }
@@ -315,7 +319,7 @@ const AddTransactionSale: React.FC = () => {
                     const result = items.data?.map((data: SearchInventoryResult) => {
                         return {
                             value: `${data.product_name}`,
-                            label: `${data.product_name}`,
+                            label: `${data.product_name}-${data.barcode}`,
                             object: data,
                             
                         }
@@ -414,6 +418,8 @@ const AddTransactionSale: React.FC = () => {
             "total_amount_after_tax": total,
             'total_quantity': total_quantity,
             'total_sku': items.length,
+            'location_id': form.getFieldValue('location_id'),
+            'location_name': form.getFieldValue('location_name'),
         }
 
         console.log(data);
@@ -575,6 +581,8 @@ const AddTransactionSale: React.FC = () => {
                     platform: responseData.data[0].platform ?? 'shopee',
                     order_number: responseData.data[0].order_number,
                     delivery_number: responseData.data[0].delivery_number,
+                    location_id: responseData.data[0].location_id,
+                    location_name: responseData.data[0].location_name,
                     // def
                 })
 
@@ -715,8 +723,11 @@ const AddTransactionSale: React.FC = () => {
                                 options={optionsLocation.map((value) => ({label: value.name, value: value.location_id}))}
                                 onSelect={(value, option) => {
                                     form.setFieldsValue({
-                                        location_id: value,
+                                        
+                                        location_name: option.label,
                                     })
+
+                                    // console.log(option);
 
                                     setShowTabel(true);
                                 }}

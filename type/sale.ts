@@ -27,6 +27,8 @@ export type Sale = {
     quantity_retur?: number,
     total_harga_beli?: number,
     profit?: number,
+    location_id: string|null,
+    location_name: string|null,
 }
 
 export type SaleItem = {

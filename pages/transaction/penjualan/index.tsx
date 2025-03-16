@@ -653,7 +653,7 @@ const Transaction: React.FC = () => {
                     options={availableColumns.map((value) => ({label: value.title, value: value.key}))}
                     >
             </Select>
-            <Table columns={filteredColumns} onChange={onChange}
+            <Table columns={availableColumns} onChange={onChange}
                 showSorterTooltip={{ target: 'sorter-icon' }} scroll={{ x: 'max-content'}} rowSelection={rowSelection} dataSource={sales?.data} rowKey={(record) => record.sale_id!} pagination={false} />
             <div className="flex my-3 justify-end">
                 <AntPagination onChange={onChangePagination} defaultCurrent={sales?.current_page} total={sales?.total} />
