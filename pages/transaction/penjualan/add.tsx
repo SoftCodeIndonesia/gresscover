@@ -373,13 +373,14 @@ const AddTransactionSale: React.FC = () => {
         let total_tax_tax = 0;
 
         taxes.forEach(element => {
+            
             if(element.unit_value == 'percent' && element.value != 0){
                 total_tax_tax = Number(total_tax_tax) + Number((total_amount * (element.value! / 100)))
             }else if(element.unit_value == 'nominal' && element.value != 0){
                 total_tax_tax = Number(total_tax_tax) + Number(element.value!);
             }
 
-            // element.value = 
+            
         });
 
         console.log(total_tax_tax);
@@ -431,12 +432,13 @@ const AddTransactionSale: React.FC = () => {
                if(slug){
                 fetchEditData();
                }else{
+                    form.resetFields();
                     setInitialTaxes();
                     setInitialTableData();
                     setInitialForm();
                     setTotal(0);
                     setSubtotal(0);
-                    form.resetFields();
+                    
                     form.setFieldsValue({
                         sale_date: dayjs(),
                         status: 'sedang dikemas',
