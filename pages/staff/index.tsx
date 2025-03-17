@@ -245,7 +245,7 @@ const StaffPage = () => {
                         name="email"
                         rules={[{ required: true, message: 'Please input Email!' }, { type: 'email', message: 'Please enter a valid email!' }]}
                     >
-                        <Input />
+                        <Input disabled={editingStaff != null} />
                     </Form.Item>
                     {editingStaff == null && <Form.Item
                         label="Password"

@@ -62,7 +62,8 @@ const LoginPage = () => {
             if(error.response && error.response.status === 401){
                 message.error(`${error.response.data.message}`);
             }else{
-                message.error(`Gagal Masuk ==> ${error}`);
+                console.log(error);
+                message.error(`Gagal Masuk ==> ${error.response?.data?.message ?? error}`);
             }
         } finally {
             setLoading(false);

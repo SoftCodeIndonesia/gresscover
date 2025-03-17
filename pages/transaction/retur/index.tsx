@@ -414,6 +414,9 @@ const ReturPage: React.FC = () => {
         request.where = {...request.where, ...{
             created_at: ['between', [currentStartDate, currentEndDate]]
         }}
+        request.orderBy = {
+            'created_at': 'DESC'
+        },
         setRequestParam(request);
         getRetur(request);
     }, []);

@@ -541,7 +541,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
         
 
     const handleSubmit = async () => {
-        // setLoading(true);
+        setLoading(true);
         const dataInitital: any[] | undefined = [];
         var totalItem = 0;
         initialTable.forEach((element, index) => {
@@ -595,9 +595,22 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
             });
             if(response.status == 200){
                 message.success(`${response?.data?.message}`)
-                setInitialTableData();
-                deleteCookie('inventory_id');
-                router.back();
+                const cookie = getCookie('movement_id');
+                form.resetFields();
+                if(cookie != undefined){
+                    getUpdateData();
+                }else{
+                    setInitialTableData();
+                    form.setFieldsValue({
+                        date: dayjs(),
+                        movement_id: type,
+                        payment_date: dayjs(),
+                        is_payment: '0',
+                        type: type,
+                    });
+                    deleteCookie('inventory_id');
+                }
+
             }
         } catch (error: any) {
             message.error(`${error.response?.data?.message}`)
@@ -855,6 +868,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
         
         if(type != undefined){
             setType(type);
+            
             if(cookie == undefined){
                 setInitialTableData();
                 form.setFieldsValue({
@@ -865,6 +879,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
                     type: type,
                 });
             }else{
+                
                 getUpdateData();
             }
         }

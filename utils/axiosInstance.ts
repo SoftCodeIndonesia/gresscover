@@ -28,7 +28,7 @@ axiosInstance.interceptors.response.use(
           errorMessage = "Unauthorized. Please log in again.";
           break;
         case 403:
-          errorMessage = "Access Denied";
+          errorMessage = data.message || "Access Denied";
           break;
         case 404:
           errorMessage = "Resource not found";
