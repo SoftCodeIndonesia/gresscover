@@ -8,6 +8,7 @@ import axiosInstance from '@/utils/axiosInstance';
 import { User } from '@/type/user';
 import { getCookie } from 'cookies-next';
 import UserInformation from '../component/UserInformation';
+import ChangePassword from '../component/ChangePassword';
 
 const Account = () => {
     const [user, setUser] = useState<User | null>(null);
@@ -22,6 +23,11 @@ const Account = () => {
           key: '2',
           label: 'Hak Akses',
           children: <HakAkses id={0} permissions={[]}/>,
+        },
+        {
+          key: '3',
+          label: 'Ganti Kata Sandi',
+          children: <ChangePassword/>,
         },
     ]);
 
@@ -50,6 +56,11 @@ const Account = () => {
                       key: '2',
                       label: 'Hak Akses',
                       children: <HakAkses id={user.id} permissions={user.permissions} />,
+                    },
+                    {
+                        key: '3',
+                        label: 'Ganti Kata Sandi',
+                        children: <ChangePassword/>,
                     },
                 ]);
             }

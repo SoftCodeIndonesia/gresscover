@@ -217,7 +217,7 @@ const UserInformation: React.FC<UserInformationProp> =  ({data}) => {
                         {editState ? 'Batal' : 'Edit'}
                     </Button>
                     <Button type="primary" htmlType="submit" loading={loading} disabled={!editState}>
-                        Submit
+                        Simpan
                     </Button>
                 </Space>
             </Form.Item>

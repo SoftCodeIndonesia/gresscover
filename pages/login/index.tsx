@@ -1,12 +1,12 @@
 
 import { User } from "@/type/user";
-import { Button, Card, Form, FormProps, Input, Layout, message } from "antd"
+import { Button, Card, Flex, Form, FormProps, Input, Layout, message } from "antd"
 import axiosInstance from '@/utils/axiosInstance';
 import { setCookie } from "cookies-next";
 import React, { useState, useEffect } from "react";
 import { Tax } from "@/type/tax";
 import { GroupSetting } from "@/type/setting";
-
+import { LockOutlined, MailOutlined, UserOutlined } from '@ant-design/icons';
 type FieldLoginType = {
     email: string,
     password: string,
@@ -71,32 +71,36 @@ const LoginPage = () => {
     };
     return (
         <Layout style={{height: '100vh'}} className="flex items-center justify-center">
-            <Card title="Masuk" bordered={false} style={{ width: 600 }}>
+            <Card title="Masuk" bordered={false} style={{ width: 360 }}>
                 <Form
                     name="basic"
                     form={form}
-                    {...layout}
+                    // {...layout}
                     onFinish={onFinish}
                 >
                     <Form.Item<FieldLoginType>
-                        label="Email"
                         name="email"
                         rules={[{ required: true, message: 'Masukan alamat email!' }]}
                     >
-                        <Input />
+                        <Input prefix={<MailOutlined />} placeholder="Email" />
                     </Form.Item>
 
                     <Form.Item<FieldLoginType>
-                        label="Password"
                         name="password"
                         rules={[{ required: true, message: 'Masukan password!' }]}
                     >
-                        <Input.Password />
+                        <Input.Password prefix={<LockOutlined />} placeholder="Password" />
                     </Form.Item>
 
-                    <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
-                        <Button type="primary" htmlType="submit" loading={loading}>
-                            Submit
+                    {/* <Form.Item>
+                        <div className="flex flex-1 items-end justify-end">
+                            <a href="" className="text-blue-500">Lupa Kata Sandi</a>
+                        </div>
+                    </Form.Item> */}
+
+                    <Form.Item >
+                        <Button block type="primary" htmlType="submit" loading={loading}>
+                            Masuk
                         </Button>
                     </Form.Item>
                 </Form>
