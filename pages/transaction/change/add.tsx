@@ -40,6 +40,9 @@ interface TableInventory {
     sale_item_id?: string,
     movement_in?: string,
     price: number,
+    quantity_retur: number,
+    quantity_sale: number,
+    cost: number,
 }
 
 type InventoryMovementSearch = {
@@ -62,7 +65,7 @@ const ExchangeAdd: React.FC = () => {
     const [data, setData] = useState<ExchangeType>();
     const [slug, setSlug] = useState<string>();
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-
+    const [total_lost, setTotalLost] = useState<number>(0);
 
     const columns: TableColumnsType<TableInventory> = [
         {
@@ -131,6 +134,7 @@ const ExchangeAdd: React.FC = () => {
                         if(plus > 0){
                             newData[index].quantity = plus;
                             setInitialTable(newData);
+                            countTotalLost(newData);
                         }
                     }} />
                     <p>{record.quantity}/{record.available_quantity}</p>
@@ -141,6 +145,7 @@ const ExchangeAdd: React.FC = () => {
                             newData[index].quantity = plus;
                             console.log(newData);
                             setInitialTable(newData);
+                            countTotalLost(newData);
                         }
                     }} />
                 </div>
@@ -158,6 +163,7 @@ const ExchangeAdd: React.FC = () => {
                         const newData = [...initialTable];
                         newData[index].condition = value.target.value;
                         setInitialTable(newData);
+                        countTotalLost(newData);
                         
                     }}>
                         <Radio value="completed"> Baik </Radio>
@@ -245,6 +251,21 @@ const ExchangeAdd: React.FC = () => {
         }
     };
 
+
+    const countTotalLost = (tables: TableInventory[]) => {
+        var total_lost = 0;
+
+        tables.forEach(element => {
+            if(element.condition == 'reject'){
+                total_lost += Number(element.cost) * Number(element.quantity);
+            }
+        });
+
+        console.log(tables);
+
+        setTotalLost(total_lost);
+    }
+
     const get_sales_item = async () => {
 
     }
@@ -255,38 +276,47 @@ const ExchangeAdd: React.FC = () => {
         if(data.object != undefined){
             const sale: Sale = data.object;
             console.log(sale);
-            form.setFieldValue('sales_id', sale.sale_id);
-            form.setFieldValue('sales_number', sale.order_number);
-            const initial = sale.items.map((value: SaleItem, index: number) => {
-                return {
-                    key: index, 
-                    product_name: value.product_name,
-                    product_photo: value.product_photo,
-                    location_name: value.location_name!, 
-                    stok: value.quantity, 
-                    quantity: 1, 
-                    available_quantity: value.quantity, 
-                    id: null,
-                    status: '',
-                    condition: 'completed',
-                    reference: 'exchange',
-                    reference_id: '',
-                    inventory_id: value.inventory_id ?? '',
-                    unit_id: value.inventory.unit_id ?? '',
-                    unit_name: value.inventory.unit_name ?? '',
-                    inventory_id_from: value.inventory.inventory_id,
-                    note: '',
-                    movement_id_from: null,
-                    inventory_id_exchange: null,
-                    product_name_to: '',
-                    product_photo_to: '',
-                    price: parseInt(value.price),
-                    sale_item_id: value.sale_item_id,
-                    change_movement_id: null,
-                }
-            });
-            setInitialTable(initial);
-            form.setFieldValue('items', initial);
+            if((sale.quantity_retur ?? 0) < (sale.total_quantity ?? 0)){
+                form.setFieldValue('sales_id', sale.sale_id);
+                form.setFieldValue('sales_number', sale.order_number);
+                const initials: TableInventory[] = [];
+                
+                sale.items.forEach((value: SaleItem, index: number) => {
+                    if(value.quantity_retur < value.quantity){
+                        initials.push({
+                            key: index,
+                            product_name: value.product_name,
+                            product_photo: value.product_photo,
+                            location_name: value.location_name!,
+                            stok: value.quantity,
+                            quantity: 1,
+                            available_quantity: value.quantity,
+                            id: null,
+                            status: '',
+                            condition: 'completed',
+                            reference: 'exchange',
+                            reference_id: '',
+                            inventory_id: value.inventory_id ?? '',
+                            unit_id: value.inventory.unit_id ?? '',
+                            unit_name: value.inventory.unit_name ?? '',
+                            inventory_id_from: value.inventory.inventory_id,
+                            note: '',
+                            inventory_id_exchange: null,
+                            product_name_to: '',
+                            product_photo_to: '',
+                            price: parseInt(value.price),
+                            sale_item_id: value.sale_item_id,
+                            change_movement_id: null,
+                            quantity_retur: value.quantity_retur,
+                            quantity_sale: value.quantity,
+                            cost: 0
+                        });
+                    }
+                });
+                setInitialTable(initials);
+                form.setFieldValue('items', initials);
+                countTotalLost(initials)
+            }
         }
     }
 
@@ -304,7 +334,7 @@ const ExchangeAdd: React.FC = () => {
                     ],
                     value: query,
                 },
-                request_column: ["order_number", "sale_id"],
+                request_column: ["order_number", "sale_id", "quantity_retur", "total_quantity"],
             }
             const response = await axiosInstance.post(`/search`, querySearch);
             if(response.status == 200){
@@ -458,12 +488,16 @@ const ExchangeAdd: React.FC = () => {
                         change_movement_id: value.change_movement_id,
                         exchange_item_id: value.exchange_item_id,
                         movement_in: value.movement_in,
+                        quantity_retur: value.quantity,
+                        quantity_sale: value.sale_item?.quantity ?? 0,
+                        cost: parseInt(value.sale_item?.movement?.cost?.toString() ?? '0'),
                     }
                 });
 
 
                 form.setFieldValue('items', initial);
                 setInitialTable(initial);
+                countTotalLost(initial);
             }
             
         } catch (error: any) {

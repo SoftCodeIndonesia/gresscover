@@ -378,7 +378,7 @@ const Transaction: React.FC = () => {
                 <Button icon={<PlusOutlined/>} type="primary" href="transaction/add" className=" bg-blue-600 text-white" >Tambah</Button>
                 <Button icon={<ReloadOutlined/>} type="default" onClick={() => getTransactions(requestParam)} className="" >Reload</Button>
                 {selectedRowKeys.length > 0 && <Popconfirm
-                    title="Yakin Ingin Menghapus Data Inventory?"
+                    title="Yakin Ingin Menghapus Data Transaksi?"
                     description="Data yang sudah dihapus tidak akan bisa di kembalikan!"
                     onConfirm={() => handleDelete(selectedRowKeys as string[])}
                     onCancel={() => {}}

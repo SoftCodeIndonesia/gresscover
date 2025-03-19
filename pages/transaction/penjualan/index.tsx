@@ -576,7 +576,7 @@ const Transaction: React.FC = () => {
                     {selectedRowKeys.length > 0 && <>
                         
                         <Popconfirm
-                            title="Yakin Ingin Menghapus Data Inventory?"
+                            title="Yakin Ingin Menghapus Data Penjualan?"
                             description="Data yang sudah dihapus tidak akan bisa di kembalikan!"
                             onConfirm={() => handleDelete(selectedRowKeys as string[])}
                             onCancel={() => {}}
@@ -654,7 +654,14 @@ const Transaction: React.FC = () => {
                     >
             </Select>
             <Table columns={availableColumns} onChange={onChange}
-                showSorterTooltip={{ target: 'sorter-icon' }} scroll={{ x: 'max-content'}} rowSelection={rowSelection} dataSource={sales?.data} rowKey={(record) => record.sale_id!} pagination={false} />
+                showSorterTooltip={{ target: 'sorter-icon' }} 
+                scroll={{ x: 'max-content'}} 
+                rowSelection={rowSelection} 
+                dataSource={sales?.data} 
+                rowKey={(record) => record.sale_id!} 
+                pagination={false}
+                
+            />
             <div className="flex my-3 justify-end">
                 <AntPagination onChange={onChangePagination} defaultCurrent={sales?.current_page} total={sales?.total} />
             </div>

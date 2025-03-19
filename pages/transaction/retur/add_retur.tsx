@@ -16,6 +16,7 @@ import { Sale, SaleItem } from "@/type/sale";
 import { InventoryMovement } from "@/type/inventory_movement";
 import { getCookie } from "cookies-next";
 import { Retur } from "@/type/retur";
+import { formatRupiah } from "@/utils/format_rupiah";
 
 
 interface TableInventory {
@@ -35,6 +36,9 @@ interface TableInventory {
     sale_item_id?: string,
     inventory_id: string,
     retur_movement_id?: string,
+    quantity_retur: number,
+    quantity_sale: number,
+    cost: number,
     type: "parent"| "child" | string,
 }
 
@@ -46,6 +50,7 @@ const AddRetur: React.FC = () => {
     const [formLayout, setFormLayout] = useState<LayoutType>('vertical');
     const [subtotal, setSubtotal] = useState<number>(0);
     const [total, setTotal] = useState<number>(0);
+    const [total_lost, setTotalLost] = useState<number>(0);
     const [data, setData] = useState<Retur>();
     const [slug, setSlug] = useState<string>();
     const [initialTable, setInitialTable] = useState<TableInventory[]>([]);
@@ -72,6 +77,7 @@ const AddRetur: React.FC = () => {
                         if(plus > 0){
                             newData[index].quantity = plus;
                             setInitialTable(newData);
+                            countTotalLost(newData);
                         }
                     }} />
                     <p>{record.quantity}/{record.stok}</p>
@@ -80,8 +86,8 @@ const AddRetur: React.FC = () => {
                         if(plus <= record.stok!){
                             const newData = [...initialTable];
                             newData[index].quantity = plus;
-                            console.log(newData);
                             setInitialTable(newData);
+                            countTotalLost(newData);
                         }
                     }} />
                 </div>
@@ -100,6 +106,7 @@ const AddRetur: React.FC = () => {
                                 const newData = [...initialTable];
                                 newData[index].condition = value.target.value;
                                 setInitialTable(newData);
+                                countTotalLost(newData);
                                 
                             }}>
                                 <Radio value="completed"> Baik </Radio>
@@ -112,6 +119,7 @@ const AddRetur: React.FC = () => {
         {
             title: "Aksi",
             dataIndex: "",
+            align: 'right',
             render: (_: any, record: TableInventory, index: number) => (
                 <>
                     <Button onClick={() => removeItem(record)}>
@@ -125,6 +133,20 @@ const AddRetur: React.FC = () => {
     const removeItem = (index: TableInventory) => {
         const initial = initialTable.filter((value) => value.key != index.key);
         setInitialTable(initial);
+    }
+
+    const countTotalLost = (tables: TableInventory[]) => {
+        var total_lost = Number(form.getFieldValue('delivery_fee') ?? 0) ?? 0;
+
+        tables.forEach(element => {
+            if(element.condition == 'reject'){
+                total_lost += Number(element.cost) * Number(element.quantity);
+            }
+        });
+
+        console.log(tables);
+
+        setTotalLost(total_lost);
     }
 
     const fetchSales = async (query: string) => {
@@ -141,7 +163,7 @@ const AddRetur: React.FC = () => {
                     ],
                     value: query,
                 },
-                request_column: ["order_number", "sale_id"],
+                request_column: ["order_number", "sale_id", "quantity_retur", "total_quantity"],
             }
             const response = await axiosInstance.post(`/search`, querySearch);
             if(response.status == 200){
@@ -169,29 +191,47 @@ const AddRetur: React.FC = () => {
         if(data.object != undefined){
             const sale: Sale = data.object;
             console.log(sale);
-            form.setFieldValue('order_id', sale.sale_id);
-            form.setFieldValue('order_number', sale.order_number);
-            const initials = sale.items.map((value: SaleItem, index: number) => ({
-                key: index, 
-                product_name: `${value.product_name}`, 
-                product_id: null, 
-                stok: value.quantity, 
-                checked: false,
-                quantity: 1,
-                parent_index: -1,
-                id: `${index}`,
-                sale_item_id: value.sale_item_id,
-                product_photo: value.product_photo,
-                location_name: value.location_name,
-                unit_name: value.unit_name,
-                inventory_id: value.inventory_id,
-                price: parseInt(value.price),
-                type: "parent",
-                condition: "completed",
-            }));
-            setInitialTable(initials)
+            if((sale.quantity_retur ?? 0) < (sale.total_quantity ?? 0)){
+                form.setFieldValue('order_id', sale.sale_id);
+                form.setFieldValue('order_number', sale.order_number);
+                const initials: TableInventory[] = [];
 
-            form.setFieldValue('items', initials);
+                sale.items.forEach((value: SaleItem, index: number) => {
+                    if(value.quantity_retur < value.quantity){
+                        initials.push({
+                            key: index, 
+                            product_name: `${value.product_name}`, 
+                            product_id: null, 
+                            stok: Number(value.quantity) - Number(value.quantity_retur),
+                            quantity: 1,
+                            parent_index: -1,
+                            id: `${index}`,
+                            sale_item_id: value.sale_item_id,
+                            product_photo: value.product_photo,
+                            location_name: value.location_name,
+                            unit_name: value.unit_name,
+                            inventory_id: value.inventory_id,
+                            price: parseInt(value.price),
+                            type: "parent",
+                            condition: "completed",
+                            cost: parseInt(value.movement.cost?.toString() ?? '0'),
+                            quantity_retur: value.quantity_retur,
+                            quantity_sale: value.quantity,
+                        });
+                    }
+                });
+
+                console.log(initials);
+
+                setInitialTable(initials)
+
+                form.setFieldValue('items', initials);
+                countTotalLost(initials);
+            }else{
+                form.setFieldValue('order_id', null);
+                form.setFieldValue('order_number', null);
+                message.error('Retur Sudah Melebihi Quantity Penjualan!');
+            }
         }
     }
     
@@ -217,17 +257,7 @@ const AddRetur: React.FC = () => {
                 });
             }
         });
-
-        var total_loss = 0;
-
-        items.forEach(element => {
-            console.log(element);
-            if(element.item_retur_condition != 'completed'){
-                total_loss = total_loss + ((element.price??1) * element.quantity) + ((element.price??1) * element.quantity);
-            }else{
-                total_loss = total_loss + ((element.price??1) * element.quantity);
-            }
-        });
+        
 
         const data = {
             'retur_id': form.getFieldValue('retur_id') ?? null,
@@ -238,7 +268,7 @@ const AddRetur: React.FC = () => {
             'status': form.getFieldValue('status'),
             'type': form.getFieldValue('type_retur'),
             'delivery_fee': form.getFieldValue('delivery_fee'),
-            'retur_item_loss': total_loss,
+            'retur_item_loss': total_lost,
             'items': items,
         }
 
@@ -304,7 +334,7 @@ const AddRetur: React.FC = () => {
                         key: index, 
                         product_name: `${value.product_name}`, 
                         product_id: null, 
-                        stok: value.sale_item?.quantity ?? 1, 
+                        stok: Number(value.sale_item?.quantity_retur) - Number(value.quantity),
                         checked: false,
                         quantity: value.quantity,
                         parent_index: -1,
@@ -319,6 +349,9 @@ const AddRetur: React.FC = () => {
                         condition: value.item_retur_condition,
                         retur_item_id: value.retur_item_id,
                         retur_movement_id: value.retur_movement_id,
+                        cost: parseInt(value.movement?.cost?.toString() ?? '0'),
+                        quantity_retur: value.quantity,
+                        quantity_sale: value.sale_item?.quantity ?? 0,
                         // children: [],
                     }
                 });
@@ -326,6 +359,7 @@ const AddRetur: React.FC = () => {
 
                 form.setFieldValue('items', initials);
                 setInitialTable(initials);
+                countTotalLost(initials);
             }
 
         } catch (error: any) {
@@ -399,9 +433,10 @@ const AddRetur: React.FC = () => {
                         <Form.Item label="Nomor Pengiriman" name="delivery_number" rules={[{ required: true, message: 'Please input nomor pesanan!' }]}>
                             <Input placeholder="Nomor Pengiriman" />
                         </Form.Item>
-                        <Form.Item label="Biaya Pengiriman" name="delivery_fee" rules={[{ required: true, message: 'Please input biaya pengiriman!' }]}>
+                        <Form.Item label="Biaya Pengiriman" name="delivery_fee">
                             <Input placeholder="Biaya Pengiriman" onChange={(e) => {
-                                form.setFieldValue('delivery_fee', handlePriceChange(e.target.value ?? '0'))
+                                // form.setFieldValue('delivery_fee')
+                                countTotalLost(initialTable);
                             }} />
                         </Form.Item>
                     </div>
@@ -443,9 +478,40 @@ const AddRetur: React.FC = () => {
                             pagination={false} 
                             dataSource={initialTable} 
                             scroll={{ x: 'max-content' }}
-                            // expandable={{
-                            //     expandedRowRender: (record) => <p style={{ margin: 0 }}>{record.description}</p>,
-                            // }}
+                            summary={pageData => {
+                                var total_loss_item = 0;
+
+                                pageData.forEach(element => {
+                                    if(element.condition == 'reject'){
+                                        total_loss_item += element.cost * (element.quantity ?? 1);
+                                    }
+                                });
+
+                                // total_loss += Number(form.getFieldValue('delivery_fee') ?? 0);
+                                
+                                return (
+                                <>
+                                    <Table.Summary.Row>
+                                        <Table.Summary.Cell index={1} colSpan={3} align="right"><p className="font-normal">Kerugian Ongkos Kirim/Lainya</p></Table.Summary.Cell>
+                                        <Table.Summary.Cell index={2} align="right">
+                                            <p>{formatRupiah(form.getFieldValue('delivery_fee') ?? 0)}</p>
+                                        </Table.Summary.Cell>
+                                    </Table.Summary.Row>
+                                    <Table.Summary.Row>
+                                        <Table.Summary.Cell index={1} colSpan={3} align="right"><p className="font-normal">Kerugian Barang</p></Table.Summary.Cell>
+                                        <Table.Summary.Cell index={2} align="right">
+                                            <p>{formatRupiah(total_loss_item)}</p>
+                                        </Table.Summary.Cell>
+                                    </Table.Summary.Row>
+                                    <Table.Summary.Row>
+                                        <Table.Summary.Cell index={1} colSpan={3} align="right"><p className="font-bold">Total Kerugian</p></Table.Summary.Cell>
+                                        <Table.Summary.Cell index={2} align="right">
+                                            <p>{formatRupiah(total_lost ?? 0)}</p>
+                                        </Table.Summary.Cell>
+                                    </Table.Summary.Row>
+                                </>
+                                );
+                            }}
                            
                     />
                     

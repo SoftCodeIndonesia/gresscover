@@ -47,6 +47,9 @@ export type SaleItem = {
     inventory_id: string;
     inventory: Inventory;
     movement: InventoryMovement;
+    has_retur: number;
+    quantity_retur: number;
+
 }
 
 export type SaleTax = {
