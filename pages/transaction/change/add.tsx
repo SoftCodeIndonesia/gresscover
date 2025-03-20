@@ -6,12 +6,13 @@ import { Sale, SaleItem } from "@/type/sale";
 import axiosInstance from "@/utils/axiosInstance";
 import { handlePriceChange } from "@/utils/validate_price_change";
 import { AutoComplete, AutoCompleteProps, Breadcrumb, Button, Form, Input, message, Radio, Select, Table, TableColumnsType } from "antd";
-import { MinusCircleOutlined, PlusCircleOutlined, SwapOutlined } from '@ant-design/icons';
+import { DeleteFilled, MinusCircleOutlined, PlusCircleOutlined, SwapOutlined } from '@ant-design/icons';
 import { useEffect, useState } from "react";
 import { InventoryMovement } from "@/type/inventory_movement";
 import TextArea from "antd/es/input/TextArea";
 import { getCookie } from "cookies-next";
 import { ExchangeItem, ExchangeType } from "@/type/exchange";
+import { formatRupiah } from "@/utils/format_rupiah";
 
 interface TableInventory {
     key: React.Key, 
@@ -173,7 +174,26 @@ const ExchangeAdd: React.FC = () => {
                 </>
             ),
         },
+        {
+            title: "Aksi",
+            dataIndex: "",
+            width: 30,
+            align: "right",
+            render: (_: any, record: TableInventory, index: number) => (
+                <>
+                    <Button onClick={() => removeItem(record)}>
+                        <DeleteFilled/>
+                    </Button>
+                </>
+            ),
+        },
     ];
+
+    const removeItem = (index: TableInventory) => {
+        const initial = initialTable.filter((value) => value.key != index.key);
+        setInitialTable(initial);
+        countTotalLost(initial);
+    }
 
     const fetchItems = async (query: string, record?: TableInventory, index?: number) => {
         
@@ -253,7 +273,7 @@ const ExchangeAdd: React.FC = () => {
 
 
     const countTotalLost = (tables: TableInventory[]) => {
-        var total_lost = 0;
+        var total_lost = Number(form.getFieldValue('delivery_fee') ?? 0) ?? 0;;
 
         tables.forEach(element => {
             if(element.condition == 'reject'){
@@ -261,7 +281,7 @@ const ExchangeAdd: React.FC = () => {
             }
         });
 
-        console.log(tables);
+        console.log(total_lost);
 
         setTotalLost(total_lost);
     }
@@ -309,7 +329,7 @@ const ExchangeAdd: React.FC = () => {
                             change_movement_id: null,
                             quantity_retur: value.quantity_retur,
                             quantity_sale: value.quantity,
-                            cost: 0
+                            cost: value.inventory.cost ?? 0
                         });
                     }
                 });
@@ -405,6 +425,7 @@ const ExchangeAdd: React.FC = () => {
             "delivery_fee": form.getFieldValue('delivery_fee'),
             "delivery_number": form.getFieldValue('delivery_number'),
             "note": form.getFieldValue('note'),
+            "total_loss": total_lost,
             "items":items,
             'exchange_id': form.getFieldValue('exchange_id') ?? null,
         }
@@ -439,7 +460,7 @@ const ExchangeAdd: React.FC = () => {
             const requestParam:RequestParam = {
                 table: 'exchange',
                 request_column: [],
-                request_column_relation: ['items', 'items.movement','items.inventory_from','items.inventory_to', 'items.sale_item'],
+                request_column_relation: ['items', 'items.movement','items.inventory_from','items.inventory_to', 'items.sale_item', 'items.sale_item.movement'],
                 where: {
                     exchange_id: slug,
                 },
@@ -490,10 +511,11 @@ const ExchangeAdd: React.FC = () => {
                         movement_in: value.movement_in,
                         quantity_retur: value.quantity,
                         quantity_sale: value.sale_item?.quantity ?? 0,
-                        cost: parseInt(value.sale_item?.movement?.cost?.toString() ?? '0'),
+                        cost: parseInt(value.inventory_from.cost.toString() ?? '0'),
                     }
                 });
 
+                console.log(initial);
 
                 form.setFieldValue('items', initial);
                 setInitialTable(initial);
@@ -568,10 +590,8 @@ const ExchangeAdd: React.FC = () => {
                         <Form.Item label="Nomor Pengiriman" name="delivery_number" rules={[{ required: true, message: 'Please input nomor pesanan!' }]}>
                             <Input placeholder="Nomor Pengiriman" />
                         </Form.Item>
-                        <Form.Item label="Biaya Pengiriman" name="delivery_fee" rules={[{ required: true, message: 'Please input biaya pengiriman!' }]}>
-                            <Input placeholder="Biaya Pengiriman" onChange={(e) => {
-                                form.setFieldValue('delivery_fee', handlePriceChange(e.target.value ?? '0'))
-                            }} />
+                        <Form.Item label="Biaya Pengiriman/Kerugian" name="delivery_fee">
+                            <Input placeholder="Biaya Pengiriman" onChange={() => countTotalLost(initialTable)} />
                         </Form.Item>
                     </div>
                     <div className="flex flex-col flex-1">
@@ -604,9 +624,40 @@ const ExchangeAdd: React.FC = () => {
                             pagination={false} 
                             dataSource={initialTable} 
                             scroll={{ x: 'max-content' }}
-                            // expandable={{
-                            //     expandedRowRender: (record) => <p style={{ margin: 0 }}>{record.description}</p>,
-                            // }}
+                            summary={pageData => {
+                                var total_loss_item = 0;
+
+                                pageData.forEach(element => {
+                                    if(element.condition == 'reject'){
+                                        total_loss_item += element.cost * (element.quantity ?? 1);
+                                    }
+                                });
+
+                                // total_loss += Number(form.getFieldValue('delivery_fee') ?? 0);
+                                
+                                return (
+                                <>
+                                    <Table.Summary.Row>
+                                        <Table.Summary.Cell index={1} colSpan={4} align="right"><p className="font-normal">Kerugian Ongkos Kirim/Lainya</p></Table.Summary.Cell>
+                                        <Table.Summary.Cell index={2} align="right" colSpan={2}>
+                                            <p>{formatRupiah(form.getFieldValue('delivery_fee')) ?? 0}</p>
+                                        </Table.Summary.Cell>
+                                    </Table.Summary.Row>
+                                    <Table.Summary.Row>
+                                        <Table.Summary.Cell index={1} colSpan={4} align="right"><p className="font-normal">Kerugian Barang</p></Table.Summary.Cell>
+                                        <Table.Summary.Cell index={2} align="right" colSpan={2}>
+                                            <p>{formatRupiah(total_loss_item) ?? 0}</p>
+                                        </Table.Summary.Cell>
+                                    </Table.Summary.Row>
+                                    <Table.Summary.Row>
+                                        <Table.Summary.Cell index={1} colSpan={4} align="right"><p className="font-bold">Total Kerugian</p></Table.Summary.Cell>
+                                        <Table.Summary.Cell index={2} align="right" colSpan={2}>
+                                            <p className="text-black">{formatRupiah(total_lost) ?? 0}</p>
+                                        </Table.Summary.Cell>
+                                    </Table.Summary.Row>
+                                </>
+                                );
+                            }}
                            
                     />
                     

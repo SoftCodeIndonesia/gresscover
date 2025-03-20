@@ -1,7 +1,7 @@
 // utils/formatRupiah.js
 
 export const formatRupiah = (value: number) => {
-    if (!value) return '';
+    if (!value) return '0';
     const number = Number(value);
     if (isNaN(number)) return '';
     

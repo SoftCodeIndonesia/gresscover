@@ -249,6 +249,7 @@ const ReturPage: React.FC = () => {
 
             if(response.status == 200){
                 message.success('Berhasil!');
+                setSelectedRowKeys([]);
                 getRetur();
             }else{
                 message.error(response.statusText);

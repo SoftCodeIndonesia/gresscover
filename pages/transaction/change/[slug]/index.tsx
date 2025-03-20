@@ -10,7 +10,7 @@ import axiosInstance from "@/utils/axiosInstance";
 import { formatDate } from "@/utils/date_utils";
 import { formatRupiah } from "@/utils/format_rupiah";
 import { capitalizeEachWord } from "@/utils/text_utils";
-import { Breadcrumb, Button, Card, Col, Dropdown, Input, MenuProps, message, Row, Select, Skeleton, Spin, Table, TableColumnsType, Tag } from "antd";
+import { Breadcrumb, Button, Card, Col, Dropdown, Input, MenuProps, message, Popconfirm, Row, Select, Skeleton, Space, Spin, Table, TableColumnsType, Tag } from "antd";
 import Column from "antd/es/table/Column";
 import { TableRowSelection } from "antd/es/table/interface";
 import { useParams } from "next/navigation";
@@ -92,6 +92,24 @@ const ExhangeDetail: React.FC = () => {
         },
     ];
 
+    const handleDelete = async (ids: String[]) => {
+    
+        setLoading(true);
+        try {
+            const response = await axiosInstance.post(`/exchange/del`, {"data": ids});
+            if(response.status == 200){
+                message.success('Data Telah Dihapus!');
+                router.back();
+            }else{
+                message.error('Gagal Telah Dihapus!');
+            }
+        } catch (error) {
+            message.error('Gagal Hapus Data!');
+        } finally {
+            setLoading(false);
+        }
+    }
+
     const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
         console.log('selectedRowKeys changed: ', newSelectedRowKeys);
         setSelectedRowKeys(newSelectedRowKeys);
@@ -154,31 +172,7 @@ const ExhangeDetail: React.FC = () => {
         }
     }
 
-    const handleDelete = async (sale: string[]) => {
-        setLoading(true);
-        try {
-
-            const data = {
-                "data": sale,
-            }
-
-            console.log(data);
-            
-            const response = await axiosInstance.post(`/sales/del`, data);
-
-            if(response.status == 200){
-                message.success('Berhasil Hapus Data!');
-                router.back();
-            }else{
-                message.error(response.statusText);
-            }
-
-        } catch (error: any) {
-            message.error(error);
-        } finally {
-            setLoading(false);
-        }
-    }
+    
 
     
 
@@ -235,9 +229,21 @@ const ExhangeDetail: React.FC = () => {
                 />
                 <Card 
                 title="Detail Penjualan" 
-                extra={<Dropdown menu={{ items }} placement="bottom">
+                extra={<Space>
+                    <Dropdown menu={{ items }} placement="bottom">
                             <Button>{capitalizeEachWord(getStatusString(change?.status ?? '') ?? '')}</Button>
-                        </Dropdown>}
+                        </Dropdown> <Popconfirm
+                    title="Yakin Ingin Menghapus Data Penukarang barang?"
+                    description="Data yang sudah dihapus tidak bisa di pulihkan!"
+                    onConfirm={() => handleDelete([change?.exchange_id!])}
+                    disabled={loading}
+                    onCancel={() => {}}
+                    okText="Yes"
+                    cancelText="No"
+                >
+                    <Button type="primary" danger>Hapus</Button>
+                </Popconfirm>
+                </Space>}
                 >
                     <Row className="mb-3">
                         <Col span={18} push={6}>{formatDate(change?.created_at ?? '')}</Col>

@@ -133,6 +133,7 @@ const AddRetur: React.FC = () => {
     const removeItem = (index: TableInventory) => {
         const initial = initialTable.filter((value) => value.key != index.key);
         setInitialTable(initial);
+        countTotalLost(initial);
     }
 
     const countTotalLost = (tables: TableInventory[]) => {
@@ -144,7 +145,7 @@ const AddRetur: React.FC = () => {
             }
         });
 
-        console.log(tables);
+        console.log(total_lost);
 
         setTotalLost(total_lost);
     }
@@ -220,9 +221,7 @@ const AddRetur: React.FC = () => {
                         });
                     }
                 });
-
-                console.log(initials);
-
+                
                 setInitialTable(initials)
 
                 form.setFieldValue('items', initials);
@@ -334,7 +333,7 @@ const AddRetur: React.FC = () => {
                         key: index, 
                         product_name: `${value.product_name}`, 
                         product_id: null, 
-                        stok: Number(value.sale_item?.quantity_retur) - Number(value.quantity),
+                        stok: (Number(value.sale_item?.quantity) + Number(value.sale_item?.quantity) - Number(value.quantity)),
                         checked: false,
                         quantity: value.quantity,
                         parent_index: -1,
@@ -433,8 +432,8 @@ const AddRetur: React.FC = () => {
                         <Form.Item label="Nomor Pengiriman" name="delivery_number" rules={[{ required: true, message: 'Please input nomor pesanan!' }]}>
                             <Input placeholder="Nomor Pengiriman" />
                         </Form.Item>
-                        <Form.Item label="Biaya Pengiriman" name="delivery_fee">
-                            <Input placeholder="Biaya Pengiriman" onChange={(e) => {
+                        <Form.Item label="Biaya Pengiriman/Kerugian" name="delivery_fee">
+                            <Input placeholder="Biaya Pengiriman/Kerugian" onChange={(e) => {
                                 // form.setFieldValue('delivery_fee')
                                 countTotalLost(initialTable);
                             }} />

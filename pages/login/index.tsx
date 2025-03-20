@@ -7,6 +7,7 @@ import React, { useState, useEffect } from "react";
 import { Tax } from "@/type/tax";
 import { GroupSetting } from "@/type/setting";
 import { LockOutlined, MailOutlined, UserOutlined } from '@ant-design/icons';
+import Link from "next/link";
 type FieldLoginType = {
     email: string,
     password: string,
@@ -92,11 +93,11 @@ const LoginPage = () => {
                         <Input.Password prefix={<LockOutlined />} placeholder="Password" />
                     </Form.Item>
 
-                    {/* <Form.Item>
+                    <Form.Item className="my-1">
                         <div className="flex flex-1 items-end justify-end">
-                            <a href="" className="text-blue-500">Lupa Kata Sandi</a>
+                            <Link href="/login/forgot_password" className="text-blue-500">Lupa Kata Sandi</Link>
                         </div>
-                    </Form.Item> */}
+                    </Form.Item>
 
                     <Form.Item >
                         <Button block type="primary" htmlType="submit" loading={loading}>

@@ -175,7 +175,7 @@ const Transaction: React.FC = () => {
             filterSearch: true,
         },
         {
-            title: 'Retur',
+            title: 'Retur/Penukaran',
             dataIndex:'has_retur', 
             key: 'has_retur',
             align: 'center',
@@ -197,7 +197,7 @@ const Transaction: React.FC = () => {
             align: 'center',
         },
         {
-            title: 'QTY Retur',
+            title: 'QTY Retur/Penukaran',
             dataIndex:'quantity_retur', 
             key: 'quantity_retur',
             align: 'center',
@@ -562,6 +562,9 @@ const Transaction: React.FC = () => {
         request.where = {...request.where, ...{
             sale_date: ['between', [currentStartDate, currentEndDate]]
         }}
+        request.orderBy = {
+            created_at: "DESC"
+        }
         setRequestParam(request);
         getSales(request);
         

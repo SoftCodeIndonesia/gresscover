@@ -73,6 +73,19 @@ const SalesDetail: React.FC = () => {
             
         },
         {
+            title: "Retur",
+            dataIndex: "total_retur_qty",
+            width: 150,
+            render: (_: any, record: SaleItem, index: number) => <p>{`${record.total_retur_qty ?? 0}`}</p>,
+            
+        },
+        {
+            title: "Penukaran",
+            dataIndex: "quatotal_exchange_qtyntity",
+            width: 150,
+            render: (_: any, record: SaleItem, index: number) => <p>{`${record.total_exchange_qty ?? 0}`}</p>,
+        },
+        {
             title: "Harga",
             dataIndex: "amount",
             width: 200,
@@ -107,13 +120,9 @@ const SalesDetail: React.FC = () => {
             requestParam.where = [{
                 sale_id: slug,
             }];
-            const response = await axiosInstance.post('/search', requestParam);
+            const response = await axiosInstance.get('/sales/' + slug);
             if(response.status == 200){
-                // console.log(response.data.data.data);
-                if(response.data.data.data.length > 0){
-                    setSales(response.data.data.data[0]);
-                }
-                
+                setSales(response.data.data);
             }
         } catch (error: any) {
             message.error(`${error.response?.data?.message}`);
@@ -191,6 +200,13 @@ const SalesDetail: React.FC = () => {
             return <Tag color="green">{'Selesai'}</Tag>
         }
     }
+    const getStatusChangeOrRetur = () => {
+        if(sale?.has_retur == 1){
+            return <Tag color="red">YA</Tag>
+        }else if(sale?.has_retur == 0){
+            return <Tag color="green">Tidak</Tag>
+        }
+    }
 
     useEffect(() => {
         if (router.isReady) {
@@ -246,6 +262,10 @@ const SalesDetail: React.FC = () => {
                         <Col span={6} pull={18}>Status</Col>
                     </Row>
                     <Row className="mb-3">
+                        <Col span={18} push={6}>{getStatusChangeOrRetur()}</Col>
+                        <Col span={6} pull={18}>Retur/Penaukaran</Col>
+                    </Row>
+                    <Row className="mb-3">
                         <Col span={18} push={6}>{sale?.platform?.toUpperCase()}</Col>
                         <Col span={6} pull={18}>Platform</Col>
                     </Row>
@@ -259,7 +279,7 @@ const SalesDetail: React.FC = () => {
                     </Row>
                 </Card>
                 <Card title="Daftar Item" className="mt-4">
-                    <Table columns={columns} dataSource={sale?.items} rowKey={(row) => row.sale_item_id} pagination={false} summary={pageData => {
+                    <Table columns={columns} scroll={{x: 'max-content'}} dataSource={sale?.items} rowKey={(row) => row.sale_item_id} pagination={false} summary={pageData => {
                         let totalQuantity = 0;
                         let totalAmount = sale?.total_amount_before_tax;
 
@@ -271,21 +291,21 @@ const SalesDetail: React.FC = () => {
                         return (
                         <>
                             <Table.Summary.Row>
-                                <Table.Summary.Cell index={(sale?.items.length ?? 1) + 1} colSpan={3} align="right"><p className="font-bold">Subtotal</p></Table.Summary.Cell>
+                                <Table.Summary.Cell index={(sale?.items.length ?? 1) + 1} colSpan={5} align="right"><p className="font-bold">Subtotal</p></Table.Summary.Cell>
                                 <Table.Summary.Cell index={(sale?.items.length ?? 1) + 2} align="right">
                                     <p>{formatRupiah(sale?.total_amount_before_tax ?? 0)}</p>
                                 </Table.Summary.Cell>
                             </Table.Summary.Row>
                             {sale?.taxes?.map((value: SaleTax, index: number) => {
                                 return <Table.Summary.Row key={index}>
-                                            <Table.Summary.Cell index={index} colSpan={3} align="right"><p className="font-bold">{value.name}</p></Table.Summary.Cell>
+                                            <Table.Summary.Cell index={index} colSpan={5} align="right"><p className="font-bold">{value.name}</p></Table.Summary.Cell>
                                             <Table.Summary.Cell index={index} align="right">
                                                 <p>{value.unit_value == 'percent' ? `${value.value}% / ${formatRupiah(sale.total_amount_before_tax * value.value / 100)}` : formatRupiah(value.value)}</p>
                                             </Table.Summary.Cell>
                                         </Table.Summary.Row>
                             })}
                             <Table.Summary.Row>
-                                <Table.Summary.Cell index={(sale?.items.length ?? 1) + 3} colSpan={3} align="right"><p className="font-bold">Total</p></Table.Summary.Cell>
+                                <Table.Summary.Cell index={(sale?.items.length ?? 1) + 3} colSpan={5} align="right"><p className="font-bold">Total</p></Table.Summary.Cell>
                                 <Table.Summary.Cell index={(sale?.items.length ?? 1) + 4} align="right">
                                     <p>{formatRupiah(sale?.total_amount_after_tax ?? 0)}</p>
                                 </Table.Summary.Cell>

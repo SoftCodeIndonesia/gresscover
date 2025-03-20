@@ -247,6 +247,7 @@ const ExchangePage: React.FC = () => {
 
             if(response.status == 200){
                 message.success('Berhasil!');
+                setSelectedRowKeys([]);
                 getData(requestParam);
             }else{
                 message.error(response.statusText);
@@ -297,6 +298,7 @@ const ExchangePage: React.FC = () => {
             if(response.status == 200){
                 setData(response.data.data.data);
                 setSummery(response.data.data.summery);
+                setSelectedRowKeys([]);
             }else{
                 message.error(response.statusText);
             }

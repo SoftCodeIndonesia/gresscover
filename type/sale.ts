@@ -49,6 +49,8 @@ export type SaleItem = {
     movement: InventoryMovement;
     has_retur: number;
     quantity_retur: number;
+    total_retur_qty?: number;
+    total_exchange_qty?:number;
 
 }
 
