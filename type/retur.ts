@@ -18,6 +18,7 @@ export type Retur = {
     items: ReturItem[];
     total_items: number;
     total_price: number;
+    total_amount_after_tax?: number,
 };
 
 export type ReturItem = {

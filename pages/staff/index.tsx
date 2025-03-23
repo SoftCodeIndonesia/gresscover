@@ -112,7 +112,7 @@ const StaffPage = () => {
 
             
         } catch (err) {
-            message.error("Gagal Menambahkan Data");
+            message.error(`${err}`);
         } finally {
             setLoading(false);
         }

@@ -310,7 +310,7 @@ const ExchangeAdd: React.FC = () => {
                             location_name: value.location_name!,
                             stok: value.quantity,
                             quantity: 1,
-                            available_quantity: value.quantity,
+                            available_quantity: (Number(value.quantity) - Number(value.quantity_retur)),
                             id: null,
                             status: '',
                             condition: 'completed',

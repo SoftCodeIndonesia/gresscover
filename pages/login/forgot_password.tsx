@@ -7,6 +7,7 @@ import React, { useState, useEffect } from "react";
 import { Tax } from "@/type/tax";
 import { GroupSetting } from "@/type/setting";
 import { LockOutlined, MailOutlined, UserOutlined } from '@ant-design/icons';
+import Link from "next/link";
 type FieldLoginType = {
     email: string,
     password: string,
@@ -65,9 +66,12 @@ const ForgotPassword = () => {
                     </Form.Item>
 
                     <Form.Item >
-                        <Button block type="primary" htmlType="submit" loading={loading}>
-                            Masuk
+                        <Button block type="primary" className="mb-4" htmlType="submit" loading={loading}>
+                            Kirim
                         </Button>
+                        <Link href="/login" className="text-blue-500 mt-4" >
+                            Masuk
+                        </Link>
                     </Form.Item>
                 </Form>
             </Card>}

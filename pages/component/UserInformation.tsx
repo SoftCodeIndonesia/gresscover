@@ -135,55 +135,94 @@ const UserInformation: React.FC<UserInformationProp> =  ({data}) => {
             
 
             if(data?.photo != null){
+                setFileList([
+                    {
+                        uid: '-1', // UID unik
+                        name: `${data.photo}`, // Nama file dummy
+                        status: 'done', // Status upload selesai
+                        url: `${process.env.NEXT_PUBLIC_API_URI}/storage/${data.photo}`, // URL gambar dari API
+                    },
+                ]);
                 
-                setPreviewImage(`${process.env.NEXT_PUBLIC_BE}/storage/${data.photo}`);
             }
             
         }
     }, [data]);
 
-    const handlePreview = async (file: UploadFile) => {
-        if (!file.url && !file.preview) {
-            file.preview = await getBase64(file.originFileObj as FileType);
+    // const handlePreview = async (file: UploadFile) => {
+    //     if (!file.url && !file.preview) {
+    //         file.preview = await getBase64(file.originFileObj as FileType);
+    //     }
+
+    //     setPreviewImage(file.url || (file.preview as string));
+    //     setPreviewOpen(true);
+    // };
+
+    const onRemoveFile = async (remove: UploadFile) => {
+        console.log('ok');
+        
+        if(data != null){
+            setLoading(true);
+            try {
+                const response = await axiosInstance.delete('/profile/picture/' + data?.id);
+                if(response.status == 200){
+                    setPreviewImage('');
+                    setFileList([]);
+                }
+            } catch (error) {
+                message.error("Gagal Menghapus Gambar!");
+            } finally {
+                setLoading(false);
+            }
+        }else{
+            setPreviewImage('');
+            setFileList([]);
         }
+    }
 
-        setPreviewImage(file.url || (file.preview as string));
-        setPreviewOpen(true);
-    };
+    // const handleChange: UploadProps['onChange'] = ({ fileList: newFileList }) => {
+    //     const data = newFileList[newFileList.length - 1];
+    //     setFileList([data]);
+    // };
 
-    const handleChange: UploadProps['onChange'] = ({ fileList: newFileList }) => {
-        const data = newFileList[newFileList.length - 1];
-        setFileList([data]);
-    };
+    const handlePreview = async (file: UploadFile) => {
+            if (!file.url && !file.preview) {
+                file.preview = await getBase64(file.originFileObj as FileType);
+            }
+    
+            setPreviewImage(file.url || (file.preview as string));
+            setPreviewOpen(true);
+        };
+    
+        const handleChange: UploadProps['onChange'] = ({ fileList: newFileList }) =>
+            setFileList(newFileList.slice(-1));
     
     return (
-        <Form form={form} {...layout} className="w-full flex flex-col gap-3" onFinish={handleSubmit} layout="horizontal">
+        <Form form={form} {...layout} disabled={loading} className="w-full flex flex-col gap-3" onFinish={handleSubmit} layout="horizontal">
             <Form.Item label="Photo Profil">
 
                 <div className="flex">
-                    {previewImage && fileList.length == 0 && (
-                        <Image
-                            wrapperStyle={{ display: 'flex' }}
-                            width={100}
-                            
-                            preview={{
-                                visible: previewOpen,
-                                onVisibleChange: (visible) => setPreviewOpen(visible),
-                                afterOpenChange: (visible) => !visible && setPreviewImage(''),
-                            }}
-                            src={previewImage}
-                        />
-                    )}
-                    
-                    <Upload
-                        listType="picture-circle"
-                        fileList={fileList}
-                        onPreview={handlePreview}
-                        onChange={handleChange}
-
-                    >
-                        {fileList.length >= 8 ? null : uploadButton}
-                    </Upload>
+               <Upload
+                                           listType="picture-card"
+                                           fileList={fileList}
+                                           onPreview={handlePreview}
+                                           onChange={handleChange}
+                                           onRemove={onRemoveFile}
+                                       >
+                                           {fileList.length >= 8 ? null : uploadButton}
+                                       </Upload>
+                                       
+                                       {previewImage && (
+                                           <Image
+                                           wrapperStyle={{ display: 'none' }}
+                                           preview={{
+                                           visible: previewOpen,
+                                           onVisibleChange: (visible) => setPreviewOpen(visible),
+                                           afterOpenChange: (visible) => !visible && setPreviewImage(''),
+                                           }}
+                                           src={previewImage}
+                                           />
+                                       )}
                     
                 </div>
 
@@ -207,7 +246,7 @@ const UserInformation: React.FC<UserInformationProp> =  ({data}) => {
             <Form.Item
                 label="No HP"
                 name="telephone"
-                rules={[{ required: true, message: 'Please input Hire Date!' }]}
+                rules={[{ required: true, message: 'Please input nomor HP!' }]}
             >
                 <Input type="number" disabled={!editState} />
             </Form.Item>

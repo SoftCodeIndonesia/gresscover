@@ -24,6 +24,9 @@ axiosInstance.interceptors.response.use(
         case 400:
           errorMessage = data.message || "Bad Request";
           break;
+        case 422:
+          errorMessage = data.errors || "Bad Request";
+          break;
         case 401:
           errorMessage = "Unauthorized. Please log in again.";
           break;

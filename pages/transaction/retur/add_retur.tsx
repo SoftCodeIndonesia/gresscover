@@ -333,7 +333,7 @@ const AddRetur: React.FC = () => {
                         key: index, 
                         product_name: `${value.product_name}`, 
                         product_id: null, 
-                        stok: (Number(value.sale_item?.quantity) + Number(value.sale_item?.quantity) - Number(value.quantity)),
+                        stok: (Number(value.sale_item?.quantity_retur) + Number(value.sale_item?.quantity) - Number(value.quantity)),
                         checked: false,
                         quantity: value.quantity,
                         parent_index: -1,

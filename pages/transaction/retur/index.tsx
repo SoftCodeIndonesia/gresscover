@@ -116,18 +116,11 @@ const ReturPage: React.FC = () => {
             render: (_: any, record: Retur, index: number) => <p >{record.total_items}</p>,
         },
         {
-            title: 'Total Produk',
-            dataIndex:'total_price', 
-            key: 'total_price',
+            title: 'Total Kerugian',
+            dataIndex:'total_amount_after_tax', 
+            key: 'total_amount_after_tax',
             sorter: true,
-            render: (_: any, record: Retur, index: number) => <p >{formatRupiah(record.total_price!)}</p>,
-        },
-        {
-            title: 'Biaya Pengiriman',
-            dataIndex:'delivery_fee', 
-            key: 'delivery_fee',
-            sorter: true,
-            render: (_: any, record: Retur, index: number) => <p>{formatRupiah(record.delivery_fee)}</p>,
+            render: (_: any, record: Retur, index: number) => <p>{formatRupiah(record.total_amount_after_tax ?? 0)}</p>,
         },
         {
             title: 'Status',

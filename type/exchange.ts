@@ -18,6 +18,7 @@ export type ExchangeType = {
     items: ExchangeItem[],
     total_items?: number,
     total_price?: number,
+    total_amount_after_tax?: number,
 };
 
 export type ExchangeItem = {

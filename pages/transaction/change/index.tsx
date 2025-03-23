@@ -125,25 +125,18 @@ const ExchangePage: React.FC = () => {
             render: (_: any, record: ExchangeType, index: number) => <p >{record.delivery_number}</p>,
         },
         {
-            title: 'Jumlah Produk',
-            dataIndex:'total_items', 
-            key: 'total_items',
+            title: 'Total Kerugian',
+            dataIndex:'total_amount_after_tax', 
+            key: 'total_amount_after_tax',
             sorter: true,
-            render: (_: any, record: ExchangeType, index: number) => <p >{record.total_items}</p>,
+            render: (_: any, record: ExchangeType, index: number) => <p >{formatRupiah(record.total_amount_after_tax ?? 0)}</p>,
         },
         {
             title: 'Total Produk',
-            dataIndex:'total_price', 
-            key: 'total_price',
+            dataIndex:'total_items', 
+            key: 'total_items',
             sorter: true,
-            render: (_: any, record: ExchangeType, index: number) => <p >{formatRupiah(record.total_price!)}</p>,
-        },
-        {
-            title: 'Biaya Pengiriman',
-            dataIndex:'delivery_fee', 
-            key: 'delivery_fee',
-            sorter: true,
-            render: (_: any, record: ExchangeType, index: number) => (formatRupiah(record.delivery_fee!)),
+            render: (_: any, record: ExchangeType, index: number) => <p>{record.total_items}</p>,
         },
         {
             title: 'Status',
@@ -405,6 +398,9 @@ const ExchangePage: React.FC = () => {
         request.where = {...request.where, ...{
             created_at: ['between', [currentStartDate, currentEndDate]]
         }}
+        request.orderBy = {
+            'created_by': 'DESC',
+        }
         setRequestParam(request);
         getData(request);
     }, [])
