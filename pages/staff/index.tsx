@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Table, Typography, Spin, Alert, Button, Form, Modal, Input, message, Space } from 'antd';
+import { Table, Typography, Spin, Alert, Button, Form, Modal, Input, message, Space, Popconfirm } from 'antd';
 import { Staff, StaffList } from '@/type/staff';
 import { getCookie } from 'cookies-next';
 import axiosInstance from '@/utils/axiosInstance';
@@ -20,12 +20,14 @@ import {
     ReloadOutlined,
     SearchOutlined,
 } from '@ant-design/icons';
+import { TableRowSelection } from 'antd/es/table/interface';
 
 const StaffPage = () => {
     const [staff, setStaff] = useState<StaffList>([]);
     const [loading, setLoading] = useState(true);
     const [searchkeyword, setSearchText] = useState<string>('');
     const [error, setError] = useState<string | null>(null);
+    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingStaff, setEditingStaff] = useState<Staff | null>(null); // Menyimpan data staff yang sedang diedit
     const [form] = Form.useForm();
@@ -51,18 +53,19 @@ const StaffPage = () => {
         setIsModalVisible(true);
     };
 
-    const handleDelete = async (staffId: string) => {
+    const handleDelete = async (staffId: string[]) => {
         setLoading(true);
         try {
-            const token = getCookie('token');
-            await axiosInstance.delete(`/staff/${staffId}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-            fetchStaff(); // Refresh data setelah delete
+            const response = await axiosInstance.post(`/staff/delete`, {data: staffId});
+            if(response.status == 200){
+                message.success("Data Berhasil Di Hapus");
+                setSelectedRowKeys([]);
+                fetchStaff(); // Refresh data setelah delete
+            }
         } catch (err) {
-            message.error("Failed Delete Staff");
+            message.error(`${err}`);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -196,7 +199,7 @@ const StaffPage = () => {
                         Lihat Detail
                     </Typography.Link>
                     <Button type='link' onClick={() => handleEdit(record)}>Edit</Button>
-                    <Button type='link' danger onClick={() => handleDelete(record.staff_id)}>Delete</Button>
+                    <Button type='link' danger onClick={() => handleDelete([record.staff_id])}>Delete</Button>
                 </div>
             ),
         },
@@ -205,6 +208,18 @@ const StaffPage = () => {
     const handleSearch = (value: string) => {
         setSearchText(value.toLowerCase());
     };
+
+    const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
+        console.log('selectedRowKeys changed: ', newSelectedRowKeys);
+        setSelectedRowKeys(newSelectedRowKeys);
+    };
+
+    const rowSelection: TableRowSelection<Staff> = {
+        selectedRowKeys,
+        onChange: onSelectChange,
+    };
+
+    
 
     
     if (error) return <Alert message={error} type="error" />;
@@ -221,8 +236,20 @@ const StaffPage = () => {
                     <Button type="primary" onClick={fetchStaff} icon={<ReloadOutlined/>}>
                             Reload
                     </Button>
+                    {selectedRowKeys.length > 0 && 
+                                        <Popconfirm
+                                        title="Yakin Ingin Menghapus Data User?"
+                                        description="Data yang sudah dihapus tidak bisa di pulihkan!"
+                                        onConfirm={() => handleDelete(selectedRowKeys as string[])}
+                                        onCancel={() => {}}
+                                        okText="Yes"
+                                        cancelText="No"
+                                    >
+                                        <Button type="primary" danger>Hapus</Button>
+                                    </Popconfirm>
+                    }
                 </Space>
-                <Table dataSource={filteredData} scroll={{x: 'max-content'}} columns={columns} loading={loading} rowKey={(record) => record.staff_id.toString()} />
+                <Table dataSource={filteredData} rowSelection={rowSelection} scroll={{x: 'max-content'}} columns={columns} loading={loading} rowKey={(record) => record.staff_id.toString()} />
             </div>
 
             <Modal
@@ -232,7 +259,7 @@ const StaffPage = () => {
                 confirmLoading={loading}
                 footer={null}
             >
-                <Form form={form} onFinish={handleSubmit} layout="vertical">
+                <Form form={form} disabled={loading} onFinish={handleSubmit} layout="vertical">
                     <Form.Item
                         label="Name"
                         name="name"

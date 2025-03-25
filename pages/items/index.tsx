@@ -218,8 +218,8 @@ const Items = () => {
         <DashboardLayout>
             <div>
                 <Title level={2}>Daftar Items</Title>
-                <Space style={{ marginBottom: 16 }} className="items-center w-full">
-                    <Input prefix={<SearchOutlined />} placeholder="Cari Berdasarkan Nama, SKU, atau Barcode" className="w-full" onChange={(e) => handleSearch(e.target.value)}/>
+                <Space style={{ marginBottom: 16 }} className="items-center">
+                    <Input prefix={<SearchOutlined />} style={{width: 350}} placeholder="Cari Berdasarkan Nama, SKU, atau Barcode" onChange={(e) => handleSearch(e.target.value)}/>
                     <Button type="primary" onClick={newItem}>
                         Buat Item Baru
                     </Button>
