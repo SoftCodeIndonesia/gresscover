@@ -435,6 +435,7 @@ const InventoryPage: React.FC = () => {
     const onSearch = (query: string) => {
         const request = {...request_param};
         request.keyword = query;
+        setRequestParam(request);
         getInventories(request);
     }
     

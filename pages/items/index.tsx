@@ -1,6 +1,6 @@
 import { Item } from "@/type/item"
 import { formatRupiah } from "@/utils/format_rupiah";
-import { Image, Button, Input, message, Space, Table, Typography, Popconfirm, TableProps, TableColumnsType } from "antd";
+import { Image, Button, Input, message, Space, Table, Typography,Pagination as AntPagination, Popconfirm, TableProps, TableColumnsType } from "antd";
 import { useEffect, useState } from "react"
 import DashboardLayout from "../component/DashboardLayout";
 import Title from "antd/es/typography/Title";
@@ -35,6 +35,7 @@ const Items = () => {
 
     const handleSearch = (value: string) => {
         const request = {...requestParam};
+        request.page = 1;
         request.keyword = value;
         setParamRequst(request);
         fetchItems(requestParam);
@@ -210,6 +211,13 @@ const Items = () => {
         }
     }
 
+    const onChangePagination = (page: number) => {
+        const request = {...requestParam};
+        request.page = page;
+        setParamRequst(request);
+        fetchItems(request);
+    }
+
     useEffect(() => {
         fetchItems(requestParam);
     }, [])
@@ -238,7 +246,10 @@ const Items = () => {
                     </Popconfirm>}
                 </Space>
                 <Table dataSource={items?.data} onChange={onChange}
-                showSorterTooltip={{ target: 'sorter-icon' }} rowSelection={rowSelection} scroll={{x: 'max-content'}} columns={columns} loading={loading} rowKey={(record) => record.product_id} />
+                showSorterTooltip={{ target: 'sorter-icon' }} rowSelection={rowSelection} scroll={{x: 'max-content'}} pagination={false} columns={columns} loading={loading} rowKey={(record) => record.product_id} />
+                <div className="flex my-3 justify-end">
+                    <AntPagination onChange={onChangePagination} defaultCurrent={items?.current_page} total={items?.total} />
+                </div>
             </div>
         </DashboardLayout>
     )

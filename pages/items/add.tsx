@@ -464,7 +464,7 @@ const AddItem = () => {
                                 value={form.getFieldValue('sku_induk')}
                                 options={optionItem}
                                 filterOption={false}
-                                style={{ width: 200 }}
+                                // style={{ width: 530 }}
                                 onSelect={(value, option) => onSelectItem(value, option)}
                                 onSearch={fetchItems}
                                 placeholder="Cari/Pilih SKU Induk"
