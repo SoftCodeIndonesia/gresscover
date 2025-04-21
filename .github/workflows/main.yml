@@ -1,38 +1,38 @@
-# name: Deploy to FTP
+name: Deploy to FTP
 
-# on:
-#   push:
-#     branches:
-#       - main  # Adjust the branch name if needed
+on:
+  push:
+    branches:
+      - main  # Adjust the branch name if needed
 
-# jobs:
-#   deploy:
-#     runs-on: ubuntu-latest
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
 
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v2
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-#       - name: Set up Node.js
-#         uses: actions/setup-node@v2
-#         with:
-#           node-version: 20.18.1  # Use the desired Node.js version
-#       - name: Clear Next.js Cache
-#         run: |
-#           rm -rf .next/cache
-#           rm -rf node_modules/.cach
-#       - name: Install dependencies and build Next.js app
-#         run: |
-#           npm install
-#           touch .env.local
-#           echo NEXT_PUBLIC_BE=${{ secrets.BE_URI }} >> .env.local
-#           echo NEXT_PUBLIC_API_URI=${{ secrets.API_URI }} >> .env.local
-#           export NEXT_DISABLE_TURBOPACK=1
-#           export NEXT_LEGACY=true
-#           npm run build
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 20.18.1  # Use the desired Node.js version
+      - name: Clear Next.js Cache
+        run: |
+          rm -rf .next/cache
+          rm -rf node_modules/.cach
+      - name: Install dependencies and build Next.js app
+        run: |
+          npm install
+          touch .env.local
+          echo NEXT_PUBLIC_BE=${{ secrets.BE_URI }} >> .env.local
+          echo NEXT_PUBLIC_API_URI=${{ secrets.API_URI }} >> .env.local
+          export NEXT_DISABLE_TURBOPACK=1
+          export NEXT_LEGACY=true
+          npm run build
       
-#       - name: Deploy to Vercel
-#         env:
-#           VERCEL_TOKEN: ${{ secrets.POS_VERCEL_TOKEN }}  # Pulls Vercel token from GitHub secrets
-#         run: npx vercel --prod --yes --token $VERCEL_TOKEN
+      - name: Deploy to Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.POS_VERCEL_TOKEN }}  # Pulls Vercel token from GitHub secrets
+        run: npx vercel --prod --yes --token $VERCEL_TOKEN
         

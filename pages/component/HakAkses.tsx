@@ -101,20 +101,20 @@ const HakAkses: React.FC<HakAksesProps> = ({id, permissions}) => {
           if(response.status == 200){
             const menus: MenuSide = response.data.data.data;
             const user_permission: number[] = response.data.data.user_permissions;
-            const tree = menus.map((value) => {
+            const tree = menus.map((valueParent) => {
                 return {
-                    title: value.name,
-                    key: value.key,
-                    children:value.children.length == 0 ? [...Object.entries(value.permissions).map(([key, value]) => ({
-                        key: key,
+                    title: valueParent.name,
+                    key: valueParent.key,
+                    children:valueParent.children.length == 0 ? [...Object.entries(valueParent.permissions).map(([key, value]) => ({
+                        key: `${valueParent.key}.${key}`,
                         title: value,
                         
-                    }))] : [...value.children.map((child) => {
+                    }))] : [...valueParent.children.map((child) => {
                         return {
                             title: child.name,
                             key: child.key,
                             children: Object.entries(child.permissions).map(([key, value]) => ({
-                                key: key,
+                                key: `${child.key}.${key}`,
                                 title: value
                             }))
                         }
@@ -124,7 +124,7 @@ const HakAkses: React.FC<HakAksesProps> = ({id, permissions}) => {
             console.log(tree);
             console.log(user_permission.map((value) => (value.toString())));
             setTraaData(tree);
-            setDefaultCheckedKey(user_permission.map((value) => (value.toString())));
+            // setDefaultCheckedKey(user_permission.map((value) => (value.toString())));
             setMenuItem(menus);
           }
         } catch (error: any) {
