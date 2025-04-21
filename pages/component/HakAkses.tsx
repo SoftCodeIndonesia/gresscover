@@ -124,7 +124,7 @@ const HakAkses: React.FC<HakAksesProps> = ({id, permissions}) => {
             console.log(tree);
             console.log(user_permission.map((value) => (value.toString())));
             setTraaData(tree);
-            // setDefaultCheckedKey(user_permission.map((value) => (value.toString())));
+            setDefaultCheckedKey(user_permission.map((value) => (value.toString())));
             setMenuItem(menus);
           }
         } catch (error: any) {
