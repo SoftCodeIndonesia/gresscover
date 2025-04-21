@@ -104,9 +104,9 @@ const HakAkses: React.FC<HakAksesProps> = ({id, permissions}) => {
             const tree = menus.map((valueParent) => {
                 return {
                     title: valueParent.name,
-                    key: valueParent.key,
+                    key: valueParent.name,
                     children:valueParent.children.length == 0 ? [...Object.entries(valueParent.permissions).map(([key, value]) => ({
-                        key: `${valueParent.key}.${key}`,
+                        key: key,
                         title: value,
                         
                     }))] : [...valueParent.children.map((child) => {
@@ -114,7 +114,7 @@ const HakAkses: React.FC<HakAksesProps> = ({id, permissions}) => {
                             title: child.name,
                             key: child.key,
                             children: Object.entries(child.permissions).map(([key, value]) => ({
-                                key: `${child.key}.${key}`,
+                                key: key,
                                 title: value
                             }))
                         }
@@ -135,6 +135,7 @@ const HakAkses: React.FC<HakAksesProps> = ({id, permissions}) => {
     }
 
     const onCheck: TreeProps['onCheck'] = (checkedKeys, info) => {
+        console.log(checkedKeys)
         setDefaultCheckedKey(checkedKeys as string[]);
       };
 
