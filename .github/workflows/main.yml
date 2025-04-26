@@ -3,7 +3,7 @@ name: Deploy to FTP
 on:
   push:
     branches:
-      - main  # Adjust the branch name if needed
+      - gresscover  # Adjust the branch name if needed
 
 jobs:
   deploy:
