@@ -376,7 +376,7 @@ const MutasiBarang = () => {
                         const newData = [...initialTableVarian];
                         if(checkAllQuantity(parseInt(handlePriceChange(e.target.value)), record.product_id!) <= ((parent_active?.unit_max_multiplier ?? 1) * (parent_active?.quantity ?? 1))){
                              newData[index].quantity = parseInt(handlePriceChange(e.target.value));
-                            newData[index].last_stok = (record.stok ?? 0) + newData[index].quantity;
+                            newData[index].last_stok = Number(record.stok ?? 0) + Number(newData[index].quantity);
                         }
                         form.setFieldValue('varian', newData);
                         setInitialTableVarian(newData);
@@ -925,7 +925,7 @@ const MutasiBarang = () => {
                         if(items.data.length > 0){
                             const inventory: Inventory = items.data[0];
                             newData[index].stok = inventory.quantity;
-                            newData[index].last_stok = inventory.quantity + (item?.quantity ?? 1);
+                            newData[index].last_stok = Number(inventory.quantity) + Number((item?.quantity ?? 1));
                             
                         }
                     }

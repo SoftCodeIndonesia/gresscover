@@ -19,11 +19,11 @@ const Account = () => {
           label: 'Profile',
           children: <UserInformation data={null}/>,
         },
-        {
-          key: '2',
-          label: 'Hak Akses',
-          children: <HakAkses id={0} permissions={[]}/>,
-        },
+        // {
+        //   key: '2',
+        //   label: 'Hak Akses',
+        //   children: <HakAkses id={0} permissions={[]}/>,
+        // },
         {
           key: '3',
           label: 'Ganti Kata Sandi',
@@ -52,11 +52,11 @@ const Account = () => {
                       label: 'Data User',
                       children: <UserInformation data={user}/>,
                     },
-                    {
-                      key: '2',
-                      label: 'Hak Akses',
-                      children: <HakAkses id={user.id} permissions={user.permissions} />,
-                    },
+                    // {
+                    //   key: '2',
+                    //   label: 'Hak Akses',
+                    //   children: <HakAkses id={user.id} permissions={user.permissions} />,
+                    // },
                     {
                         key: '3',
                         label: 'Ganti Kata Sandi',
