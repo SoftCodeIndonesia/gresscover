@@ -439,11 +439,11 @@ const AddTransactionSale: React.FC = () => {
                     setTotal(0);
                     setSubtotal(0);
                     
-                    form.setFieldsValue({
-                        sale_date: dayjs(),
-                        status: 'sedang dikemas',
-                        platform: 'shopee'
-                    })
+                    // form.setFieldsValue({
+                    //     sale_date: dayjs(),
+                    //     status: 'sedang dikemas',
+                    //     platform: 'shopee'
+                    // })
                }
             }
         } catch (error: any) {
