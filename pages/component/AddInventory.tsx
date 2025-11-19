@@ -554,7 +554,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
             element.unit_id = formItems[index].unit_id;
             element.unit_name = formItems[index].unit_name;
 
-            totalItem += element.quantity!;
+            totalItem += Number(element.quantity ?? 0);
 
             dataInitital.push({...element});
         });
