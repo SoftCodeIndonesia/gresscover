@@ -569,6 +569,14 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
         });
         setTotalAmount(total);
     }
+
+    useEffect(() => {
+        const total = initialTable.reduce((sum, item) => {
+            return sum + ((item.cost || 0) * (item.quantity || 0));
+        }, 0);
+        console.log('initialTable changed:', total)
+        // Lakukan sesuatu ketika count berubah
+    }, [initialTable])
 // const formData = new FormData();
         // formData.append('movement_id', form.getFieldValue('movement_id'));
         // formData.append('movement_type', form.getFieldValue('type'));

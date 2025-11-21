@@ -375,7 +375,9 @@ const Transaction: React.FC = () => {
     return (
         <DashboardLayout>
             <Space className="gap-3">
-                <Button icon={<PlusOutlined/>} type="primary" href="transaction/add" className=" bg-blue-600 text-white" >Tambah</Button>
+                <Button icon={<PlusOutlined/>} type="primary" onClick={() => {
+                    setCookie('tr_id', null);
+                }} href="transaction/add" className=" bg-blue-600 text-white" >Tambah</Button>
                 <Button icon={<ReloadOutlined/>} type="default" onClick={() => getTransactions(requestParam)} className="" >Reload</Button>
                 {selectedRowKeys.length > 0 && <Popconfirm
                     title="Yakin Ingin Menghapus Data Transaksi?"

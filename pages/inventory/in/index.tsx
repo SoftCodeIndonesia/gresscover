@@ -371,7 +371,7 @@ const MovementIn: React.FC = () => {
         request.type = 'export';
         setLoading(true);
         try {
-            const response = await axiosInstance.post('/movement_search', request, {
+            const response = await axiosInstance.post('/movement/search', request, {
                 responseType: 'blob',
             });
             // Buat URL untuk file yang di-download

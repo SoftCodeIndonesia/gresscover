@@ -56,7 +56,7 @@ const AddTransaction: React.FC = () => {
 
         console.log(data);
         try {
-            const response = await axiosInstance.post('/transaction', tr_id == undefined ? data : {...data, unique_id: tr_id});
+            const response = await axiosInstance.post('/transaction', tr_id == undefined || tr_id == 'null' ? data : {...data, unique_id: tr_id});
             if(response.status == 200){
                 message.success(`${response?.data?.message}`)
 
@@ -75,7 +75,8 @@ const AddTransaction: React.FC = () => {
 
     const getDetail = async() => {
         const tr_id = getCookie('tr_id');
-        if(tr_id != undefined){
+        console.log('tr_id',tr_id);
+        if(tr_id != undefined && tr_id != 'null'){
             setLoading(true);
             const request_param: RequestParam = {
                 table: 'transaction',
