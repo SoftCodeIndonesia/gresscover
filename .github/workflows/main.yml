@@ -3,7 +3,7 @@ name: Deploy to FTP
 on:
   push:
     branches:
-      - main  # Adjust the branch name if needed
+      - gresscover  # Adjust the branch name if needed
 
 jobs:
   deploy:
@@ -34,5 +34,7 @@ jobs:
       - name: Deploy to Vercel
         env:
           VERCEL_TOKEN: ${{ secrets.POS_VERCEL_TOKEN }}  # Pulls Vercel token from GitHub secrets
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.PROJECT_ID }}
         run: npx vercel --prod --yes --token $VERCEL_TOKEN
-        
+      

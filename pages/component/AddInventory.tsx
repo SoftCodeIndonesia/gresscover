@@ -3,10 +3,10 @@ import { Item, ItemUnit } from "@/type/item";
 import { Location } from "@/type/location";
 import DashboardLayout from "../component/DashboardLayout";
 import axiosInstance from "@/utils/axiosInstance";
-import { Image,Button, Divider, Form, Input, message, Select, Space, Table, Modal, Checkbox, AutoComplete, AutoCompleteProps, TableColumnsType, Breadcrumb, DatePicker, Radio, Card, Upload, UploadFile, UploadProps } from "antd";
+import { Image,Button, Divider, Form, Input, message, Select, Space, Table, Modal, Checkbox, AutoComplete, AutoCompleteProps, TableColumnsType, Breadcrumb, DatePicker, Radio, Card, Upload, UploadFile, UploadProps, Popconfirm } from "antd";
 import { LayoutType } from "@/type/form.layout";
 
-import { CloseCircleOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
+import { CloseCircleOutlined, DeleteFilled, PlusOutlined, SearchOutlined, UploadOutlined } from '@ant-design/icons';
 import { formatRupiah } from "@/utils/format_rupiah";
 import { CheckboxChangeEvent } from "antd/es/checkbox";
 import { Inventory } from "@/type/inventory";
@@ -212,6 +212,34 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
         }
     }
 
+    const onDeleteItem = (data: TableInventory, index: number) => {
+        
+        if(data.id == null){
+            // setInitialTable
+            const newData = initialTable.filter((value) => value.key != initialTable[index].key);
+            setInitialTable(newData);
+        }else{
+            delete_item([data.id]);
+            
+        }
+    }
+
+
+    const delete_item = async (ids: string[]) => {
+        setLoading(true);
+        try {
+            const response = await axiosInstance.post('/movement/delete_item', {data: ids});
+            if(response.status == 200){
+                message.success('Data Di Hapus!');
+                getUpdateData();
+            }
+        } catch (error: any) {
+            message.error(`${error?.response?.message ?? error}`);
+        } finally {
+            setLoading(false);
+        }
+    }
+
     
 
     const columns: TableColumnsType<TableInventory> = [
@@ -221,19 +249,29 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
             fixed: 'left',
             width: '300',
             render: (_: any, record: TableInventory, index: number) => (
-                <Form.Item name={['items', index, 'product_name']} rules={[{ required: true, message: 'Product Tidak Ditemukan!' }]} className="m-0">
-                    <AutoComplete
-                        showSearch={true}
-                            value={record.product_name}
-                            options={optionItem}
-                            filterOption={false}
-                            style={{ width: 300 }}
-                            onSelect={(value, option) => onSelectItem(value, option, index)}
-                            onSearch={fetchItems}
-                            
-                            placeholder="Cari/Pilih Product"
-                        />
-                </Form.Item>
+                <div className="flex gap-3">
+                    <Popconfirm
+                        title={"Apakah Kamu Yakin Ingin Menghapus Data Ini?"}
+                        onConfirm={(() => onDeleteItem(record, index))}
+                        okText={"Ya"}
+                        cancelText={"Tidak"}
+                        >
+                        <Button type="link" disabled={loading}  icon={<DeleteFilled/>} className='text-red-500'/>
+                    </Popconfirm>
+                    <Form.Item name={['items', index, 'product_name']} rules={[{ required: true, message: 'Product Tidak Ditemukan!' }]} className="m-0">
+                        <AutoComplete
+                            showSearch={true}
+                                value={record.product_name}
+                                options={optionItem}
+                                filterOption={false}
+                                style={{ width: 500 }}
+                                onSelect={(value, option) => onSelectItem(value, option, index)}
+                                onSearch={fetchItems}
+                                
+                                placeholder="Cari/Pilih Product"
+                            />
+                    </Form.Item>
+                </div>
             ),
         },
         {
@@ -249,6 +287,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
         {
             title: "STOK Sekarang",
             dataIndex: "",
+            width: 100,
             render: (_: any, record: TableInventory, index: number) => (
                 <Input placeholder="Masukan stok"  value={record.before_stok ?? 0} min={1}  disabled={true}/>
             ),
@@ -256,6 +295,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
         {
             title: type == 'in' ? "QTY Masuk" : "QTY Keluar",
             dataIndex: "stok",
+            width: 100,
             render: (_: any, record: TableInventory, index: number) => (
                 <Form.Item name={['items', index, 'quantity']} rules={[{ required: true, message: 'QTY Tidak Boleh Kosong!' }]} className="m-0">
 
@@ -285,6 +325,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
         {
             title: "STOK Akhir",
             dataIndex: "",
+            width: 100,
             render: (_: any, record: TableInventory, index: number) => (
                 <Input placeholder="Masukan stok"  value={record.after_stok ?? 1} min={1}  disabled={true}/>
             ),
@@ -341,6 +382,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
         {
             title: "Minimum Stok",
             dataIndex: "minimum",
+            width: 100,
             render: (_: any, record: TableInventory, index: number) => (
                 <Form.Item name={['items', index, 'minimum']} rules={[{ required: true, message: 'Minimum Stok Tidak Boleh Kosong!' }]} className="m-0">
                     <Input placeholder="Masukan Minimum Stok" value={record.minimum ?? 0.0} onChange={(e) => {
@@ -527,6 +569,14 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
         });
         setTotalAmount(total);
     }
+
+    useEffect(() => {
+        const total = initialTable.reduce((sum, item) => {
+            return sum + ((item.cost || 0) * (item.quantity || 0));
+        }, 0);
+        console.log('initialTable changed:', total)
+        // Lakukan sesuatu ketika count berubah
+    }, [initialTable])
 // const formData = new FormData();
         // formData.append('movement_id', form.getFieldValue('movement_id'));
         // formData.append('movement_type', form.getFieldValue('type'));
@@ -720,7 +770,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
     
     const setInitialTableData = () => {
         const tableInit: TableInventory[] = Array.from({ length: 1 }, (_, index) => ({
-            key: index, 
+            key: new Date().getTime().toString() + index,  
             id: null,
             product_name: null, 
             product_id: null, 
@@ -748,7 +798,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
     const newLine = () => {
         const table = [...initialTable];
         table.push({
-            key: table.length + 1, 
+            key: new Date().getTime().toString(), 
             id: null,
             product_name: null, 
             product_id: null, 
