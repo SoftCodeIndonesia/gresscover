@@ -532,7 +532,7 @@ const InventoryPage: React.FC = () => {
             <Table<SearchInventoryResult> columns={filteredColumns} onChange={onChange}
                 showSorterTooltip={{ target: 'sorter-icon' }} scroll={{ x: 'max-content'}} pagination={false} loading={loading} rowSelection={rowSelection} dataSource={inventories?.data} rowKey={(record) => record.inventory_id} />
             <div className="flex my-3 justify-end">
-                <AntPagination onChange={onChangePagination} defaultCurrent={inventories?.current_page} total={inventories?.total} />
+                <AntPagination onChange={onChangePagination} pageSize={inventories?.per_page} defaultCurrent={inventories?.current_page} total={inventories?.total} />
             </div>
 
         </DashboardLayout>
