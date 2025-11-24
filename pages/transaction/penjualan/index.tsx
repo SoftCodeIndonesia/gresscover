@@ -656,7 +656,7 @@ const Transaction: React.FC = () => {
                     options={availableColumns.map((value) => ({label: value.title, value: value.key}))}
                     >
             </Select>
-            <Table columns={availableColumns} onChange={onChange}
+            <Table columns={filteredColumns} onChange={onChange}
                 showSorterTooltip={{ target: 'sorter-icon' }} 
                 scroll={{ x: 'max-content'}} 
                 rowSelection={rowSelection} 
