@@ -40,6 +40,7 @@ const MovementIn: React.FC = () => {
         current_page: 0,
         data: [],
         last_page: 1,
+        per_page: 10,
         total: 0,
     });
     const [summary, setSummary] = useState<{total_item: number, total_asset: number}>({total_asset: 0, total_item: 0});

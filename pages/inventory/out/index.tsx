@@ -39,6 +39,7 @@ const MovementOut: React.FC = () => {
         data: [],
         last_page: 1,
         total: 0,
+        per_page: 10,
     });
     const [summary, setSummary] = useState<{total_item: number, total_asset: number}>({total_asset: 0, total_item: 0});
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);

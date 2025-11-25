@@ -39,6 +39,7 @@ const MutasiBarang: React.FC = () => {
         data: [],
         last_page: 1,
         total: 0,
+        per_page: 10,
     });
     
     const [loading, setLoading] = useState<boolean>(false);
