@@ -327,6 +327,13 @@ const InventoryPage: React.FC = () => {
         const request = {...request_param};
         request.column = checkedListColumn.filter((value) => value != 'no' && value != 'action');
         request.type = 'export';
+
+        if(selectedRowKeys.length > 0){
+            request.where = {
+                inventory_id: ["in", selectedRowKeys]
+            }
+        }
+
         setLoading(true);
         try {
             const response = await axiosInstance.post('/inventory/search', request, {
