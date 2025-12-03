@@ -267,7 +267,11 @@ const Transaction: React.FC = () => {
 
     const onExport = async () => {
         const request = {...requestParam};
-        
+        if(selectedRowKeys.length > 0){
+            request.where = {
+                unique_id: ["in", selectedRowKeys]
+            }
+        }
         request.type = 'export';
         setLoading(true);
         try {
