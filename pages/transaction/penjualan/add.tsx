@@ -503,7 +503,7 @@ const AddTransactionSale: React.FC = () => {
         setInitialTableTax(taxData);
     }
 
-    const removeTaxes = async (data: Tax) => {
+    const removeTaxes = async (data: Tax, index: number) => {
         setLoading(true);
 
         
@@ -513,11 +513,15 @@ const AddTransactionSale: React.FC = () => {
                 sales_tax.push(element.sale_tax_id);
             }
         });
+
+        // console.log(initialTableTax.filter((value) => value.tax_id != data.tax_id));
+
         
         try {
             const response = await axiosInstance.post('/search_del', {table: 'tax_sales',data: sales_tax});
             if(response.status == 200){
                 setInitialTableTax(initialTableTax.filter((value) => value.tax_id != data.tax_id));
+                form.setFieldValue('taxes', initialTableTax.filter((value) => value.tax_id != data.tax_id));
             }
         } catch (error: any) {
             message.error(`${error?.response?.data?.message ?? error}`);
@@ -812,7 +816,7 @@ const AddTransactionSale: React.FC = () => {
                                         return <Table.Summary.Row key={index} className="text-right">
                                                     <Table.Summary.Cell  index={(initialTableTax.length ?? 2) + 1}  colSpan={1} align="right">
                                                         <div className="flex text-right flex-1 items-center justify-end">
-                                                            <Button type="text" danger onClick={() => removeTaxes(value)}><CloseCircleOutlined/></Button> 
+                                                            <Button type="text" danger onClick={() => removeTaxes(value, index)}><CloseCircleOutlined/></Button> 
                                                             <p className="font-bold">{value.name}</p>
                                                         </div>
                                                     </Table.Summary.Cell>

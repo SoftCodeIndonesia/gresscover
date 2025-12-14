@@ -31,7 +31,7 @@ type GetSingle<T> = T extends (infer U)[] ? U : never;
 type Sorts = GetSingle<Parameters<OnChange>[2]>;
 
 const { RangePicker } = DatePicker;
-const Transaction: React.FC = () => {
+const Penjualan: React.FC = () => {
 
     const [request_param, setRequestParam] = useState<NewRequestParam>({
         table: 'sales',
@@ -672,5 +672,5 @@ const Transaction: React.FC = () => {
     );
 }
 
-export default Transaction;
+export default Penjualan;
 

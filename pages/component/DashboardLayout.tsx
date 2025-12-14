@@ -180,6 +180,7 @@ const DashboardLayout: React.FC<Props> = ({children}) => {
         { key: '5.1', label: <Link href="/items" onClick={() => setKeyMenu(['5', '5.1'])}>Semua Item</Link> },
         { key: '5.2', label: <Link href="/category" onClick={() => setKeyMenu(['5', '5.2'])}>Kategori</Link> },
         { key: '5.3', label: <Link href="/warehouse" onClick={() => setKeyMenu(['5', '5.3'])}>Gudang</Link> },
+        { key: '5.4', label: <Link href="/vendor" onClick={() => setKeyMenu(['5', '5.4'])}>Vendor</Link> },
       ],
     },
     {
