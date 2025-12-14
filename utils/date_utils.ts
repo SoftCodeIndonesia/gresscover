@@ -15,6 +15,23 @@ export const formatDate = (dateString: string) => {
 
     return `${formattedDate} ${formattedTime}`;
 };
+export const formatDateWithoutTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const formattedDate = date.toLocaleDateString('id-ID', {
+        year: '2-digit', // "25" untuk 2025
+        month: 'short',  // "Feb" untuk Februari
+        day: '2-digit',  // "18"
+    }).replace('.', ''); // Hapus titik dari nama bulan
+
+    const formattedTime = date.toLocaleTimeString('id-ID', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+    });
+
+    return `${formattedDate}`;
+};
 export const formatDateOnlyMonthAndYear = (dateString: string) => {
     const date = new Date(dateString);
     const formattedDate = date.toLocaleDateString('id-ID', {
