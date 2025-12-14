@@ -19,7 +19,7 @@ import { Key, useEffect, useState } from "react";
 import { NewRequestParam, RequestParam } from "@/type/request_param";
 import { Pagination } from "@/type/pagination";
 import axiosInstance from "@/utils/axiosInstance";
-import { formatDate, getStartAndEndOfMonth } from "@/utils/date_utils";
+import { formatDate, formatDateWithoutTime, getStartAndEndOfMonth } from "@/utils/date_utils";
 import dayjs from "dayjs";
 import CustomButtonPopConfirm from "@/pages/component/CustomButtonPopConfirm";
 import { TableRowSelection } from "antd/es/table/interface";
@@ -74,11 +74,11 @@ const Penjualan: React.FC = () => {
             render: (_: any, record: Sale, index: number) => <Typography.Link href={`/transaction/penjualan/${record.sale_id}`}>{record.order_number}</Typography.Link>,
         },
         {
-            title: 'Tanggal',
+            title: 'Tanggal Penjualan',
             dataIndex: 'sale_date',
             key: 'sale_date',
             sorter: true,
-            render: (_: any, record: Sale, index: number) => <p><CalendarOutlined /> {formatDate(record.sale_date!)}</p>,
+            render: (_: any, record: Sale, index: number) => <p><CalendarOutlined /> {formatDateWithoutTime(record.sale_date!)}</p>,
         },
         {
             title: 'Total QTY',
@@ -173,6 +173,13 @@ const Penjualan: React.FC = () => {
                 {text: 'Pesanan Terkirim', value: 'pesanan terkirim'},
             ],
             filterSearch: true,
+        },
+        {
+            title: 'Tanggal Pencairan',
+            dataIndex: 'withdrawal_date',
+            key: 'withdrawal_date',
+            sorter: true,
+            render: (_: any, record: Sale, index: number) => <p><CalendarOutlined /> {record.withdrawal_date == null ? '-' : formatDateWithoutTime(record.withdrawal_date)}</p>,
         },
         {
             title: 'Retur/Penukaran',
@@ -502,7 +509,11 @@ const Penjualan: React.FC = () => {
 
     const onExport = async () => {
         const request = {...request_param};
-        
+        if(selectedRowKeys.length > 0){
+            request.where = {
+                sale_id: ["in", selectedRowKeys]
+            }
+        }
         request.type = 'export';
         setLoading(true);
         try {

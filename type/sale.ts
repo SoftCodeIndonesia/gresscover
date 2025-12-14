@@ -5,6 +5,7 @@ import { Tax } from "./tax";
 export type Sale = {
     sale_id: string|null;
     sale_date: string|null;
+    withdrawal_date: string|null;
     total_amount: string|null;
     payment_method: string|null;
     created_at: string|null;

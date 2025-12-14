@@ -28,6 +28,7 @@ import { validateDecimal } from "@/utils/validate_decimal";
 import { GroupSetting } from "@/type/setting";
 import { Platform } from "@/type/platform";
 import { getPlatforms } from "@/utils/get_filters";
+import { useWatch } from "antd/es/form/Form";
 
 
 interface TableInventory {
@@ -111,6 +112,8 @@ const AddTransactionSale: React.FC = () => {
     const [total_quantity, setTotalQuantity] = useState<number>(0);
 
     const [form] = Form.useForm();
+
+    const status = useWatch(['status'], form);
 
     const onChecked = (e: CheckboxChangeEvent, indexTable: number) => {
         setInitialTable((prevData) =>
@@ -406,6 +409,7 @@ const AddTransactionSale: React.FC = () => {
 
         const data = {
             'sale_id': form.getFieldValue('sale_id') != null ? form.getFieldValue('sale_id') : null,
+            'withdrawal_date': form.getFieldValue('withdrawal_date') != null ? toFormatLaravel(form.getFieldValue('withdrawal_date')) : null,
             'sale_date': toFormatLaravel(form.getFieldValue('sale_date')),
             'total_amount': subtotal,
             'payment_method': null,
@@ -667,6 +671,7 @@ const AddTransactionSale: React.FC = () => {
 
         form.setFieldsValue({
             sale_date: dayjs(),
+            withdrawal_date: dayjs(),
             status: 'sedang dikemas',
             // platform: 'shopee'
         })
@@ -721,68 +726,94 @@ const AddTransactionSale: React.FC = () => {
                 disabled={loading}
             >
                 
-                <div className="flex gap-4">
-                    <div className="flex flex-col flex-1">
-                        <Form.Item className="flex-1" label="Pilih Gudang Penjualan" name='location_id' rules={[{ required: true, message: 'Bagian ini tidak boleh kosong!' }]} >
-                            <Select 
-                                placeholder="Pilih Lokasi Awal Gudang"
-                                options={optionsLocation.map((value) => ({label: value.name, value: value.location_id}))}
-                                onSelect={(value, option) => {
-                                    form.setFieldsValue({
-                                        
-                                        location_name: option.label,
-                                    })
-
-                                    // console.log(option);
-
-                                    setShowTabel(true);
-                                }}
-                            ></Select>
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                    {/* Kolom Kiri */}
+                    <div className="space-y-4">
+                        <Form.Item
+                        label="Pilih Gudang Penjualan"
+                        name="location_id"
+                        rules={[{ required: true, message: 'Bagian ini tidak boleh kosong!' }]}
+                        >
+                        <Select
+                            placeholder="Pilih Lokasi Awal Gudang"
+                            options={optionsLocation.map((value) => ({ label: value.name, value: value.location_id }))}
+                            onSelect={(value, option) => {
+                            form.setFieldsValue({
+                                location_name: option.label,
+                            });
+                            setShowTabel(true);
+                            }}
+                        />
                         </Form.Item>
-                        
-                        <Form.Item label="Nomor Pesanan" name="order_number" rules={[{ required: true, message: 'Please input nomor pesanan!' }]}>
-                            <Input placeholder="Nomor Pesanan" />
+
+                        <Form.Item
+                        label="Nomor Pesanan"
+                        name="order_number"
+                        rules={[{ required: true, message: 'Please input nomor pesanan!' }]}
+                        >
+                        <Input placeholder="Nomor Pesanan" />
                         </Form.Item>
-                        <Form.Item label="Nomor Pengiriman" name="delivery_number" rules={[{ required: true, message: 'Please input nomor pesanan!' }]}>
-                            <Input placeholder="Nomor Pengiriman" />
+
+                        <Form.Item
+                        label="Nomor Pengiriman"
+                        name="delivery_number"
+                        rules={[{ required: true, message: 'Please input nomor pesanan!' }]}
+                        >
+                        <Input placeholder="Nomor Pengiriman" />
                         </Form.Item>
                     </div>
-                    <div className="flex flex-col flex-1">
+
+                    {/* Kolom Kanan */}
+                    <div className="space-y-4">
                         <Form.Item
-                            label="Tanggal Penjualan"
-                            name="sale_date"
-                            rules={[{ required: true, message: 'Please input tanggal penjualan' }]}
-                            style={{width: '100%'}}
+                        label="Tanggal Penjualan"
+                        name="sale_date"
+                        rules={[{ required: true, message: 'Please input tanggal penjualan' }]}
                         >
-                            <DatePicker defaultValue={dayjs()} width={`100%`} />
-                        </Form.Item>
-                        <Form.Item name="status" label="Status Pesanan" rules={[{ required: true , message: 'Please input status pesanan!'}]}>
-                            <Select
-                                defaultValue={'sedang dikemas'}
-                                placeholder="Status Pesanan"
-                                options={[
-                                    {label: 'Sedang Dikemas', value: 'sedang dikemas'},
-                                    {label: 'Dalam Pengiriman', value: 'dalam pengiriman'},
-                                    {label: 'Pesanan Terkirim', value: 'pesanan terkirim'},
-                                    
-                                ]}
-                                onChange={(value) => {console.log(value)}}
-                                allowClear={false}
-                            >
-                            </Select>
+                        <DatePicker className="w-full" defaultValue={dayjs()} />
                         </Form.Item>
 
-                        <Form.Item name="platform" label="Platform" rules={[{ required: true , message: 'Please input platform!'}]}>
-                            <Select
-                                placeholder="platform penjualan"
-                                options={platforms.map((value) => ({label: value.name, value: value.slug}))}
-                                onChange={(value) => {console.log(value)}}
-                                allowClear={false}
-                            >
-                            </Select>
+                        <Form.Item
+                        name="status"
+                        label="Status Pesanan"
+                        rules={[{ required: true, message: 'Please input status pesanan!' }]}
+                        >
+                        <Select
+                            defaultValue="sedang dikemas"
+                            placeholder="Status Pesanan"
+                            options={[
+                            { label: 'Sedang Dikemas', value: 'sedang dikemas' },
+                            { label: 'Dalam Pengiriman', value: 'dalam pengiriman' },
+                            { label: 'Pesanan Terkirim', value: 'pesanan terkirim' },
+                            { label: 'Pesanan Selesai', value: 'lunas' },
+                            ]}
+                            onChange={(value) => { console.log(value); }}
+                            allowClear={false}
+                        />
                         </Form.Item>
 
-                        
+                        {/* Conditional Rendering untuk Tanggal Pencairan */}
+                        {status === 'lunas' && (
+                        <Form.Item
+                            label="Tanggal Pencairan"
+                            name="withdrawal_date"
+                        >
+                            <DatePicker className="w-full" defaultValue={dayjs()} />
+                        </Form.Item>
+                        )}
+
+                        <Form.Item
+                        name="platform"
+                        label="Platform"
+                        rules={[{ required: true, message: 'Please input platform!' }]}
+                        >
+                        <Select
+                            placeholder="platform penjualan"
+                            options={platforms.map((value) => ({ label: value.name, value: value.slug }))}
+                            onChange={(value) => { console.log(value); }}
+                            allowClear={false}
+                        />
+                        </Form.Item>
                     </div>
                 </div>
                 
