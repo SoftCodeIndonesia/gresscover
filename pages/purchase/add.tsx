@@ -497,7 +497,7 @@ const AddEditInvoice: React.FC = () => {
         console.log(response.data);
         if(response.data.data){
           if(!isEditing){
-            router.push(`/purchase/${response.data.data.id}`);
+            router.push(`/purchase/${response.data.data.purchase_order_id}`);
           }
         }
       }
