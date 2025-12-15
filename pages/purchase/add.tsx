@@ -828,7 +828,8 @@ const AddEditInvoice: React.FC = () => {
       title: 'Produk',
       dataIndex: 'product_name',
       key: 'product_name',
-      width: 250,
+      width: 400,
+      fixed: 'left',
       render: (_: any, record: PurchaseOrderItemForm, index: number) => {
         const isChild = record.isChild;
         
@@ -848,7 +849,7 @@ const AddEditInvoice: React.FC = () => {
                 <AutoComplete
                   options={optionItem}
                   filterOption={false}
-                  style={{ width: 200 }}
+                  style={{ width: 400 }}
 
                   onSelect={(value, option) => onSelectItem(value, option, record.key!, false)}
                   onSearch={(value) => fetchItems(value)}
@@ -880,7 +881,7 @@ const AddEditInvoice: React.FC = () => {
                 
                   options={optionItem}
                   filterOption={false}
-                  style={{ width: 200 }}
+                  style={{ width: 400 }}
                   onSelect={(value, option) => onSelectItem(value, option, record.key!, true)}
                   onSearch={(value) => fetchItems(value)}
                   placeholder="Cari/Pilih Product"
@@ -1170,7 +1171,7 @@ const AddEditInvoice: React.FC = () => {
               columns={columns}
               dataSource={getFlattenedItems()}
               pagination={false}
-              
+              scroll={{ x: 'max-content' }}
               summary={() => (
                 <Table.Summary.Row>
                   <Table.Summary.Cell index={1} colSpan={5} align="right">

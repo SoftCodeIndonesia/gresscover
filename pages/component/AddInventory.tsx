@@ -23,12 +23,14 @@ import { InventoryMovement } from "@/type/inventory_movement";
 import { getLocation } from "@/utils/get_filters";
 import dayjs from "dayjs";
 import SomethingWrong from "./500";
-import TextArea from "antd/es/input/TextArea";
+
 import { toFormatLaravel } from "@/utils/date_utils";
 import { SearchInventoryResult } from "@/type/search_inventory_result";
 import { Movement } from "@/type/movement";
+import { PurchaseOrder, PurchaseOrderStatus } from "@/type/purchase";
 
-
+const { TextArea } = Input;
+const { Option } = Select;
 
 
 interface TableInventory {
@@ -78,10 +80,14 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
     const [total_amount, setTotalAmount] = useState<number>(0);
     const [type, setType] = useState<string|null>(null);
     const [payment, setPayment] = useState<string>("0");
-    
+    const isEdit = getCookie('movement_id');
     const [fileList, setFileList] = useState<UploadFile[]>([
         
     ]);
+
+    const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
+
+    const [selectedPurchaseOrder, setSelectedPurchaseOrder] = useState<PurchaseOrder | null>(null);
 
     const handleChange: UploadProps['onChange'] = (info) => {
         let newFileList = [...info.fileList];
@@ -267,7 +273,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
                                 style={{ width: 500 }}
                                 onSelect={(value, option) => onSelectItem(value, option, index)}
                                 onSearch={fetchItems}
-                                
+                                disabled={selectedPurchaseOrder != null}
                                 placeholder="Cari/Pilih Product"
                             />
                     </Form.Item>
@@ -299,7 +305,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
             render: (_: any, record: TableInventory, index: number) => (
                 <Form.Item name={['items', index, 'quantity']} rules={[{ required: true, message: 'QTY Tidak Boleh Kosong!' }]} className="m-0">
 
-                    <Input placeholder="Masukan stok"  value={record.quantity ?? 1} min={1}  onChange={(e) => {
+                    <Input placeholder="Masukan stok" disabled={selectedPurchaseOrder != null}  value={record.quantity ?? 1} min={1}  onChange={(e) => {
                         const newData = [...initialTable];
                         if(type == 'out'){
                             if(parseInt(handlePriceChange(e.target.value)) <= newData[index].after_stok){
@@ -336,6 +342,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
             render: (_: any, record: TableInventory, index: number) => (
                 <Form.Item name={['items', index, 'unit_name']} rules={[{ required: true, message: 'Satuan Tidak Boleh Kosong!' }]} className="m-0">
                     <AutoComplete
+                    disabled={selectedPurchaseOrder != null}
                         value={record.unit_name}
                         options={optionUnit}
                         filterOption={true}
@@ -422,6 +429,61 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
     const back = () => router.back();
     
 
+    const fetchInfoForPO = async (po: PurchaseOrder) => {
+        try {
+            const product_ids: string[] = (po.qualityReport?.items ?? []).map((item, index) => item.product_id);
+            const querySearch: NewRequestParam = {
+                limit: 100,
+                page: 1,
+                table: 'product',
+                type: 'search',
+                keyword: '',
+                where: {
+                    location_id: ["in", [form.getFieldValue('location_id')]],
+                    product_id: ["in", product_ids],
+                }
+            }
+            const response = await axiosInstance.post(`/inventory/get_info`, querySearch);
+            if(response.status == 200){
+                const inventory: Inventory[] = response.data.data;
+                const tableInit: TableInventory[] = inventory.map((inv, index) => {
+                    const qualityReportItem = (po?.qualityReport?.items ?? []).findLast((value) => value.product_id == inv.product_id);
+                    const item = {
+                        key: new Date().getTime().toString() + index,  
+                        id: null,
+                        product_name: inv.product_name ?? '', 
+                        product_id: inv.product_id ?? '', 
+                        quantity: qualityReportItem?.good_quantity ?? 0.0, 
+                        before_stok: inv.quantity,
+                        after_stok: inv.quantity + (qualityReportItem?.good_quantity ?? 0.0),
+                        sku: qualityReportItem?.sku ?? '', 
+                        selling_price: inv.price ?? 0.0, 
+                        cost: inv.cost, 
+                        minimum: 1,
+                        checked: false,
+                        location_id: inv.location_id,
+                        location_name: inv.location?.name ?? '',
+                        cost_string: `${inv.cost}`,
+                        selling_price_string: `${inv.price}`,
+                        unit_id: qualityReportItem?.order_item?.unit_id ?? '',
+                        unit_name: qualityReportItem?.order_item?.unit_name ?? '',
+                        // children: [],
+                    }
+
+                    console.log('qualityReportItem', qualityReportItem);
+                    console.log('item', item);
+                    return item;
+                });
+                form.setFieldValue('items', tableInit);
+                setInitialTable(tableInit);
+                sumTotalAmount(tableInit);
+            }else{
+                message.error(response.data.message);
+            }
+        } catch (error) {
+            message.error(`${error}`);
+        }
+    }
     const fetchItems = async (query: string) => {
        
         try {
@@ -626,6 +688,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
         formData.append('total_item', totalItem.toString());
         formData.append('total_amount', total_amount.toString());
         formData.append('data', JSON.stringify(dataInitital));
+        formData.append('po_id', `${form.getFieldValue('purchase_order_id')}`);
         
         if(fileList.length > 0 && !fileList[0].url){
             formData.append('image', fileList[0].originFileObj as Blob);
@@ -885,7 +948,12 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
                     payment_date: dayjs(movemnetData.payment_date),
                     is_payment: movemnetData.is_payment.toString(),
                     type: type,
+                    purchase_order_id: movemnetData.purchase_order?.purchase_order_id,
+                    purchase_order_number: movemnetData.purchase_order?.invoice_number,
                 })
+
+                setSelectedPurchaseOrder(movemnetData.purchase_order ?? null);
+
                 setInitialTable(item);
                 sumTotalAmount(item);
             }
@@ -935,6 +1003,60 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
         }
     }, []);
 
+    const getPurchaseOrders = async () => {
+        setLoading(true);
+        try {
+            const request_param: NewRequestParam = {
+                table: "purchase_orders",
+                request_column: [],
+                limit: 10,
+                page: 1,
+                orderBy: {
+                    order_date: "DESC",
+                },
+                where: {
+                    status: ['in', [PurchaseOrderStatus.RECEIVED]]
+                },
+            };
+            const response = await axiosInstance.post(
+                "/purchase-orders/search",
+                request_param
+            );
+            if (response.status === 200) {
+                console.log('purchase order', response.data.data.data);
+                setPurchaseOrders(response.data.data.data.data);
+            }
+        } catch (error: any) {
+            message.error(error.toString());
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchPurchaseOrderDetails = async (poId: number) => {
+        try {
+            const response = await axiosInstance.get(`/purchase-orders/${poId}`);
+            if (response.status === 200) {
+                const data_po: PurchaseOrder = response.data.data;
+                setSelectedPurchaseOrder(data_po);
+                form.setFieldValue('purchase_order_id', data_po.purchase_order_id);
+                form.setFieldValue('purchase_order_number', `${data_po.invoice_number}-${data_po.vendor?.name}`);
+                fetchInfoForPO(data_po);
+            }
+        } catch (error) {
+            message.error(`Gagal mengambil detail purchase order ${error}`);
+        }
+    };
+
+    const handlePurchaseOrderChange = (value: number, option?: any) => {
+        // setitems([]);
+        
+        fetchPurchaseOrderDetails(value);
+    };
+
+    useEffect(() => {
+        getPurchaseOrders();
+    }, []);
 
     
     return (
@@ -956,7 +1078,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
                         <div className="flex flex-col flex-1 pr-6">
                         
                             <Form.Item label="Pilih Gudang" name="location_id" rules={[{ required: true, message: 'Pilih Gudang Terlebih Dahulu!' }]}>
-                                <Select disabled={form.getFieldValue('location_id')} onChange={(e) => {
+                                <Select disabled={isEdit != undefined && isEdit != null} onChange={(e) => {
                                     
                                     
                                     var location_selected: Location|null = null;
@@ -995,16 +1117,39 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
                         </div>
                         <div className="flex flex-col flex-1 px-6">
                             {type == 'in' && <>
+                                <Form.Item
+                                    label="Invoice"
+                                    name="purchase_order_number"
+                                    
+                                >
+                                    <Select
+                                    disabled={isEdit != undefined && isEdit != null}
+                                        placeholder="Pilih Purchase Order"
+                                        onChange={handlePurchaseOrderChange}
+                                        showSearch
+                                        optionFilterProp="label"
+                                        filterOption={(input, option) =>
+                                            (option?.label as string)?.toLowerCase().includes(input.toLowerCase())
+                                        }
+                                    >
+                                        {purchaseOrders.map(po => (
+                                            <Option key={po.purchase_order_id} value={po.purchase_order_id}>
+                                                {po.invoice_number} - {po.vendor_name} 
+                                                ({formatRupiah(po.total_amount)})
+                                            </Option>
+                                        ))}
+                                    </Select>
+                                </Form.Item>
                                 <Form.Item label="Status Pembayaran" name="is_payment" rules={[{ required: true, message: 'Pilih Status Pembayaran Terlebih Dahulu!' }]}>
-                                <Radio.Group onChange={(e) => {
-                                    
-                                    setPayment(e.target.value);
-                                    
-                                }}>
-                                    <Radio value="1"> Lunas </Radio>
-                                    <Radio value="0"> Belum Lunas </Radio>
-                                </Radio.Group>
-                            </Form.Item>
+                                    <Radio.Group onChange={(e) => {
+                                        
+                                        setPayment(e.target.value);
+                                        
+                                    }}>
+                                        <Radio value="1"> Lunas </Radio>
+                                        <Radio value="0"> Belum Lunas </Radio>
+                                    </Radio.Group>
+                                </Form.Item>
                             {payment == '1' && <Form.Item
                                 label="Tanggal Pembayaran"
                                 name="payment_date"
@@ -1044,7 +1189,8 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
                     footer={() => {
                         return (
                             <div className="flex justify-between items-center">
-                                <Button type="text" onClick={newLine} className="text-blue-400">Tambah Baris</Button>
+                                {!selectedPurchaseOrder && <Button type="text" onClick={newLine} className="text-blue-400">Tambah Baris</Button>}
+                                <div></div>
                                 <div className="flex gap-10">
                                     <p className="text-lg font-bold">Total : </p>
                                     <p className="text-lg">{formatRupiah(total_amount)}</p>

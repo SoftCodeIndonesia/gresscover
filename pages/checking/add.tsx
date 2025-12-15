@@ -296,6 +296,7 @@ const CheckingAdd: React.FC = () => {
                 const data_po: PurchaseOrder = response.data.data;
                 setSelectedPurchaseOrder(data_po);
                 form.setFieldValue('purchase_order_id', data_po.purchase_order_id);
+                form.setFieldValue('purchase_order_number', `${data_po.invoice_number}-${data_po.vendor?.name}`);
                 // Initialize items from purchase order if not in edit mode
                 if (!isEditMode && response.data.data.items) {
                     // const items = transformItemsForTable([], response.data.data.items);
@@ -376,8 +377,9 @@ const CheckingAdd: React.FC = () => {
     };
 
     // Handle purchase order selection
-    const handlePurchaseOrderChange = (value: number) => {
+    const handlePurchaseOrderChange = (value: number, option?: any) => {
         // setitems([]);
+        
         fetchPurchaseOrderDetails(value);
     };
 
@@ -695,6 +697,7 @@ console.log('change', items);
                 "received_by": values.received_by,
                 "action": values.action,
                 "action_note": values.action_note,
+                "status": "draft",
                 "items": payloadItem,
             }
 
@@ -805,7 +808,7 @@ const columns: TableColumnsType<QualityReportItemForm> = [
         title: 'Produk',
         dataIndex: 'product_name',
         key: 'product_name',
-        width: 250,
+        width: 300,
         render: (_: any, record: QualityReportItemForm, index: number) => {
             const isChild = record.is_child;
             const parentIndex = record.parent_index;
@@ -1245,7 +1248,7 @@ const columns: TableColumnsType<QualityReportItemForm> = [
                                 <Col span={12}>
                                     <Form.Item
                                         label="Purchase Order"
-                                        name="purchase_order_id"
+                                        name="purchase_order_number"
                                         rules={[{ required: true, message: 'Pilih purchase order' }]}
                                     >
                                         <Select
@@ -1285,6 +1288,9 @@ const columns: TableColumnsType<QualityReportItemForm> = [
 
                             <Row gutter={16}>
                                 <Col span={12}>
+                                <Form.Item name="purchase_order_id" hidden>
+                                    <Input type="hidden" />
+                                </Form.Item>
                                 <Form.Item name="received_by" hidden>
                                     <Input type="hidden" />
                                 </Form.Item>
@@ -1417,6 +1423,7 @@ const columns: TableColumnsType<QualityReportItemForm> = [
                                         dataSource={getFlattenedItems()}
                                         pagination={false}
                                         size="middle"
+                                        scroll={{ x: 'max-content' }}
                                         summary={() => (
                                             <Table.Summary fixed>
                                                 <Table.Summary.Row>

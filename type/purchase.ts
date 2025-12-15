@@ -1,4 +1,5 @@
 import { ItemUnit } from "./item";
+import { QualityReport } from "./reportIssue";
 import { Vendor } from "./vendor";
 
 
@@ -89,4 +90,5 @@ export type PurchaseOrder = {
   notes: string;
   items: PurchaseOrderItem[];
   created_at?: string;
+  qualityReport?: QualityReport;
 }

@@ -1,4 +1,5 @@
 import { InventoryMovement } from "./inventory_movement";
+import { PurchaseOrder } from "./purchase";
 import { User } from "./user";
 
 export type Movement = {
@@ -23,4 +24,6 @@ export type Movement = {
     image: string|null,
     original_name: string|null,
     extension: string|null,
+    po_id: string|null,
+    purchase_order?: PurchaseOrder
 };

@@ -7,6 +7,37 @@ export function printQualityReportPdf(data: QualityReport) {
 
   let y = 20
 
+  // ===== HELPER =====
+  const labelX = 20
+  const colonX = 65
+  const valueX = 70
+  const tableX = 20
+
+  function infoRow(label: string, value: string, yPos: number) {
+    doc.text(label, labelX, yPos)
+    doc.text(':', colonX, yPos)
+    doc.text(value || '-', valueX, yPos)
+  }
+
+  function drawCell(
+    text: string,
+    x: number,
+    y: number,
+    w: number,
+    align: 'left' | 'center' | 'right' = 'left'
+  ) {
+    const padding = 2
+    const textY = y + 5
+
+    if (align === 'right') {
+      doc.text(text, x + w - padding, textY, { align: 'right' })
+    } else if (align === 'center') {
+      doc.text(text, x + w / 2, textY, { align: 'center' })
+    } else {
+      doc.text(text, x + padding, textY)
+    }
+  }
+
   // ===== TITLE =====
   doc.setFontSize(16)
   doc.setFont('helvetica', 'bold')
@@ -17,13 +48,10 @@ export function printQualityReportPdf(data: QualityReport) {
   doc.setFont('helvetica', 'normal')
 
   // ===== HEADER INFO =====
-  doc.text(`Tanggal Pemeriksaan : ${formatDateWithoutTime(data.inspection_date)}`, 20, y)
-  y += 6
-  doc.text(`No. Invoice               : ${data.purchase_order?.invoice_number}`, 20, y)
-  y += 6
-  doc.text(`Nama Vendor          : ${data.purchase_order?.vendor?.name}`, 20, y)
-  y += 6
-  doc.text(`Penerima Barang      : ${data.receiver_name}`, 20, y)
+  infoRow('Tanggal Pemeriksaan', formatDateWithoutTime(data.inspection_date), y); y += 6
+  infoRow('No. Invoice', data.purchase_order?.invoice_number || '-', y); y += 6
+  infoRow('Nama Vendor', data.purchase_order?.vendor?.name || '-', y); y += 6
+  infoRow('Penerima Barang', data.receiver_name, y)
 
   y += 12
 
@@ -32,48 +60,56 @@ export function printQualityReportPdf(data: QualityReport) {
   doc.text('Detail Barang Cacat', 20, y)
   y += 6
 
-  // Table Header
   doc.setFontSize(9)
-  doc.rect(20, y, 10, 8)
-  doc.rect(30, y, 45, 8)
-  doc.rect(75, y, 40, 8)
-  doc.rect(115, y, 20, 8)
-  doc.rect(135, y, 45, 8)
+  doc.setFont('helvetica', 'normal')
 
-  doc.text('No', 22, y + 5)
-  doc.text('SKU / Produk', 32, y + 5)
-  doc.text('Jenis Cacat', 77, y + 5)
-  doc.text('Qty', 120, y + 5)
-  doc.text('Keterangan', 137, y + 5)
+  // ===== TABLE SETUP =====
+  const headers = [
+    { label: 'No', w: 10, align: 'center' },
+    { label: 'SKU / Produk', w: 50, align: 'left' },
+    { label: 'Jenis Cacat', w: 40, align: 'left' },
+    { label: 'Qty', w: 20, align: 'center' },
+    { label: 'Keterangan', w: 50, align: 'left' },
+  ]
 
-  y += 8
-
-  // Table Rows
-  data.items.forEach((item, index) => {
-    doc.rect(20, y, 10, 8)
-    doc.rect(30, y, 45, 8)
-    doc.rect(75, y, 40, 8)
-    doc.rect(115, y, 20, 8)
-    doc.rect(135, y, 45, 8)
-
-    doc.text(String(index + 1), 22, y + 5)
-    doc.text(`${item.sku} - ${item.product_name}`, 32, y + 5)
-    doc.text(item.defect_type, 77, y + 5)
-    doc.text(String(item.qty_defect), 120, y + 5)
-    doc.text(item.note || '-', 137, y + 5)
-
-    y += 8
+  // ===== TABLE HEADER =====
+  let x = tableX
+  headers.forEach(h => {
+    doc.rect(x, y, h.w, 8)
+    drawCell(h.label, x, y, h.w, 'center')
+    x += h.w
   })
 
   y += 8
 
+  // ===== TABLE ROWS =====
+  data.items.forEach((item, index) => {
+    x = tableX
+
+    const row = [
+      String(index + 1),
+      `${item.sku} - ${item.product_name}`,
+      item.defect_type,
+      String(item.qty_defect),
+      item.note || '-',
+    ]
+
+    row.forEach((cell, i) => {
+      doc.rect(x, y, headers[i].w, 8)
+      drawCell(cell, x, y, headers[i].w, headers[i].align as any)
+      x += headers[i].w
+    })
+
+    y += 8
+  })
+
+  y += 10
+
   // ===== SUMMARY =====
   doc.setFontSize(10)
-  doc.text(`Total Barang Diterima : ${data.total_received} pcs`, 20, y)
-  y += 6
-  doc.text(`Total Barang Cacat    : ${data.total_defect} pcs`, 20, y)
-  y += 6
-  doc.text(`Persentase Cacat      : ${data.defect_percentage} %`, 20, y)
+  infoRow('Total Barang Diterima', `${data.total_received} pcs`, y); y += 6
+  infoRow('Total Barang Cacat', `${data.total_defect} pcs`, y); y += 6
+  infoRow('Persentase Cacat', `${data.defect_percentage} %`, y)
 
   y += 12
 
@@ -97,7 +133,7 @@ export function printQualityReportPdf(data: QualityReport) {
   })
 
   if (data.action === 'other' && data.action_note) {
-    doc.text(`Keterangan: ${data.action_note}`, 22, y)
+    doc.text(`Keterangan : ${data.action_note}`, 22, y)
     y += 6
   }
 
@@ -109,9 +145,9 @@ export function printQualityReportPdf(data: QualityReport) {
   y += 10
 
   doc.setFont('helvetica', 'normal')
-  doc.text(`Pemeriksa Barang : _______________________________________`, 20, y)
+  doc.text('Pemeriksa Barang : _________________________________', 20, y)
   y += 10
-  doc.text(`Vendor (Jika diperlukan) : _______________________________`, 20, y)
+  doc.text('Vendor (Jika diperlukan) : _________________________', 20, y)
 
   // ===== OUTPUT =====
   doc.save(`quality-report-${data.unique_id}.pdf`)

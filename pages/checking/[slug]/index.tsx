@@ -8,6 +8,8 @@ import { capitalizeEachWord } from "@/utils/text_utils";
 import { Breadcrumb, Button, Card, Col, Descriptions, Divider, message, Row, Spin, Table, TableColumnsType, Tag, Typography } from "antd";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import { PrinterOutlined } from '@ant-design/icons';
+import { printQualityReportPdf } from "@/utils/printQualityReportPdf";
 
 const { Title, Text } = Typography;
 
@@ -303,12 +305,7 @@ const CheckingDetail: React.FC = () => {
                             >
                                 Edit Laporan
                             </Button>
-                            <Button 
-                                type="primary"
-                                onClick={() => window.print()}
-                            >
-                                Cetak Laporan
-                            </Button>
+                            <Button type="primary" icon={<PrinterOutlined/>} onClick={() => printQualityReportPdf(qualityReport!)}>Cetak PDF</Button>
                         </div>
                     }
                 >

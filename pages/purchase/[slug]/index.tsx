@@ -3,10 +3,12 @@ import { PurchaseOrder, PurchaseOrderItem } from "@/type/purchase";
 import axiosInstance from "@/utils/axiosInstance";
 import { formatDate } from "@/utils/date_utils";
 import { formatRupiah } from "@/utils/format_rupiah";
+import { printPurchaseOrder } from "@/utils/printPurchaseOrderPdf";
 import { capitalizeEachWord } from "@/utils/text_utils";
 import { Breadcrumb, Button, Card, Col, Dropdown, MenuProps, message, Row, Space, Spin, Table, TableColumnsType, Tag } from "antd";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import { PrinterOutlined } from "@ant-design/icons";
 
 const PurchaseOrderDetail: React.FC = () => {
     const [purchaseOrder, setPurchaseOrder] = useState<PurchaseOrder | null>(null);
@@ -297,6 +299,7 @@ const PurchaseOrderDetail: React.FC = () => {
                                 <Button>{getStatusTag()}</Button>
                             </Dropdown>
                             <Button href={`/checking/add?po=${purchaseOrder?.purchase_order_id}`}>Lakukan Pemeriksaan</Button>
+                            <Button type="primary" icon={<PrinterOutlined/>} onClick={() => printPurchaseOrder(purchaseOrder!)}>Cetak PDF</Button>
                         </Space>
                     }
                 >

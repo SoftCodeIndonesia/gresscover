@@ -39,7 +39,7 @@ export type QualityReportSummary = {
     avg_defect_percentage: number;
 };
 
-export interface QualityReportItem {
+export type QualityReportItem = {
     id: number;
     quality_report_id: number;
     product_id: string;
