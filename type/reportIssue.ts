@@ -1,3 +1,4 @@
+import { Item } from "./item";
 import { PurchaseOrder, PurchaseOrderItem } from "./purchase";
 import { User } from "./user";
 
@@ -54,6 +55,7 @@ export type QualityReportItem = {
     good_quantity: number;
     order_item_id: number;
     order_item: PurchaseOrderItem;
+    product?: Item,
 }
 
 

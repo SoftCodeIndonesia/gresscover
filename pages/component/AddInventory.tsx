@@ -446,34 +446,62 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
             const response = await axiosInstance.post(`/inventory/get_info`, querySearch);
             if(response.status == 200){
                 const inventory: Inventory[] = response.data.data;
-                const tableInit: TableInventory[] = inventory.map((inv, index) => {
-                    const qualityReportItem = (po?.qualityReport?.items ?? []).findLast((value) => value.product_id == inv.product_id);
-                    const item = {
-                        key: new Date().getTime().toString() + index,  
-                        id: null,
-                        product_name: inv.product_name ?? '', 
-                        product_id: inv.product_id ?? '', 
-                        quantity: qualityReportItem?.good_quantity ?? 0.0, 
-                        before_stok: inv.quantity,
-                        after_stok: inv.quantity + (qualityReportItem?.good_quantity ?? 0.0),
-                        sku: qualityReportItem?.sku ?? '', 
-                        selling_price: inv.price ?? 0.0, 
-                        cost: inv.cost, 
-                        minimum: 1,
-                        checked: false,
-                        location_id: inv.location_id,
-                        location_name: inv.location?.name ?? '',
-                        cost_string: `${inv.cost}`,
-                        selling_price_string: `${inv.price}`,
-                        unit_id: qualityReportItem?.order_item?.unit_id ?? '',
-                        unit_name: qualityReportItem?.order_item?.unit_name ?? '',
-                        // children: [],
-                    }
+                let tableInit: TableInventory[] = [];
+                if(inventory.length > 0){
+                    tableInit = inventory.map((inv, index) => {
+                        const qualityReportItem = (po?.qualityReport?.items ?? []).findLast((value) => value.product_id == inv.product_id);
+                        const item = {
+                            key: new Date().getTime().toString() + index,  
+                            id: null,
+                            product_name: inv.product_name ?? '', 
+                            product_id: inv.product_id ?? '', 
+                            quantity: qualityReportItem?.good_quantity ?? 0.0, 
+                            before_stok: inv.quantity,
+                            after_stok: inv.quantity + (qualityReportItem?.good_quantity ?? 0.0),
+                            sku: qualityReportItem?.sku ?? '', 
+                            selling_price: inv.price ?? 0.0, 
+                            cost: inv.cost, 
+                            minimum: 1,
+                            checked: false,
+                            location_id: inv.location_id,
+                            location_name: inv.location?.name ?? '',
+                            cost_string: `${inv.cost}`,
+                            selling_price_string: `${inv.price}`,
+                            unit_id: qualityReportItem?.order_item?.unit_id ?? '',
+                            unit_name: qualityReportItem?.order_item?.unit_name ?? '',
+                            // children: [],
+                        }
 
-                    console.log('qualityReportItem', qualityReportItem);
-                    console.log('item', item);
-                    return item;
-                });
+                        console.log('qualityReportItem', qualityReportItem);
+                        console.log('item', item);
+                        return item;
+                    });
+                }else{
+                    tableInit = (po?.qualityReport?.items ?? []).map((valueItem, index) => {
+                        const item = {
+                            key: new Date().getTime().toString() + index,  
+                            id: null,
+                            product_name: valueItem.product_name ?? '', 
+                            product_id: valueItem.product_id ?? '', 
+                            quantity: valueItem.good_quantity, 
+                            before_stok: 0,
+                            after_stok: valueItem.good_quantity,
+                            sku: valueItem?.sku ?? '', 
+                            selling_price: parseInt(valueItem.product?.price ?? "0.0"), 
+                            cost: parseInt(valueItem.product?.cost ?? "0.0"), 
+                            minimum: 1,
+                            checked: false,
+                            location_id: form.getFieldValue('location_id'),
+                            location_name: form.getFieldValue('location_name'),
+                            cost_string: `${valueItem.product?.cost}`,
+                            selling_price_string: `${valueItem.product?.price}`,
+                            unit_id: valueItem.product?.unit_id ?? '',
+                            unit_name: valueItem.product?.unit_name ?? '',
+                            // children: [],
+                        }
+                        return item;
+                    })
+                }
                 form.setFieldValue('items', tableInit);
                 setInitialTable(tableInit);
                 sumTotalAmount(tableInit);
