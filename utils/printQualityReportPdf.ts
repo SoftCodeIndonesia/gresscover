@@ -92,11 +92,11 @@ export function printQualityReportPdf(data: QualityReport) {
 
   // ===== TABLE CONFIG =====
   const headers = [
-    { label: 'No', w: 10, align: 'center' },
-    { label: 'SKU / Produk', w: 50, align: 'left' },
-    { label: 'Jenis Cacat', w: 40, align: 'left' },
-    { label: 'Qty', w: 20, align: 'center' },
-    { label: 'Keterangan', w: 50, align: 'left' },
+    { label: 'No', w: 10, align: 'center' as "left" | "center" | "right" },
+    { label: 'SKU / Produk', w: 50, align: 'left' as "left" | "center" | "right" },
+    { label: 'Jenis Cacat', w: 40, align: 'left' as "left" | "center" | "right" },
+    { label: 'Qty', w: 20, align: 'center' as "left" | "center" | "right" },
+    { label: 'Keterangan', w: 50, align: 'left' as "left" | "center" | "right" },
   ]
 
   // ===== TABLE HEADER =====
