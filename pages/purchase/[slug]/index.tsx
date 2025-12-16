@@ -1,5 +1,5 @@
 import DashboardLayout from "@/pages/component/DashboardLayout";
-import { PurchaseOrder, PurchaseOrderItem } from "@/type/purchase";
+import { PurchaseOrder, PurchaseOrderItem, PurchaseOrderStatus } from "@/type/purchase";
 import axiosInstance from "@/utils/axiosInstance";
 import { formatDate } from "@/utils/date_utils";
 import { formatRupiah } from "@/utils/format_rupiah";
@@ -298,7 +298,7 @@ const PurchaseOrderDetail: React.FC = () => {
                             <Dropdown menu={{ items }} placement="bottomLeft">
                                 <Button>{getStatusTag()}</Button>
                             </Dropdown>
-                            <Button href={`/checking/add?po=${purchaseOrder?.purchase_order_id}`}>Lakukan Pemeriksaan</Button>
+                            {purchaseOrder?.status === PurchaseOrderStatus.RECEIVED && <Button href={`/checking/add?po=${purchaseOrder?.purchase_order_id}`}>Lakukan Pemeriksaan</Button>}
                             <Button type="primary" icon={<PrinterOutlined/>} onClick={() => printPurchaseOrder(purchaseOrder!)}>Cetak PDF</Button>
                         </Space>
                     }

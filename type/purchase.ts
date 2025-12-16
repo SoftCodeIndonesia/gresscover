@@ -1,3 +1,4 @@
+import { UnitType } from "dayjs";
 import { ItemUnit } from "./item";
 import { QualityReport } from "./reportIssue";
 import { Vendor } from "./vendor";
@@ -40,6 +41,7 @@ export type PurchaseOrderItemForm = {
   total: number;
   unit_id: string;
   unit_name: string;
+  unit?: ItemUnit | null;
   is_parent?:boolean;
   parentIndex?: number;
   originalIndex?: number;

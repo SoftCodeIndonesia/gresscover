@@ -49,6 +49,7 @@ import { formatRupiah } from "@/utils/format_rupiah";
 import { PurchaseOrder, PurchaseOrderItem, PurchaseOrderStatus } from "@/type/purchase";
 import { NewRequestParam } from "@/type/request_param";
 import { User } from "@/type/user";
+import { Staff } from "@/type/staff";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -319,7 +320,7 @@ const CheckingAdd: React.FC = () => {
                         children: itemPo.children.length > 0 ? itemPo.children.map((child, childIndex) => ({
                             order_item_id: child.id,
                             key: `parent-${index}-child-${childIndex}`,
-                            product_id: child.product_id,
+                            product_id: child.variant_id,
                             sku: child.sku,
                             product_name: child.product_name,
                             ordered_quantity: child.quantity,
@@ -1135,15 +1136,15 @@ const columns: TableColumnsType<QualityReportItemForm> = [
                 },
                 where: {},
             };
-            const response = await axiosInstance.post(`/search`, request_param);
+            const response = await axiosInstance.get<Staff[]>(`/staff`);
             if (response.status == 200) {
-                const users: User[] = response.data.data.data;
+                const users: Staff[] = response.data;
                 
                 if (users.length > 0) {
-                    const result = users?.map((data: User) => {
+                    const result = users?.map((data: Staff) => {
                         return {
-                            value: `${data.name}-${data.email}`,
-                            label: `${data.name}-${data.email}`,
+                            value: `${data.user?.name}-${data.user?.email}`,
+                            label: `${data.user?.name}-${data.user?.email}`,
                             object: data,
                         };
                     });
@@ -1152,7 +1153,7 @@ const columns: TableColumnsType<QualityReportItemForm> = [
                     setOptionItemUser([]);
                 }
             } else {
-                message.error(response.data.message);
+                message.error('Gagal Mengambil Data Staff');
             }
         } catch (error) {
             message.error(`${error}`);
@@ -1161,9 +1162,9 @@ const columns: TableColumnsType<QualityReportItemForm> = [
 
     const onSelectUser = (value: string, option: any, fieldName: string, name: string) => {
         if (option.object != undefined) {
-            const item: User = option.object;
-            form.setFieldValue(fieldName, item.id);
-            form.setFieldValue(name, item.name);
+            const item: Staff = option.object;
+            form.setFieldValue(fieldName, item.user?.id);
+            form.setFieldValue(name, item.user?.name);
 
             console.log(item);
         }
@@ -1176,6 +1177,8 @@ const columns: TableColumnsType<QualityReportItemForm> = [
         if (selectedPurchaseOrder?.status === "received") return <Tag color="blue">DITERIMA</Tag>;
         return <Tag color="default">DRAFT</Tag>;
     };
+
+    
 
     useEffect(() => {
         getPurchaseOrders();

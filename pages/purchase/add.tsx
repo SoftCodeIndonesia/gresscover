@@ -164,7 +164,7 @@ const AddEditInvoice: React.FC = () => {
 
   // Calculate totals
   const calculateTotals = (itemsData: PurchaseOrderItem[], additionalCost: number = 0, discount: number = 0, ppn: number = 0) => {
-    const newSubtotal = itemsData.reduce((sum, item) => sum + item.total, 0);
+    const newSubtotal = itemsData.filter((value) => value.action != PurchaseOrderItemFormAction.DELETE).reduce((sum, item) => sum + item.total, 0);
     const newTotal = newSubtotal + additionalCost - discount + ppn;
     
     setSubtotal(newSubtotal);
@@ -249,21 +249,31 @@ const AddEditInvoice: React.FC = () => {
         unit_id: '',
         unit_name: '',
         is_parent: false,
-        
+        action: PurchaseOrderItemFormAction.CREATE,
       }
     ]);
   };
 
   // Remove item row
   const removeItemRow = (key: string, is_parent: boolean) => {
+    const id = router.query.id as string;
     if(is_parent){
 
       const newItem = [...items];
 
       const findIndex = newItem.findIndex((value) => value.key == key);
-      newItem[findIndex].action = PurchaseOrderItemFormAction.DELETE;
-      newItem[findIndex].children = newItem[findIndex].children.map((child) => ({...child, action: PurchaseOrderItemFormAction.DELETE}));
-      setItems(newItem);
+      if(id){
+        newItem[findIndex].action = PurchaseOrderItemFormAction.DELETE;
+        newItem[findIndex].children = newItem[findIndex].children.map((child) => ({...child, action: PurchaseOrderItemFormAction.DELETE}));
+        setItems(newItem);
+        calculateTotals(newItem);
+        form.setFieldValue('items', newItem);
+      }else{
+        const filter = newItem.filter((value) => value.key != key);
+        setItems(filter);
+        calculateTotals(filter);
+        form.setFieldValue('items', filter);
+      }
     }else{
       const newItem = [...items];
       const [parentKey, childIndex] = key.split('-child-');
@@ -276,9 +286,10 @@ const AddEditInvoice: React.FC = () => {
       });
       setItems(newItem);
       // items[findIndex].children = items[findIndex].children.map((child) => ({...child, action: PurchaseOrderItemFormAction.DELETE}));
+      calculateTotals(newItem);
+      form.setFieldValue('items', newItem);
     }
 
-    console.log(items);
     // if (items.length > 1) {
     //   const newItems = items.filter((_, i) => i !== index);
     //   setItems(newItems);
@@ -402,7 +413,8 @@ const AddEditInvoice: React.FC = () => {
 
       const itemsToAdd: any[] = [];
       items.forEach((item) => {
-        if(item.id){
+        if(item.product_id){
+          if(item.id){
             itemsToAdd.push({
               "id": item.id,
               "action": item.action,
@@ -450,6 +462,7 @@ const AddEditInvoice: React.FC = () => {
               });
             }
           })
+        }
         }
         
       })
@@ -904,7 +917,7 @@ const AddEditInvoice: React.FC = () => {
       dataIndex: 'quantity',
       key: 'quantity',
       width: 150,
-      render: (_: any, record: any, index: number) => {
+      render: (_: any, record: PurchaseOrderItemForm, index: number) => {
         const isChild = record.isChild;
         
         if (isChild) {
@@ -914,10 +927,13 @@ const AddEditInvoice: React.FC = () => {
           const handleChildQuantityChange = (value: number | null) => {
             if (value !== null && value > 0) {
               const newItems = [...items];
-              if (newItems[parentIndex].children && newItems[parentIndex].children[childIndex]) {
-                newItems[parentIndex].children[childIndex].quantity = value;
-                newItems[parentIndex].children[childIndex].total = 
-                  newItems[parentIndex].children[childIndex].price * value;
+              if (newItems[parentIndex!].children && newItems[parentIndex!].children[childIndex!]) {
+
+                
+
+                newItems[parentIndex!].children[childIndex!].quantity = value > (newItems[parentIndex!].unit?.max_value ?? 1) ? (newItems[parentIndex!].unit?.max_value ?? 1) : value;
+                newItems[parentIndex!].children[childIndex!].total = 
+                newItems[parentIndex!].children[childIndex!].price * value;
                 
                 setItems(newItems);
                 calculateTotals(newItems,
@@ -1050,15 +1066,19 @@ const AddEditInvoice: React.FC = () => {
       title: '',
       key: 'action',
       width: 150,
-      render: (_: any, record: PurchaseOrderItemForm, index: number) => (
-        <Button
-          danger
-          type="text"
-          icon={<DeleteOutlined />}
-          onClick={() => removeItemRow(record.key!, record.isChild ? false : true)}
-          disabled={items.length === 1}
-        />
-      ),
+      render: (_: any, record: PurchaseOrderItemForm, index: number) => {
+        if(record.is_parent){
+          return <Button
+            danger
+            type="text"
+            icon={<DeleteOutlined />}
+            onClick={() => removeItemRow(record.key!, record.isChild ? false : true)}
+            disabled={items.length === 1}
+          />
+        }else{
+          return <></>
+        }
+      },
     },
   ];
 

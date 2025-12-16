@@ -36,7 +36,7 @@ import {
 import dayjs from "dayjs";
 import { setCookie } from "cookies-next";
 import { formatRupiah } from "@/utils/format_rupiah";
-import { PurchaseOrder } from "@/type/purchase";
+import { PurchaseOrder, PurchaseOrderStatus } from "@/type/purchase";
 import { Pagination as CustomPagination } from "@/type/pagination";
 import { getStartAndEndOfMonth } from "@/utils/date_utils";
 import { NewRequestParam } from "@/type/request_param";
@@ -170,12 +170,12 @@ export default function PurchaseOrderIndex() {
             type="link"
             icon={<PrinterOutlined/>}
           >Cetak PDF</Button>
-          <DeleteButton
+          {item.status !== PurchaseOrderStatus.COMPLETED && <DeleteButton
             label="Hapus"
             onComfirm={() => handleDelete([item.purchase_order_id!])}
             okText="Hapus"
             cancelText="Batal"
-          />
+          />}
         </>
       ),
     },
@@ -348,6 +348,20 @@ export default function PurchaseOrderIndex() {
     getPurchaseOrders(req);
   };
 
+  const checkExistCompletedData = (selected: Key[]) => {
+    var result = true;
+    (purchaseOrders?.data ?? []).forEach(element => {
+      if(element.status == PurchaseOrderStatus.COMPLETED){
+        const exist = selected.find((find) => find == element.purchase_order_id);
+        if(exist){
+          result = false;
+          return;
+        }
+      }
+    });
+    return result;
+  }
+
   // INIT
   useEffect(() => {
     const req = { ...requestParam };
@@ -377,7 +391,7 @@ export default function PurchaseOrderIndex() {
           Reload
         </Button>
 
-        {selectedRowKeys.length > 0 && (
+        {selectedRowKeys.length > 0 && checkExistCompletedData(selectedRowKeys) && (
           <Popconfirm
             title="Yakin ingin menghapus?"
             onConfirm={() => handleDelete(selectedRowKeys as number[])}

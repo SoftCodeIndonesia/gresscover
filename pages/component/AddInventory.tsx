@@ -432,6 +432,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
     const fetchInfoForPO = async (po: PurchaseOrder) => {
         try {
             const product_ids: string[] = (po.qualityReport?.items ?? []).map((item, index) => item.product_id);
+            console.log('items', po.qualityReport?.items);
             const querySearch: NewRequestParam = {
                 limit: 100,
                 page: 1,
@@ -457,7 +458,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
                             product_id: inv.product_id ?? '', 
                             quantity: qualityReportItem?.good_quantity ?? 0.0, 
                             before_stok: inv.quantity,
-                            after_stok: inv.quantity + (qualityReportItem?.good_quantity ?? 0.0),
+                            after_stok: Number(inv.quantity) + Number((qualityReportItem?.good_quantity ?? 0.0)),
                             sku: qualityReportItem?.sku ?? '', 
                             selling_price: inv.price ?? 0.0, 
                             cost: inv.cost, 
