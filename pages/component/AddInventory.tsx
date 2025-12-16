@@ -1044,7 +1044,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
                     order_date: "DESC",
                 },
                 where: {
-                    status: ['in', [PurchaseOrderStatus.RECEIVED]]
+                    status: ['in', [PurchaseOrderStatus.RECEIVED, PurchaseOrderStatus.COMPLETED]]
                 },
             };
             const response = await axiosInstance.post(

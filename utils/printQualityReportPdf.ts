@@ -7,11 +7,13 @@ export function printQualityReportPdf(data: QualityReport) {
 
   let y = 20
 
-  // ===== HELPER =====
+  // ===== CONSTANT & HELPER =====
   const labelX = 20
   const colonX = 65
   const valueX = 70
   const tableX = 20
+  const lineHeight = 5
+  const rowGap = 2 // 🔑 JARAK ANTAR ROW
 
   function infoRow(label: string, value: string, yPos: number) {
     doc.text(label, labelX, yPos)
@@ -19,23 +21,48 @@ export function printQualityReportPdf(data: QualityReport) {
     doc.text(value || '-', valueX, yPos)
   }
 
-  function drawCell(
-    text: string,
-    x: number,
-    y: number,
-    w: number,
-    align: 'left' | 'center' | 'right' = 'left'
+  function drawRow(
+    row: string[],
+    yPos: number,
+    headers: { w: number; align: 'left' | 'center' | 'right' }[]
   ) {
-    const padding = 2
-    const textY = y + 5
+    let x = tableX
+    let maxLines = 1
 
-    if (align === 'right') {
-      doc.text(text, x + w - padding, textY, { align: 'right' })
-    } else if (align === 'center') {
-      doc.text(text, x + w / 2, textY, { align: 'center' })
-    } else {
-      doc.text(text, x + padding, textY)
-    }
+    // Split text & cari baris tertinggi
+    const splitTexts = row.map((cell, i) => {
+      const lines = doc.splitTextToSize(cell, headers[i].w - 4)
+      maxLines = Math.max(maxLines, lines.length)
+      return lines
+    })
+
+    const rowHeight = maxLines * lineHeight + rowGap
+
+    // Draw cell
+    splitTexts.forEach((lines, i) => {
+      doc.rect(x, yPos, headers[i].w, rowHeight)
+
+      lines.forEach((line: any, lineIndex: any) => {
+        let textX = x + 2
+        if (headers[i].align === 'center') {
+          textX = x + headers[i].w / 2
+        }
+        if (headers[i].align === 'right') {
+          textX = x + headers[i].w - 2
+        }
+
+        doc.text(
+          line,
+          textX,
+          yPos + 5 + lineIndex * lineHeight,
+          { align: headers[i].align }
+        )
+      })
+
+      x += headers[i].w
+    })
+
+    return rowHeight
   }
 
   // ===== TITLE =====
@@ -63,7 +90,7 @@ export function printQualityReportPdf(data: QualityReport) {
   doc.setFontSize(9)
   doc.setFont('helvetica', 'normal')
 
-  // ===== TABLE SETUP =====
+  // ===== TABLE CONFIG =====
   const headers = [
     { label: 'No', w: 10, align: 'center' },
     { label: 'SKU / Produk', w: 50, align: 'left' },
@@ -76,31 +103,26 @@ export function printQualityReportPdf(data: QualityReport) {
   let x = tableX
   headers.forEach(h => {
     doc.rect(x, y, h.w, 8)
-    drawCell(h.label, x, y, h.w, 'center')
+    doc.text(h.label, x + h.w / 2, y + 5, { align: 'center' })
     x += h.w
   })
 
   y += 8
 
-  // ===== TABLE ROWS =====
+  // ===== TABLE ROWS (WRAP + MARGIN BOTTOM) =====
   data.items.forEach((item, index) => {
-    x = tableX
+    if(item.qty_defect > 0){
+      const row = [
+        String(index + 1),
+        `${item.sku} - ${item.product_name}`,
+        item.defect_type ?? 'N/A',
+        String(item.qty_defect),
+        item.note || '-',
+      ]
 
-    const row = [
-      String(index + 1),
-      `${item.sku} - ${item.product_name}`,
-      item.defect_type,
-      String(item.qty_defect),
-      item.note || '-',
-    ]
-
-    row.forEach((cell, i) => {
-      doc.rect(x, y, headers[i].w, 8)
-      drawCell(cell, x, y, headers[i].w, headers[i].align as any)
-      x += headers[i].w
-    })
-
-    y += 8
+      const rowHeight = drawRow(row, y, headers)
+      y += rowHeight
+    }
   })
 
   y += 10

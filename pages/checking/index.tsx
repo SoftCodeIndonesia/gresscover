@@ -511,7 +511,7 @@ const Checking: React.FC = () => {
             sorter: true,
             render: (date: string) => (
                 <Space direction="vertical" size={0}>
-                    <div><CalendarOutlined /> {formatDateWithoutTime(date)}</div>
+                    <div><CalendarOutlined /> {formatDate(date)}</div>
                 </Space>
             ),
         },
@@ -826,7 +826,7 @@ const Checking: React.FC = () => {
             where: {
                 inspection_date: ['between', [currentStartDate, currentEndDate]]
             },
-            orderBy: {
+            order_by: {
                 created_at: "DESC"
             }
         };
