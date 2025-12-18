@@ -789,6 +789,9 @@ console.log('change', items);
             fetchPurchaseOrderDetails(parseInt(po as string));
         }
     }, [po]);
+    useEffect(() => {
+       fetchUser();
+    }, []);
 
     // Calculate summary for display
     const summary = calculateSummary();
@@ -1124,7 +1127,7 @@ const columns: TableColumnsType<QualityReportItemForm> = [
         }
     };
 
-    const fetchUser = async (query: string) => {
+    const fetchUser = async () => {
         try {
             const request_param: NewRequestParam = {
                 table: "user",
@@ -1300,19 +1303,21 @@ const columns: TableColumnsType<QualityReportItemForm> = [
                                 <Form.Item name="inspected_by" hidden>
                                     <Input type="hidden" />
                                 </Form.Item>
-                                    <Form.Item
-                                        label="Diperiksa Oleh"
-                                        name="inspection_name"
-                                        rules={[{ required: true, message: 'Isi pemeriksa' }]}
-                                    >
-                                        <AutoComplete
-                                            options={optionUser}
-                                            filterOption={false}
-                                            onSelect={(value, option) => onSelectUser(value, option, 'inspected_by', 'inspection_name')}
-                                            onSearch={(value) => fetchUser(value)}
-                                            placeholder="Cari Pemeriksa"
-                                        />
-                                    </Form.Item>
+                                <Form.Item
+                                    label="Diperiksa Oleh"
+                                    name="inspection_name"
+                                    rules={[{ required: true, message: 'Isi pemeriksa' }]}
+                                >
+                                    <Select
+                                        showSearch
+                                        placeholder="Pilih vendor"
+                                        options={optionUser}
+                                        onSelect={(value, option) => onSelectUser(value, option, 'inspected_by', 'inspection_name')}
+                                        filterOption={(input, option) =>
+                                            (option?.label ?? '').toString().toLowerCase().includes(input.toLowerCase())
+                                        }
+                                    />
+                                </Form.Item>
                                 </Col>
                                 
                                 <Col span={12}>
@@ -1321,13 +1326,16 @@ const columns: TableColumnsType<QualityReportItemForm> = [
                                         name="receiver_name"
                                         rules={[{ required: true, message: 'Isi penerima' }]}
                                     >
-                                        <AutoComplete
+                                        <Select
+                                            showSearch
+                                            placeholder="Pilih vendor"
                                             options={optionUser}
-                                            filterOption={false}
                                             onSelect={(value, option) => onSelectUser(value, option, 'received_by', 'receiver_name')}
-                                            onSearch={(value) => fetchUser(value)}
-                                            placeholder="Cari Penerima"
+                                            filterOption={(input, option) =>
+                                                (option?.label ?? '').toString().toLowerCase().includes(input.toLowerCase())
+                                            }
                                         />
+                                        
                                     </Form.Item>
                                 </Col>
                             </Row>

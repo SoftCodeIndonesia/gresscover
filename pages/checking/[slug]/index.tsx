@@ -301,7 +301,7 @@ const CheckingDetail: React.FC = () => {
                             
                             <Button 
                                 type="primary"
-                                href={`/checking/edit?id=${slug}`}
+                                href={`/checking/${slug}/edit`}
                             >
                                 Edit Laporan
                             </Button>

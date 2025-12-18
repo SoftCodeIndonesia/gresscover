@@ -50,6 +50,7 @@ import { PurchaseOrder, PurchaseOrderItem, PurchaseOrderStatus } from "@/type/pu
 import { NewRequestParam } from "@/type/request_param";
 import { User } from "@/type/user";
 import { QualityReport } from "@/type/reportIssue";
+import { Staff } from "@/type/staff";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -265,7 +266,8 @@ const CheckingEdit: React.FC = () => {
                     purchase_order_id: data.purchase_order_id,
                     inspection_date: dayjs(data.inspection_date),
                     inspected_by: data.inspected_by,
-                    receiver_name: data.inspector?.name,
+                    inspection_name: data.inspector?.name,
+                    receiver_name: data.receiver_name,
                     received_by: data.received_by,
                     action: data.action,
                     action_note: data.action_note,
@@ -740,6 +742,7 @@ const CheckingEdit: React.FC = () => {
 
     // Initialize data
     useEffect(() => {
+        
         if (isEditMode && id) {
             fetchQualityReport(id as string);
         }
@@ -954,7 +957,7 @@ const columns: TableColumnsType<QualityReportItemForm> = [
         }
     };
 
-    const fetchUser = async (query: string) => {
+    const fetchUser = async () => {
         try {
             const request_param: NewRequestParam = {
                 table: "user",
@@ -966,15 +969,15 @@ const columns: TableColumnsType<QualityReportItemForm> = [
                 },
                 where: {},
             };
-            const response = await axiosInstance.post(`/search`, request_param);
+            const response = await axiosInstance.get<Staff[]>(`/staff`);
             if (response.status == 200) {
-                const users: User[] = response.data.data.data;
+                const users: Staff[] = response.data;
                 
                 if (users.length > 0) {
-                    const result = users?.map((data: User) => {
+                    const result = users?.map((data: Staff) => {
                         return {
-                            value: `${data.name}-${data.email}`,
-                            label: `${data.name}-${data.email}`,
+                            value: `${data.user?.name}-${data.user?.email}`,
+                            label: `${data.user?.name}-${data.user?.email}`,
                             object: data,
                         };
                     });
@@ -983,7 +986,7 @@ const columns: TableColumnsType<QualityReportItemForm> = [
                     setOptionItemUser([]);
                 }
             } else {
-                message.error(response.data.message);
+                message.error('Gagal Mengambil Data Staff');
             }
         } catch (error) {
             message.error(`${error}`);
@@ -1010,6 +1013,9 @@ const columns: TableColumnsType<QualityReportItemForm> = [
 
     useEffect(() => {
         getPurchaseOrders();
+    }, []);
+    useEffect(() => {
+        fetchUser();
     }, []);
 
     return (
@@ -1125,19 +1131,21 @@ const columns: TableColumnsType<QualityReportItemForm> = [
                                 <Form.Item name="inspected_by" hidden>
                                     <Input type="hidden" />
                                 </Form.Item>
-                                    <Form.Item
-                                        label="Diperiksa Oleh"
-                                        name="inspection_name"
-                                        rules={[{ required: true, message: 'Isi pemeriksa' }]}
-                                    >
-                                        <AutoComplete
-                                            options={optionUser}
-                                            filterOption={false}
-                                            onSelect={(value, option) => onSelectUser(value, option, 'inspected_by', 'inspection_name')}
-                                            onSearch={(value) => fetchUser(value)}
-                                            placeholder="Cari Pemeriksa"
-                                        />
-                                    </Form.Item>
+                                 <Form.Item
+                                    label="Diperiksa Oleh"
+                                    name="inspection_name"
+                                    rules={[{ required: true, message: 'Isi pemeriksa' }]}
+                                >
+                                    <Select
+                                        showSearch
+                                        placeholder="Pilih vendor"
+                                        options={optionUser}
+                                        onSelect={(value, option) => onSelectUser(value, option, 'inspected_by', 'inspection_name')}
+                                        filterOption={(input, option) =>
+                                            (option?.label ?? '').toString().toLowerCase().includes(input.toLowerCase())
+                                        }
+                                    />
+                                </Form.Item>
                                 </Col>
                                 
                                 <Col span={12}>
@@ -1146,13 +1154,16 @@ const columns: TableColumnsType<QualityReportItemForm> = [
                                         name="receiver_name"
                                         rules={[{ required: true, message: 'Isi penerima' }]}
                                     >
-                                        <AutoComplete
+                                        <Select
+                                            showSearch
+                                            placeholder="Pilih vendor"
                                             options={optionUser}
-                                            filterOption={false}
                                             onSelect={(value, option) => onSelectUser(value, option, 'received_by', 'receiver_name')}
-                                            onSearch={(value) => fetchUser(value)}
-                                            placeholder="Cari Penerima"
+                                            filterOption={(input, option) =>
+                                                (option?.label ?? '').toString().toLowerCase().includes(input.toLowerCase())
+                                            }
                                         />
+                                        
                                     </Form.Item>
                                 </Col>
                             </Row>
