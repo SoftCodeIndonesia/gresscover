@@ -509,9 +509,9 @@ const AddEditInvoice: React.FC = () => {
         message.success(`Invoice berhasil ${isEditing ? 'diperbarui' : 'dibuat'}`);
         console.log(response.data);
         if(response.data.data){
-          if(!isEditing){
-            router.push(`/purchase/${response.data.data.purchase_order_id}`);
-          }
+          router.push(`/purchase/${response.data.data.purchase_order_id}`);
+          // if(!isEditing){
+          // }
         }
       }
     } catch (error: any) {

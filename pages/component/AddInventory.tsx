@@ -717,7 +717,11 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
         formData.append('total_item', totalItem.toString());
         formData.append('total_amount', total_amount.toString());
         formData.append('data', JSON.stringify(dataInitital));
-        formData.append('po_id', `${form.getFieldValue('purchase_order_id')}`);
+
+        if(form.getFieldValue('purchase_order_id') != undefined){
+            formData.append('po_id', `${form.getFieldValue('purchase_order_id')}`);
+        }
+
         
         if(fileList.length > 0 && !fileList[0].url){
             formData.append('image', fileList[0].originFileObj as Blob);
