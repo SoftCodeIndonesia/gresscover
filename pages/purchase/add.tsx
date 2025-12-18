@@ -306,6 +306,7 @@ const AddEditInvoice: React.FC = () => {
     if (option.data) {
       const vendor: Vendor = option.data;
       form.setFieldsValue({
+        vendor_id: vendor.id,
         vendor_name: vendor.name,
         vendor_address: vendor.address,
         vendor_phone: vendor.phone,
@@ -509,9 +510,12 @@ const AddEditInvoice: React.FC = () => {
         message.success(`Invoice berhasil ${isEditing ? 'diperbarui' : 'dibuat'}`);
         console.log(response.data);
         if(response.data.data){
-          router.push(`/purchase/${response.data.data.purchase_order_id}`);
-          // if(!isEditing){
-          // }
+          if(!isEditing){
+            router.push(`/purchase/${response.data.data.purchase_order_id}`);
+          }else{
+            router.push(`/purchase/${invoiceId}`);
+
+          }
         }
       }
     } catch (error: any) {
@@ -1111,7 +1115,7 @@ const AddEditInvoice: React.FC = () => {
               <div>
                 <Form.Item
                   label="Vendor"
-                  name="vendor_id"
+                  name="vendor_name"
                   rules={[{ required: true, message: 'Vendor harus dipilih' }]}
                 >
                   <Select
