@@ -671,7 +671,7 @@ const AddTransactionSale: React.FC = () => {
 
         form.setFieldsValue({
             sale_date: dayjs(),
-            withdrawal_date: dayjs(),
+            withdrawal_date: null,
             status: 'sedang dikemas',
             // platform: 'shopee'
         })
