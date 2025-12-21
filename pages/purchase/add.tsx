@@ -1132,6 +1132,9 @@ const AddEditInvoice: React.FC = () => {
                 <Form.Item label="Nama Vendor" name="vendor_name" className="m-0">
                   <Input disabled />
                 </Form.Item>
+                <Form.Item hidden name="vendor_id">
+                  <Input disabled />
+                </Form.Item>
 
                 <Form.Item label="Alamat Vendor" name="vendor_address" className="m-0">
                   <Input disabled />
