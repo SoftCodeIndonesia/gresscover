@@ -211,7 +211,7 @@ export default function PurchaseOrderIndex() {
     setLoading(true);
     try {
       const request_param = {...requestParam};
-      requestParam.type = 'export';
+      request_param.type = 'export';
       const response = await axiosInstance.post(
         "/purchase-orders/search",
         request_param,{
