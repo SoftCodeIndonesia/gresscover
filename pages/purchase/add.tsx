@@ -120,6 +120,10 @@ const AddEditInvoice: React.FC = () => {
     { label: 'Cash', value: 'cash' },
     { label: 'COD', value: 'cod' },
   ];
+  const paymentStatus = [
+    { label: 'Pending', value: 'pending' },
+    { label: 'Lunas', value: 'paid' },
+  ];
 
   // Fetch vendors
   const fetchVendors = async () => {
@@ -485,6 +489,7 @@ const AddEditInvoice: React.FC = () => {
         bank_name: values.payment.bank,
         bank_account_number: values.payment.account_number,
         bank_account_holder: values.payment.account_name,
+        payment_status: values.payment_status,
         status: values.status,
         notes: values.notes || '',
         items: itemsToAdd,
@@ -1151,6 +1156,18 @@ const AddEditInvoice: React.FC = () => {
 
               {/* Right Column */}
               <div>
+                <Form.Item
+                  label="Status Pembayaran"
+                  name="payment_status"
+                  rules={[{ required: true, message: 'Metode Status harus dipilih' }]}
+                >
+                  <Select
+                    showSearch
+                    placeholder="Pilih Status Pembayaran"
+                    options={paymentStatus}
+                    
+                  />
+                </Form.Item>
                 <Form.Item
                   label="Pembayaran"
                   name="payment_method"

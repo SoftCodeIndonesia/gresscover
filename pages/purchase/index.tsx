@@ -143,6 +143,11 @@ export default function PurchaseOrderIndex() {
       sorter: true,
     },
     {
+      title: "Status Pembayaran",
+      dataIndex: "payment_status",
+      key: "payment_status",
+    },
+    {
       title: "Status",
       dataIndex: "status",
       key: "status",

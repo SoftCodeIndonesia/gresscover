@@ -91,6 +91,7 @@ export type PurchaseOrder = {
   status: PurchaseOrderStatus;
   notes: string;
   items: PurchaseOrderItem[];
+  payment_status?: string;
   created_at?: string;
   qualityReport?: QualityReport;
 }

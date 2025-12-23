@@ -368,6 +368,10 @@ const PurchaseOrderDetail: React.FC = () => {
                             </div>
                             
                             <Row className="mb-3">
+                                <Col span={6}><strong>Status Pembayaran</strong></Col>
+                                <Col span={18}>{purchaseOrder.payment_status ?? '-'}</Col>
+                            </Row>
+                            <Row className="mb-3">
                                 <Col span={6}><strong>Metode Pembayaran</strong></Col>
                                 <Col span={18}>{showPaymentMethod()}</Col>
                             </Row>
