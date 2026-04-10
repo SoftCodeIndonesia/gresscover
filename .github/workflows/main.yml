@@ -1,10 +1,10 @@
 name: Deploy to FTP
-
 on:
   push:
     branches:
       - main  # Adjust the branch name if needed
 
+      
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -16,7 +16,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: 20.18.1  # Use the desired Node.js version
+          node-version: 22  # Use the desired Node.js version
       - name: Clear Next.js Cache
         run: |
           rm -rf .next/cache
@@ -36,4 +36,5 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.POS_VERCEL_TOKEN }}  # Pulls Vercel token from GitHub secrets
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.PROJECT_ID }}
-        run: npx vercel --prod --yes --token $VERCEL_TOKEN
+        run: npx vercel --prod --yes --token $VERCEL_TOKEN --force
+

@@ -19,7 +19,6 @@ const geistMono = localFont({
 
 
 export default function Home() {
-  
   useEffect(() => {
     const user = getCookie('user');
     if(user != null){
