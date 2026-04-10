@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - gresscover  # Adjust the branch name if needed
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
