@@ -5,7 +5,7 @@ import { User } from "./user";
   
 export type Item = {
     product_id: string;
-    photo: string;
+    main_image: string;
     name: string;
     category_id: string;
     category_name: string;
