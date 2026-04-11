@@ -168,7 +168,7 @@ const AddItem = () => {
                     'sku': data.sku,
                     'parent_id': data.parent_id,
                     'min_quantity': data.min_stock_quantity,
-                    'photo': data.photo,
+                    'photo': data.main_image,
                     'unit_id': data.unit_id,
                     'unit_name': data.unit_name,
                 });
