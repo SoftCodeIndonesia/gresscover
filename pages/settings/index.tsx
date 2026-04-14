@@ -117,6 +117,9 @@ const Settings: React.FC = () => {
         }else if(setting.slug == 'pengaturan-konversi-satuan'){
             
             return <TableUnit key={index} units={units} onSave={onHandleEditUnits}/>
+        }else if(setting.slug == 'informasi-toko'){
+            
+            return storeInformation(setting);
         }else{
             return <p></p>;
         }
@@ -147,7 +150,7 @@ const Settings: React.FC = () => {
        
         return (
             <>
-            <Form.Item hidden name={['setting', getIndexForm(setting), 'setting_id']} label="Platform" rules={[{ required: true, message: 'Pilih Salah Satu Platform Penjualan' }]}>
+            <Form.Item name={['setting', getIndexForm(setting), 'setting_id']} label="Platform" rules={[{ required: true, message: 'Pilih Salah Satu Platform Penjualan' }]}>
                     <Input value={setting.setting_id} />
             </Form.Item>
             <Form.Item name={['setting', getIndexForm(setting), 'value']} label="Platform" rules={[{ required: true, message: 'Pilih Salah Satu Platform Penjualan' }]}>
@@ -180,6 +183,29 @@ const Settings: React.FC = () => {
             
         );
     }
+    const storeInformation = (setting: Setting) => {
+       
+        return (
+            <>
+            
+            <Form.Item hidden name={['setting', getIndexForm(setting), 'setting_id']} label="Informasi Toko" rules={[{ required: true, message: 'Masukan id pengaturan' }]}>
+                    <Input value={setting.setting_id} />
+            </Form.Item>
+            <Form.Item name={['setting', getIndexForm(setting), 'value', 'name']} label="Nama Toko" rules={[{ required: true, message: 'Masukan Nama Toko' }]}>
+                <Input />
+            </Form.Item>
+            <Form.Item name={['setting', getIndexForm(setting), 'value', 'phone']} label="Nomor Telepon" rules={[{ required: true, message: 'Masukan Nomor Telepon' }]}>
+                <Input />
+            </Form.Item>
+            <Form.Item name={['setting', getIndexForm(setting), 'value', 'address']} label="Alamat Toko" rules={[{ required: true, message: 'Masukan Alamat Toko' }]}>
+                <Input.TextArea rows={3} />
+            </Form.Item>
+
+            </>
+            
+            
+        );
+    }
     const defaultLocations = (setting: Setting) => {
        
         return (
@@ -202,10 +228,17 @@ const Settings: React.FC = () => {
         const settingForm: {setting_id: string, value: any|any[]|null}[] = [];
         settings.forEach(element => {
             element.settings.forEach(elementSetting => {
-                settingForm.push({
+                if(elementSetting.slug == 'informasi-toko'){
+settingForm.push({
+                    setting_id: elementSetting.setting_id,
+                    value: JSON.parse(elementSetting.value),
+                });
+                }else{
+                    settingForm.push({
                     setting_id: elementSetting.setting_id,
                     value: elementSetting.value,
                 });
+                }
             });
         });
         console.log(settingForm);

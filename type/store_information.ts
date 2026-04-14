@@ -1,0 +1,1 @@
+export type StoreInformation = {"name": string, "phone": string, "address": string};

@@ -1,7 +1,26 @@
 import jsPDF from 'jspdf'
 import { PurchaseOrder } from '@/type/purchase'
-
+import { GroupSetting } from '@/type/setting';
+import { StoreInformation } from '@/type/store_information';
 export function printPurchaseOrder(data: PurchaseOrder) {
+  const settings = localStorage.getItem('settings');
+        const settingsData: GroupSetting[] = JSON.parse(settings as string);
+
+        var storeInformation: StoreInformation = {
+          name: '',
+          phone: '',
+          address: ''
+        }
+
+        settingsData.forEach(element => {
+            element.settings.forEach(setting => {
+                if(setting.slug == "informasi-toko" && setting.value != null){
+                    const decodeValue = JSON.parse(setting.value as string)
+                    storeInformation = decodeValue as StoreInformation;
+                }
+            });
+        });
+
   const doc = new jsPDF('p', 'mm', 'a4')
   let y = 20
 
@@ -32,9 +51,9 @@ export function printPurchaseOrder(data: PurchaseOrder) {
   infoRow('Email', data.vendor.email, y)
 
   y += 8
-  infoRow('Nama Toko / Retail Buyer', 'Gresscover', y); y += 5
-  infoRow('Alamat Toko', '', y); y += 5
-  infoRow('Kontak', '', y)
+  infoRow('Nama Toko / Retail Buyer', `${storeInformation.name}`, y); y += 5
+  infoRow('Alamat Toko', `${storeInformation.address}`, y); y += 5
+  infoRow('Kontak', `${storeInformation.phone}`, y)
 
   y += 8
   infoRow('No. Invoice', data.invoice_number, y); y += 5
