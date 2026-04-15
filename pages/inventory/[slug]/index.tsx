@@ -209,7 +209,7 @@ const DetailInventory: React.FC = () => {
                 <Card.Grid hoverable={false} style={gridStyle}>Barcode</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>{inventory?.item?.barcode}</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>Harga Beli</Card.Grid>
-                <Card.Grid hoverable={false} style={gridStyle}>{formatRupiah(inventory?.cost ?? 0)}</Card.Grid>
+                <Card.Grid hoverable={false} style={gridStyle}>{formatRupiah(parseInt(inventory?.item?.cost ?? '0'))}</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>Harga Jual</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>{formatRupiah(parseInt(inventory?.item?.price ?? '0') ?? 0)}</Card.Grid>
                 <Card.Grid hoverable={false} style={gridStyle}>Minimum Stok</Card.Grid>

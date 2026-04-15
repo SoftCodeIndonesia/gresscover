@@ -1,5 +1,5 @@
 import { UnitType } from "dayjs";
-import { ItemUnit } from "./item";
+import { Item, ItemUnit } from "./item";
 import { QualityReport } from "./reportIssue";
 import { Vendor } from "./vendor";
 
@@ -28,6 +28,7 @@ export type PurchaseOrderItem = {
   is_variant?: boolean,
   has_variants?: boolean,
   action?: PurchaseOrderItemFormAction,
+  product?: Item,
 }
 export type PurchaseOrderItemForm = {
   key?: string,

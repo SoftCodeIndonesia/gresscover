@@ -44,6 +44,8 @@ export function printPurchaseOrder(data: PurchaseOrder) {
     doc.text(value || '-', valueX, yPos)
   }
 
+  doc.setFontSize(9)
+
   // ===== VENDOR & BUYER =====
   infoRow('Nama Vendor', data.vendor.name, y); y += 5
   infoRow('Alamat Vendor', data.vendor.address, y); y += 5
@@ -83,18 +85,30 @@ export function printPurchaseOrder(data: PurchaseOrder) {
   let x = tableX
   headers.forEach(h => {
     doc.rect(x, y, h.w, 8)
-    doc.text(h.label, x + 2, y + 5)
+
+    let textX = x + 2
+
+    if (h.align === 'center') textX = x + h.w / 2
+    if (h.align === 'right') textX = x + h.w - 2
+
+    doc.text(
+      h.label,
+      textX,
+      y + 5,
+      { align: h.align as any }
+    )
+
     x += h.w
   })
 
   y += 8
 
   // ===== TABLE ROW HELPER (WRAP + PADDING) =====
-  function drawRow(row: string[]) {
+  function drawRow(row: any[]) {
     let x = tableX
     const lineHeight = 5
-    const topPadding = 4
-    const bottomPadding = 4
+    const topPadding = 1
+    const bottomPadding = 3
     let maxLines = 1
 
     const wrapped = row.map((cell, i) => {
@@ -106,23 +120,55 @@ export function printPurchaseOrder(data: PurchaseOrder) {
     const rowHeight = topPadding + bottomPadding + maxLines * lineHeight
 
     wrapped.forEach((lines, i) => {
-      doc.rect(x, y, headers[i].w, rowHeight)
+  doc.rect(x, y, headers[i].w, rowHeight)
 
-      lines.forEach((line: any, index: number) => {
-        let textX = x + 3
-        if (headers[i].align === 'center') textX = x + headers[i].w / 2
-        if (headers[i].align === 'right') textX = x + headers[i].w - 3
+  if (i === 0) {
+    // 🔹 Line 1: Nama produk (bold)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(9)
 
-        doc.text(
-          line,
-          textX,
-          y + topPadding + lineHeight * (index + 1),
-          { align: headers[i].align as any }
-        )
-      })
+    doc.text(
+      lines[0] || '-',
+      x + 3,
+      y + topPadding + lineHeight
+    )
 
-      x += headers[i].w
+    // 🔹 Line 2: Category (kecil & abu)
+    if (lines[1]) {
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(7)
+      doc.setTextColor(120) // abu-abu
+
+      doc.text(
+        `kategori: ${lines[1]}`,
+        x + 3,
+        y + topPadding + lineHeight * 2
+      )
+
+      doc.setTextColor(0) // reset ke hitam
+    }
+
+  } else {
+    // kolom lain tetap
+    lines.forEach((line: any, index: number) => {
+      let textX = x + 3
+      if (headers[i].align === 'center') textX = x + headers[i].w / 2
+      if (headers[i].align === 'right') textX = x + headers[i].w - 3
+
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'normal')
+
+      doc.text(
+        line,
+        textX,
+        y + topPadding + lineHeight * (index + 1),
+        { align: headers[i].align as any }
+      )
     })
+  }
+
+  x += headers[i].w
+})
 
     y += rowHeight
   }
@@ -132,7 +178,8 @@ export function printPurchaseOrder(data: PurchaseOrder) {
     if (item.children.length > 0) {
       item.children.forEach(child => {
         drawRow([
-          item.product_name,
+          // `${item.product_name} \n ${child.product?.category?.name}`,
+          [item.product_name, child.product?.category?.name || ''],
           child.product_name,
           String(child.quantity),
           `Rp ${child.price.toLocaleString()}`,
@@ -141,7 +188,7 @@ export function printPurchaseOrder(data: PurchaseOrder) {
       })
     } else {
       drawRow([
-        item.product_name,
+        [item.product_name, item.product?.category?.name || ''],
         '',
         String(item.quantity),
         `Rp ${item.price.toLocaleString()}`,
@@ -187,5 +234,11 @@ export function printPurchaseOrder(data: PurchaseOrder) {
   doc.text('Pembeli : __________________', 20, y)
 
   // ===== SAVE =====
-  doc.save(`invoice-bulanan-${data.invoice_number}.pdf`)
+  // doc.save(`invoice-bulanan-${data.invoice_number}.pdf`)
+
+  const blob = doc.output("blob");
+  // pdfBlob.value = blob;
+  const url = URL.createObjectURL(blob);
+
+  return { url, blob, doc };
 }

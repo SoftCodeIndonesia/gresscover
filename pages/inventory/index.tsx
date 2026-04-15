@@ -229,7 +229,7 @@ const InventoryPage: React.FC = () => {
             render: (_: any, item: SearchInventoryResult) => (
                 <>
                   
-                  {/* <EditButton label=''  onClick={() => setCookie('id', [item.inventory_id])}/> */}
+                  <EditButton label=''  onClick={() => handleEdit(item.inventory_id)}/>
                   <ViewButton label=''  onClick={() => router.push('inventory/' + item.inventory_id)}/>
                   <DeleteButton label='' onComfirm={() => handleDelete([item.inventory_id])} okText='Hapus' cancelText='Batal' />
                 </>
@@ -253,9 +253,9 @@ const InventoryPage: React.FC = () => {
 
     
     
-    const handleEdit = (ids: String[]) => {
-        const inventory_id = setCookie('movement_id', ids);
-        router.push('/inventory/add');
+    const handleEdit = (id: String) => {
+        const inventory_id = setCookie('inventory_id', id);
+        router.push('/inventory/edit');
     }
 
     const handleNewInventory = () => {

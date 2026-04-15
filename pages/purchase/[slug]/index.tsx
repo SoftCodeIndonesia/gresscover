@@ -5,14 +5,22 @@ import { formatDate } from "@/utils/date_utils";
 import { formatRupiah } from "@/utils/format_rupiah";
 import { printPurchaseOrder } from "@/utils/printPurchaseOrderPdf";
 import { capitalizeEachWord } from "@/utils/text_utils";
-import { Breadcrumb, Button, Card, Col, Dropdown, MenuProps, message, Row, Space, Spin, Table, TableColumnsType, Tag } from "antd";
+import { Breadcrumb, Button, Card, Col, Dropdown, MenuProps, message, Modal, Row, Space, Spin, Table, TableColumnsType, Tag } from "antd";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { PrinterOutlined } from "@ant-design/icons";
+import jsPDF from "jspdf";
 
 const PurchaseOrderDetail: React.FC = () => {
     const [purchaseOrder, setPurchaseOrder] = useState<PurchaseOrder | null>(null);
+
     const [loading, setLoading] = useState<boolean>(false);
+    const [showPreviewPDF, setPrevPDF] = useState<boolean>(false);
+
+    const [pdfUrl, setPdfUrl] = useState<string|null>(null);
+    const [blobPDF, setBlob] = useState<Blob|null>(null);
+    const [doc, setDoc] = useState<jsPDF|null>(null);
+
     const router = useRouter();
     const [slug, setSlug] = useState<number | undefined>(undefined);
 
@@ -244,6 +252,22 @@ const PurchaseOrderDetail: React.FC = () => {
             default:
                 return 'Lainya';
         }
+        
+    }
+
+    const generatePDF = () => {
+        const {url, blob, doc} = printPurchaseOrder(purchaseOrder!)
+        setBlob(blob);
+        setPdfUrl(url);
+        setDoc(doc);
+        setPrevPDF(true);
+    }
+
+    const downloadInvoice = () => {
+        if(doc){
+            doc.save(`invoice-bulanan-${purchaseOrder!.invoice_number}.pdf`)
+        }
+        setPrevPDF(false);
     }
 
     useEffect(() => {
@@ -299,7 +323,7 @@ const PurchaseOrderDetail: React.FC = () => {
                                 <Button>{getStatusTag()}</Button>
                             </Dropdown>
                             {purchaseOrder?.status === PurchaseOrderStatus.RECEIVED && <Button href={`/checking/add?po=${purchaseOrder?.purchase_order_id}`}>Lakukan Pemeriksaan</Button>}
-                            <Button type="primary" icon={<PrinterOutlined/>} onClick={() => printPurchaseOrder(purchaseOrder!)}>Cetak PDF</Button>
+                            <Button type="primary" icon={<PrinterOutlined/>} onClick={generatePDF}>Cetak PDF</Button>
                         </Space>
                     }
                 >
@@ -416,6 +440,24 @@ const PurchaseOrderDetail: React.FC = () => {
                     </Button>
                 </div>
             </Spin>
+
+            <Modal
+                title="Preview Invoice"
+                centered
+                open={showPreviewPDF}
+                onOk={downloadInvoice}
+                okText="Download"
+                onCancel={() => {
+                    setPdfUrl(null);
+                    setBlob(null);
+                    setDoc(null);
+                    setPrevPDF(false);
+                }}
+                width={1000}
+            >
+                {pdfUrl && <iframe src={pdfUrl!} width="100%" height="600px"></iframe>}
+                
+            </Modal>
         </DashboardLayout>
     );
 };

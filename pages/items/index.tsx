@@ -1,6 +1,6 @@
 import { Item } from "@/type/item"
 import { formatRupiah } from "@/utils/format_rupiah";
-import { Image, Button, Input, message, Space, Table, Typography,Pagination as AntPagination, Popconfirm, TableProps, TableColumnsType } from "antd";
+import { Image, Button, Input, message, Space, Table, Typography,Pagination as AntPagination, Popconfirm, TableProps, TableColumnsType, PaginationProps } from "antd";
 import { useEffect, useState } from "react"
 import DashboardLayout from "../component/DashboardLayout";
 import Title from "antd/es/typography/Title";
@@ -65,7 +65,9 @@ const Items = () => {
             title: 'No',
             dataIndex: '',
             key: '',
-            render: (_: any, record: any, index: number) => index + 1,
+            render: (_: any, record: any, index: number) => {
+                return (requestParam.page - 1) * requestParam.limit + index + 1;
+            }
         },
         {
             title: 'Photo',
@@ -211,12 +213,24 @@ const Items = () => {
         }
     }
 
-    const onChangePagination = (page: number) => {
+    const onChangePagination = (page: number, pageSize: number) => {
         const request = {...requestParam};
+        request.limit = pageSize;
         request.page = page;
         setParamRequst(request);
         fetchItems(request);
     }
+
+
+    const showTotal: PaginationProps['showTotal'] = (total) => `Total ${total} items`;
+
+//     const onShowSizeChange: PaginationProps['onShowSizeChange'] = (current, pageSize) => {
+//         const request = {...requestParam};
+//         request.limit = pageSize;
+//         request.page = current;
+//         setParamRequst(request);
+//         fetchItems(request);
+// };
 
     useEffect(() => {
         fetchItems(requestParam);
@@ -248,7 +262,7 @@ const Items = () => {
                 <Table dataSource={items?.data} onChange={onChange}
                 showSorterTooltip={{ target: 'sorter-icon' }} rowSelection={rowSelection} scroll={{x: 'max-content'}} pagination={false} columns={columns} loading={loading} rowKey={(record) => record.product_id} />
                 <div className="flex my-3 justify-end">
-                    <AntPagination onChange={onChangePagination} defaultCurrent={items?.current_page} total={items?.total} />
+                    <AntPagination showSizeChanger onChange={onChangePagination} defaultCurrent={items?.current_page} showTotal={showTotal} total={items?.total} />
                 </div>
             </div>
         </DashboardLayout>
