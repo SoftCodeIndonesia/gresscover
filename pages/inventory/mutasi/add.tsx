@@ -184,6 +184,7 @@ const MutasiBarang = () => {
                 newData[index].unit_id = item.type_id ?? '',
                 newData[index].unit_name = item.name ?? '';
                 setInitialTableVarian(newData);
+                form.setFieldValue('varian', newData);
             }else{
                 const item: ItemUnit = option.object;
                 const newData = [...initialTable];
@@ -191,6 +192,7 @@ const MutasiBarang = () => {
                 newData[index].unit_id = item.type_id ?? '',
                 newData[index].unit_name = item.name ?? '';  
                 setInitialTable(newData);   
+                form.setFieldValue('varian', newData);
             }
 
             // if(item.unit?.max_value != null && item.unit?.max_value > 0){
@@ -246,13 +248,13 @@ const MutasiBarang = () => {
                 newData[index].cost = item?.harga_beli;
                 newData[index].selling_price = item.harga_jual;
                 newData[index].minimum = item.minimum;
-                newData[index].unit_id = item.unit_id ?? '';
-                newData[index].unit_name = item.unit_name ?? '';
+                // newData[index].unit_id = item.unit_id ?? '';
+                // newData[index].unit_name = item.unit_name ?? '';
                 newData[index].parent_id = parent_active?.product_id ?? null;
-                console.log(newData);
-                form.setFieldValue('varian', newData);
-    
+                // console.log(form.getFieldValue('varian'));
+                
                 setInitialTableVarian(newData);
+                form.setFieldValue('varian', newData);
     
             }
         }else{
@@ -353,9 +355,7 @@ const MutasiBarang = () => {
                 dataIndex: "sku",
                 width: 150,
                 render: (_: any, record: TableInventory, index: number) => (
-                    <Form.Item name={['varian', index, 'sku']} rules={[{ required: true, message: 'SKU Tidak Boleh Kosong!' }]} className="m-0">
-                        <Input placeholder={`${record.sku} Masukan SKU Product`} disabled value={record.sku!} />
-                    </Form.Item>
+                    <Input placeholder={`Masukan ${record.sku} Product`} value={record.sku || ''} disabled={!record.product_id ? false : true} />
                     
                 ),
             },
@@ -398,9 +398,23 @@ const MutasiBarang = () => {
                 dataIndex: "unit",
                 width: 150,
                 render: (_: any, record: TableInventory, index: number) => (
-                    <Form.Item name={['varian', index, 'unit_name']} rules={[{ required: true, message: 'Product Tidak Boleh Kosong!' }]} className="m-0">
-                        <Input placeholder="Masukan stok" type="number" disabled value={record.unit_name ?? ''} />
-                    </Form.Item>
+                   <div>
+                                        <Form.Item hidden name={['varian', index, 'unit_id']} rules={[{ required: true, message: 'Satuan Tidak Boleh Kosong!' }]} className="m-0">
+                                        <Input hidden />
+                                    </Form.Item>
+                                    <Form.Item name={['varian', index, 'unit_name']} rules={[{ required: true, message: 'Satuan Tidak Boleh Kosong!' }]} className="m-0">
+                                        <AutoComplete
+                                            value={record.unit_name}
+                                            options={optionUnit}
+                                            filterOption={true}
+                                            style={{ width: 100 }}
+                                            onChange={(value) => onSelectItemUOM(value, {}, index,true)}
+                                            onSelect={(value, option) => onSelectItemUOM(value, option, index,true)}
+                                            onSearch={fetchUOM}
+                                            placeholder="Cari/Pilih Unit"
+                                        />
+                                    </Form.Item>
+                                    </div>
                     
                 ),
             },
@@ -542,6 +556,7 @@ const MutasiBarang = () => {
                 dataIndex: "unit",
                 width: 150,
                 render: (_: any, record: TableInventory, index: number) => (
+                    
                     <Input placeholder="UOM" disabled max={record.stok ?? 1} value={record.unit_name ?? ''} readOnly />
                 ),
             },
@@ -655,7 +670,7 @@ const MutasiBarang = () => {
                 type: "search",
             }
 
-            var path = '/items/search';
+            var path = '/inventory/search';
             if(is_varian){
                 path = '/items/search';
             }
@@ -664,7 +679,7 @@ const MutasiBarang = () => {
             if(response.status == 200){
                 if(is_varian){
                     const items: SearchInventoryResult[] = response.data.data;
-                
+                    
                     if(items.length > 0){
                         const result = items?.map((data: SearchInventoryResult) => {
                             return {
@@ -678,7 +693,8 @@ const MutasiBarang = () => {
                         setOptionsItem([]);
                     }
                 }else{
-                    const items: SearchInventoryResult[] = response.data.data;
+                    console.log('response', response.data.data.data.data);
+                    const items: SearchInventoryResult[] = response.data.data.data.data;
                 
                     if(items.length > 0){
                         
@@ -760,6 +776,8 @@ const MutasiBarang = () => {
         }
     }
 
+    
+
     const fetchUOM = async (query: string) => {
        
         try {
@@ -778,11 +796,11 @@ const MutasiBarang = () => {
             const response = await axiosInstance.post(`/search`, querySearch);
             if(response.status == 200){
                 const items: Pagination<ItemUnit> = response.data.data;
-                
+                console.log('response unit', items);
                 if(items.data.length > 0){
                     const result = items.data.map((data: ItemUnit) => {
                         return {
-                            value: `${data.type_id}`,
+                            value: `${data.name}`,
                             label: `${data.name}-${data.name}`,
                             object: data,
                         }
@@ -837,7 +855,7 @@ const MutasiBarang = () => {
     }
 
     const onSelect = async (value: string, option: any, index: number, is_varian?: boolean, item?: TableInventory) => {
-      
+        console.log('select gudang', option);
         if(option.object == undefined){
             
             var location: Location = {
@@ -926,7 +944,7 @@ const MutasiBarang = () => {
                             const inventory: Inventory = items.data[0];
                             newData[index].stok = inventory.quantity;
                             newData[index].last_stok = Number(inventory.quantity) + Number((item?.quantity ?? 1));
-                            
+                            // newData[index].unit_name
                         }
                     }
                 } catch (error: any) {

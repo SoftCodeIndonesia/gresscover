@@ -1,3 +1,4 @@
+import { DeliveryTracking } from "./delivery_tracking";
 import { Inventory } from "./inventory";
 import { InventoryMovement } from "./inventory_movement";
 import { Sale, SaleItem } from "./sale";
@@ -19,6 +20,8 @@ export type Retur = {
     total_items: number;
     total_price: number;
     total_amount_after_tax?: number,
+    status_pengiriman?: string,
+    trackings: DeliveryTracking[]
 };
 
 export type ReturItem = {

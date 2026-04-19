@@ -1,6 +1,6 @@
 import { Item } from "@/type/item"
 import { formatRupiah } from "@/utils/format_rupiah";
-import { Image, Button, Input, message, Space, Table, Typography,Pagination as AntPagination, Popconfirm, TableProps, TableColumnsType, PaginationProps } from "antd";
+import { Image, Button, Input, message, Space, Table, Typography,Pagination as AntPagination, Popconfirm, TableProps, TableColumnsType, PaginationProps, Spin } from "antd";
 import { useEffect, useState } from "react"
 import DashboardLayout from "../component/DashboardLayout";
 import Title from "antd/es/typography/Title";
@@ -21,6 +21,7 @@ type Sorts = GetSingle<Parameters<OnChange>[2]>;
 type TableRowSelection<T extends object = object> = TableProps<T>['rowSelection'];
 const Items = () => {
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+    const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
     const [items, setItems] = useState<Pagination<Item>>();
     const [loading, setLoading] = useState<boolean>(false);
     const [searchText, setSearchText] = useState('');
@@ -31,7 +32,13 @@ const Items = () => {
         },
         limit: 10,
         page: 1,
+        where: {
+            parent_id: ['null'],
+        }
     });
+
+    const [data, setData] = useState<Item[]>([]);
+    const [loadingKeys, setLoadingKeys] = useState<string[]>([]);
 
     const handleSearch = (value: string) => {
         const request = {...requestParam};
@@ -62,14 +69,6 @@ const Items = () => {
 
     const columns: TableColumnsType<Item> = [
         {
-            title: 'No',
-            dataIndex: '',
-            key: '',
-            render: (_: any, record: any, index: number) => {
-                return (requestParam.page - 1) * requestParam.limit + index + 1;
-            }
-        },
-        {
             title: 'Photo',
             dataIndex:'photo', 
             key: 'photo',
@@ -83,6 +82,19 @@ const Items = () => {
             title: 'Nama item',
             dataIndex:'name', 
             key: 'name',
+            // render: (_: any, record: Item) => {
+            //     const expanded = (record.children || []).length > 0;
+
+            //     return (
+            //         <div onClick={(e) => {
+            //             e.stopPropagation();
+            //             handleExpand(!expanded, record);
+            //         }}>
+            //             {expanded ? "▼ " : "▶ "}
+            //             {record.name}
+            //         </div>
+            //     );
+            // }
         },
         {
             title: 'SKU',
@@ -202,7 +214,23 @@ const Items = () => {
         try {
             const response = await axiosInstance.post('/items_search', request);
             if(response.status == 200){
-                setItems(response.data.data);
+                const paginationData = response.data.data as Pagination<Item>;
+
+                const items: Item[] = [];
+
+
+                (paginationData.data || []).forEach(element => {
+                    if((element.childCount || 0) > 0){
+                        items.push({
+                            ...element,
+                            children: [],
+                        })
+                    }else{
+                        items.push(element);
+                    }
+                });
+
+                setItems({...paginationData, data: items});
             }else{
                 message.error('Gagal Mengambil Data Item!');
             }
@@ -212,6 +240,32 @@ const Items = () => {
             setLoading(false);
         }
     }
+
+    const fetchChildren = async (id: string): Promise<Item[]> => {
+        
+        const request_search: NewRequestParam = {
+            table: '',
+            orderBy: {
+                'created_at': 'DESC'
+            },
+            limit: 100,
+            page: 1,
+            where: {
+                parent_id: ["in", [id]]
+            }
+        }
+
+
+
+        
+        const response = await axiosInstance.post('/items_search', request_search);
+        
+        if(response.status == 200){
+            return response.data.data.data as Item[];
+        }else{
+            return [];
+        }
+    };
 
     const onChangePagination = (page: number, pageSize: number) => {
         const request = {...requestParam};
@@ -231,6 +285,79 @@ const Items = () => {
 //         setParamRequst(request);
 //         fetchItems(request);
 // };
+
+    // const handleExpand = async (expanded: boolean, record: Item) => {
+    //     if (!expanded) return;
+
+    //     // kalau sudah ada children → skip
+    //     if (record.children) return;
+
+    //     // kalau memang punya child
+    //     if (record.childCount == 0) return;
+
+    //     setLoadingKeys((prev) => [...prev, record.product_id]);
+
+    //     const children = await fetchChildren(record.product_id);
+
+    //     setData((prev) => updateTreeData(prev, record.product_id, children));
+
+    //     setLoadingKeys((prev) => prev.filter((k) => k !== record.product_id));
+    // };
+
+    const handleExpand = async (expanded: boolean, record: Item) => {
+        console.log('on expand', expanded);
+        const id = record.product_id;
+
+        if (expanded) {
+            setExpandedRowKeys((prev) => prev.includes(id) ? prev : [...prev, id]);
+
+            if ((record.childCount || 0) > 0) {
+
+                // 🔥 placeholder biar kebuka
+                setItems((prev) => {
+                    if (!prev) return prev;
+                    return {
+                        ...prev,
+                        data: updateTreeData(prev.data, id, []),
+                    };
+                });
+
+                setLoadingKeys((prev) => [...prev, id]);
+
+                const children = await fetchChildren(id);
+
+                // 🔥 isi data asli
+                setItems((prev) => {
+                    if (!prev) return prev;
+                    return {
+                        ...prev,
+                        data: updateTreeData(prev.data, id, children),
+                    };
+                });
+
+                setLoadingKeys((prev) => prev.filter((k) => k !== id));
+            }
+        } else {
+            setExpandedRowKeys((prev) => prev.filter((key) => key !== id));
+        }
+    };
+
+    const updateTreeData = (list: Item[], key: string, children: Item[]): Item[] => {
+        return list.map((node) => {
+            if (node.product_id === key) {
+                return { ...node, children };
+            }
+
+            if (node.children) {
+                return {
+                    ...node,
+                    children: updateTreeData(node.children, key, children),
+                };
+            }
+
+            return node;
+        });
+    };
 
     useEffect(() => {
         fetchItems(requestParam);
@@ -259,8 +386,23 @@ const Items = () => {
                         <Button type="primary" danger>Hapus</Button>
                     </Popconfirm>}
                 </Space>
-                <Table dataSource={items?.data} onChange={onChange}
-                showSorterTooltip={{ target: 'sorter-icon' }} rowSelection={rowSelection} scroll={{x: 'max-content'}} pagination={false} columns={columns} loading={loading} rowKey={(record) => record.product_id} />
+                <Table 
+                    dataSource={items?.data} 
+                    onChange={onChange}
+                    showSorterTooltip={{ target: 'sorter-icon' }} 
+                    rowSelection={rowSelection} 
+                    scroll={{x: 'max-content'}} 
+                    pagination={false} 
+                    columns={columns} 
+                    loading={loading} 
+                    rowKey={(record) => record.product_id}
+                    expandable={{
+                        expandedRowKeys,
+                        onExpand: handleExpand,
+                        rowExpandable: (record) => (record.childCount || 0) > 0,
+                        showExpandColumn: true,
+                    }} 
+                />
                 <div className="flex my-3 justify-end">
                     <AntPagination showSizeChanger onChange={onChangePagination} defaultCurrent={items?.current_page} showTotal={showTotal} total={items?.total} />
                 </div>

@@ -9,12 +9,15 @@ import axiosInstance from "@/utils/axiosInstance";
 import { formatDate } from "@/utils/date_utils";
 import { formatRupiah } from "@/utils/format_rupiah";
 import { capitalizeEachWord } from "@/utils/text_utils";
-import { Breadcrumb, Button, Card, Col, Dropdown, Input, MenuProps, message, Row, Select, Skeleton, Spin, Table, TableColumnsType, Tag } from "antd";
+import { Breadcrumb, Button, Card, Col, Dropdown, Input, MenuProps, message, Row, Select, Skeleton, Spin, Table, TableColumnsType, Tag, Timeline, TimelineItemProps } from "antd";
 import Column from "antd/es/table/Column";
 import { TableRowSelection } from "antd/es/table/interface";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import { RightOutlined } from '@ant-design/icons';
+
 
 const ReturDetail: React.FC = () => {
     const [slug, setSlug] = useState<string | undefined>(undefined);
@@ -29,7 +32,7 @@ const ReturDetail: React.FC = () => {
         where: [{
             sale_id: '',
         }],
-        request_column_relation: ['sales','items', 'items.movement', 'items.inventory'],
+        request_column_relation: ['sales','items', 'items.movement', 'items.inventory', 'trackings'],
     });
 
 
@@ -238,6 +241,23 @@ const ReturDetail: React.FC = () => {
                 <Card title="Daftar Item" className="mt-4" >
                     <Table columns={columns} dataSource={retur?.items} rowKey={(row) => row.retur_item_id} pagination={false} />
                     
+                </Card>
+                <Card title="Status Pengiriman" className="mt-4" >
+                    <Timeline
+                        
+                        items={(retur?.trackings ?? []).map((track) => ({
+                            children: (
+                                <div>
+                                    <div className="font-semibold">{track.description}</div>
+                                    { track.photo && <Link href={`${process.env.NEXT_PUBLIC_API_URI}/storage/${track?.photo}`} target="__blank" className="text-blue-600">Lihat Bukti Paket <RightOutlined /></Link>}
+                                    <div className={`text-xs ${track.is_current ? 'text-gray-600' : 'text-gray-400'} text-gr`}>
+                                        {track.date}
+                                    </div>
+                                </div>
+                            ),
+                            color: track.is_current === 1 ? 'green' : 'blue'
+                        } as TimelineItemProps))}
+                    />
                 </Card>
             </Spin>
         </DashboardLayout>

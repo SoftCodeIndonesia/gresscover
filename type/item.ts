@@ -27,9 +27,11 @@ export type Item = {
     sku_induk?: string|null,
     parent: Item|null,
     overall_quantity?: number,
-    children: Item[],
+    children?: Item[],
     user?: User,
     product_images?: ProductImage[],
+    childCount?: number;
+    
 };
 
 export type ItemUnit = {

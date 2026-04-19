@@ -140,8 +140,10 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
 
     const hasSelected = selectedRowKeys.length > 0;
 
+    
+
     const onSelectItem = (value: string, option: any, index: number) => {
-        console.log(option);
+        console.log('onSelectItem',initialTable);
         if(option.object == undefined){
 
             const newData = [...initialTable];
@@ -152,7 +154,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
         }else{
             const item: SearchInventoryResult = option.object;
 
-            
+            console.log('option',item);
 
             const newData = [...initialTable];
 
@@ -176,44 +178,23 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
 
     }
     const onSelectItemUOM = (value: string, option: any, index: number) => {
-        console.log(option);
+        
         if(option.object == undefined){
 
             const newData = [...initialTable];
             newData[index].unit_name = value;
             setInitialTable(newData);
+            form.setFieldValue('items', newData);
 
         }else{
-            const item: ItemUnit = option.object;
+            const item: ItemUnit = option.object as ItemUnit;
             const newData = [...initialTable];
 
             newData[index].unit_id = item.type_id ?? '',
             newData[index].unit_name = item.name ?? '';
 
-            // if(item.unit?.max_value != null && item.unit?.max_value > 0){
-            //     newData[index].children = Array.from({ length: item.unit?.max_value }, (_, index) => ({
-            //         key: index, 
-            //         product_name: null, 
-            //         product_id: null, 
-            //         stok: 0.0, 
-            //         sku: "", 
-            //         selling_price: 0.0, 
-            //         cost: 0.0, 
-            //         minimum: 1,
-            //         checked: false,
-            //         location_id: '',
-            //         location_name: '',
-            //         cost_string: '0.0',
-            //         selling_price_string: '0.0',
-            //         unit_id: '',
-            //         unit_name: '',
-            //         children: [],
-            //     }))
-            // }
-
-            console.log(newData[index]);
-
             setInitialTable(newData);
+            form.setFieldValue('items', newData);
 
         }
     }
@@ -340,6 +321,10 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
             title: "Satuan",
             dataIndex: "unit",
             render: (_: any, record: TableInventory, index: number) => (
+                <div>
+                    <Form.Item hidden name={['items', index, 'unit_id']} rules={[{ required: true, message: 'Satuan Tidak Boleh Kosong!' }]} className="m-0">
+                    <Input hidden />
+                </Form.Item>
                 <Form.Item name={['items', index, 'unit_name']} rules={[{ required: true, message: 'Satuan Tidak Boleh Kosong!' }]} className="m-0">
                     <AutoComplete
                     disabled={selectedPurchaseOrder != null}
@@ -350,9 +335,10 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
                         onChange={(value) => onSelectItemUOM(value, {}, index)}
                         onSelect={(value, option) => onSelectItemUOM(value, option, index)}
                         onSearch={fetchUOM}
-                        placeholder="Cari/Pilih Product"
+                        placeholder="Cari/Pilih Unit"
                     />
                 </Form.Item>
+                </div>
                 
             ),
         },
@@ -599,7 +585,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
                 if(items.data.length > 0){
                     const result = items.data.map((data: ItemUnit) => {
                         return {
-                            value: `${data.type_id}`,
+                            value: `${data.name}`,
                             label: `${data.name}`,
                             object: data,
                         }
@@ -682,6 +668,7 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
         
 
     const handleSubmit = async () => {
+        console.log('initial', form.getFieldValue('items'));
         setLoading(true);
         const dataInitital: any[] | undefined = [];
         var totalItem = 0;
@@ -702,6 +689,8 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
 
         
         const formData = new FormData();
+
+        console.log('data initial', dataInitital);
 
         if(form.getFieldValue('movement_id') != undefined){
 
@@ -1095,9 +1084,10 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
     return (
         <>
             {breadcrumb}
-            {type == null && <SomethingWrong/>}
-            {type != null && 
-                <Form
+           
+           
+
+         <Form
                 layout={formLayout}
                 form={form}
                 initialValues={{ layout: formLayout }}
@@ -1106,7 +1096,9 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
                 disabled={loading}
             >
 
-                <Card title={`Form Tambah ${type == 'in' ? 'Barang Masuk' : 'Barang Keluar'}`} className="mb-6">
+                {type == null && <SomethingWrong/>}
+                {type != null && (<div>
+                    <Card title={`Form Tambah ${type == 'in' ? 'Barang Masuk' : 'Barang Keluar'}`} className="mb-6">
                     <div className="flex gap-6">
                         <div className="flex flex-col flex-1 pr-6">
                         
@@ -1239,8 +1231,8 @@ const AddInventory: React.FC<AddInventoryParam> = ({breadcrumb}) => {
                         <Button type="link" className="mr-3" onClick={back}>Batal</Button>
                         <Button type="primary" htmlType="submit" loading={loading}>Kirim</Button>
                 </Form.Item>
+                </div>)}
             </Form>
-        }
             
               
         </>

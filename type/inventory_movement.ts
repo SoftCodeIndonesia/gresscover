@@ -2,6 +2,21 @@ import { Inventory } from "./inventory";
 import { Item } from "./item";
 import { User } from "./user";
 
+export enum InventoryMovementStatus {
+    COMPLETED = "completed",
+    REJECTED = "rejected",
+    CANCELLED = "cancelled",
+    DELIVER_TO_SELLER = "deliver_to_seller",
+    DELIVER_TO_BUYER = "deliver_to_buyer",
+}
+export enum InventoryMovementStatusView {
+    COMPLETED = "Selesai",
+    REJECTED = "Ditolak",
+    CANCELLED = "Dibatalkan",
+    DELIVER_TO_SELLER = "Dikirim ke penjual",
+    DELIVER_TO_BUYER = "Dikirim ke pembeli",
+}
+
 export type InventoryMovement = {
     id: string;
     movement_id: string;
@@ -17,8 +32,9 @@ export type InventoryMovement = {
     updated_at: string;
     amount: number;
     total_amount: number;
-    status: string;
+    status: InventoryMovementStatus;
     note: string | null;
+    sku?: string;
     reference: string | null;
     reference_id: string | null;
     inventory_id: string;

@@ -174,6 +174,8 @@ const AddTransaction: React.FC = () => {
                 <Form.Item label="Note" name={"note"}>
                     <TextArea rows={4} />
                 </Form.Item>
+
+                
                 
                 <Form.Item className="mt-2">
                         <Button type="link" href="/transaction" loading={loading} >Batal</Button>

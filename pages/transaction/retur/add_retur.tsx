@@ -3,10 +3,10 @@ import { ItemUnit } from "@/type/item";
 import { Location } from "@/type/location";
 import DashboardLayout from "../../component/DashboardLayout";
 import axiosInstance from "@/utils/axiosInstance";
-import { Button, Form, Input, message, Select, Table, Modal, AutoComplete, AutoCompleteProps, TableColumnsType, Breadcrumb, Radio } from "antd";
+import { Button, Form, Input, message, Select, Table, Modal, AutoComplete, AutoCompleteProps, TableColumnsType, Breadcrumb, Radio, Divider, Space, DatePicker, Upload, Checkbox, UploadProps, GetProp } from "antd";
 import { LayoutType } from "@/type/form.layout";
 
-import { DeleteFilled, MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons';
+import { DeleteFilled, DeleteOutlined, LoadingOutlined, MinusCircleOutlined, PlusCircleOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
 import { handlePriceChange } from "@/utils/validate_price_change";
 import { RequestParam } from "@/type/request_param";
 import { Pagination } from "@/type/pagination";
@@ -17,6 +17,7 @@ import { InventoryMovement } from "@/type/inventory_movement";
 import { getCookie } from "cookies-next";
 import { Retur } from "@/type/retur";
 import { formatRupiah } from "@/utils/format_rupiah";
+// import styles from "./styles/add.component.css";
 
 
 interface TableInventory {
@@ -221,6 +222,8 @@ const AddRetur: React.FC = () => {
                         });
                     }
                 });
+
+                // console.log()
                 
                 setInitialTable(initials)
 
@@ -237,44 +240,122 @@ const AddRetur: React.FC = () => {
     const handleSubmit = async () => {
         setLoading(true);
         
+        const values = form.getFieldsValue();
 
         const items :{ quantity: number, retur_movement_id?: string, retur_item_id?: string, inventory_id: string, price: number|null,item_retur_condition: string, sales_item_id?: string, product_name: string, product_photo: string|null, location_name: string, unit_name: string } [] = [];
-        initialTable.forEach(element => {
-            if(element.quantity! > 0){
-                items.push({
-                    quantity: element.quantity!,
-                    price: element.price,
-                    inventory_id: element.inventory_id,
-                    sales_item_id: element.sale_item_id,
-                    item_retur_condition: element.condition,
-                    product_name: element.product_name!,
-                    product_photo: element.product_photo,
-                    location_name: element.location_name,
-                    unit_name: element.unit_name,
-                    retur_item_id: element.retur_item_id,
-                    retur_movement_id: element.retur_movement_id,
-                });
-            }
-        });
         
 
-        const data = {
-            'retur_id': form.getFieldValue('retur_id') ?? null,
-            'retur_number': form.getFieldValue('retur_number') ?? null,
-            'sales_id': form.getFieldValue('order_id'),
-            'sales_number': form.getFieldValue('order_number'),
-            'delivery_number': form.getFieldValue('delivery_number'),
-            'status': form.getFieldValue('status'),
-            'type': form.getFieldValue('type_retur'),
-            'delivery_fee': form.getFieldValue('delivery_fee'),
-            'retur_item_loss': total_lost,
-            'items': items,
+    
+        const trackings = values.trackings || [];
+        const currentCount = trackings.filter((t: any) => t?.is_current).length;
+
+        if (currentCount > 1) {
+            message.error('Hanya boleh 1 status saat ini!');
+            setLoading(false);
+            return;
+        }else if(currentCount == 0){
+            message.error('Pilih Status Pengiriman Terakhir!');
+            setLoading(false);
+            return;
         }
 
-        console.log(data);
+        const formData = new FormData();
+
+
+        formData.append('retur_id', values.retur_id ?? null);
+        formData.append('retur_number', values.retur_number ?? null);
+        formData.append('sales_id', values.order_id);
+        formData.append('sales_number', values.order_number);
+        formData.append('delivery_number', values.delivery_number);
+        formData.append('status', values.status);
+        formData.append('type', values.type_retur);
+        formData.append('delivery_fee', `${values.delivery_fee || 0}`);
+        formData.append('retur_item_loss', `${total_lost}`);
+
+        initialTable.forEach((element, index) => {
+            if(element.quantity! > 0){
+                formData.append(`items[${index}][quantity]`, `${element.quantity}`);
+                formData.append(`items[${index}][price]`, `${element.price}`);
+                formData.append(`items[${index}][inventory_id]`, element.inventory_id);
+                formData.append(`items[${index}][sales_item_id]`, `${element.sale_item_id}`);
+                formData.append(`items[${index}][item_retur_condition]`, element.condition);
+                formData.append(`items[${index}][product_name]`, element.product_name!);
+                formData.append(`items[${index}][product_photo]`, `${element.product_photo}`);
+                formData.append(`items[${index}][location_name]`, element.location_name);
+                formData.append(`items[${index}][unit_name]`, element.unit_name);
+                formData.append(`items[${index}][retur_item_id]`, element.retur_item_id || '');
+                formData.append(`items[${index}][retur_movement_id]`, `${element.retur_movement_id}`);
+            }
+        });
+
+        trackings.forEach((track: any, index: number) => {
+
+            if(track.track_id){
+                formData.append(`trackings[${index}][track_id]`, track.track_id ?? '');
+            }
+
+            formData.append(`trackings[${index}][description]`, track.description ?? '');
+
+            // 📅 format date (WAJIB karena dari DatePicker)
+            if (track.date) {
+                formData.append(
+                `trackings[${index}][date]`,
+                track.date.format('YYYY-MM-DD HH:mm:ss')
+                );
+            }
+
+            // 🔥 is_current (boolean → string)
+            formData.append(
+                `trackings[${index}][is_current]`,
+                track.is_current ? '1' : '0'
+            );
+
+            const photo = track.photo;
+
+            if (photo && Array.isArray(photo) && photo.length > 0) {
+                const fileObj = photo[0];
+
+                // 🔥 CASE 1: FOTO BARU UPLOAD
+                if (fileObj.originFileObj) {
+                    formData.append(
+                        `trackings[${index}][photo]`,
+                        fileObj.originFileObj
+                    );
+                }
+            }
+
+            // // 📸 photo
+            // if (track.photo && track.photo.length > 0) {
+            //     const file = track.photo[0].originFileObj;
+            //     if (file) {
+            //         formData.append(`trackings[${index}][photo]`, file);
+            //     }
+            // }
+        });
+
+        
+
+        // const data = {
+        //     'retur_id': values.retur_id ?? null,
+        //     'retur_number': values.retur_number ?? null,
+        //     'sales_id': values.order_id,
+        //     'sales_number': values.order_number,
+        //     'delivery_number': values.delivery_number,
+        //     'status': values.status,
+        //     'type': values.type_retur,
+        //     'delivery_fee': values.delivery_fee,
+        //     'retur_item_loss': total_lost,
+        //     'items': items,
+        // }
+
+        // console.log(data);
 
         try {
-            const response = await axiosInstance.post('/retur', data);
+            const response = await axiosInstance.post('/retur', formData, {
+                headers: {
+                    "Content-Type": 'multipart/form-data',
+                }
+            });
             if(response.status == 200){
                 message.success(`${response?.data?.message}`)
                 if(slug){
@@ -304,7 +385,7 @@ const AddRetur: React.FC = () => {
                 table: 'retur',
                 limit: 1,
                 page: 1,
-                request_column_relation: ['items', 'items.movement','items.inventory', 'items.sale_item'],
+                request_column_relation: ['items', 'items.movement','items.inventory', 'items.sale_item', 'trackings'],
                 where: [
                     {
                         retur_id: retur_id,
@@ -357,6 +438,18 @@ const AddRetur: React.FC = () => {
                 
 
                 form.setFieldValue('items', initials);
+
+                // const 
+
+                form.setFieldValue('trackings', retur.trackings.map((track, index) => ({
+                    track_id: track.track_id,
+                    description: track.description,
+                    date: track.date ? dayjs(track.date) : null,
+                    is_current: track.is_current == 1 || track.is_current === 1,
+                    preview: track.photo ? `${process.env.NEXT_PUBLIC_BE}/storage/${track.photo}` : '',
+                })));
+
+                console.log('trackings',)
                 setInitialTable(initials);
                 countTotalLost(initials);
             }
@@ -367,6 +460,53 @@ const AddRetur: React.FC = () => {
             setLoading(false);
         }
     }
+
+
+
+    type FileType = Parameters<GetProp<UploadProps, 'beforeUpload'>>[0];
+
+    const getBase64 = (img: FileType, callback: (url: string) => void) => {
+    const reader = new FileReader();
+    reader.addEventListener('load', () => callback(reader.result as string));
+    reader.readAsDataURL(img);
+    };
+
+    const handleChange = (info: any, index: number) => {
+        const file = info.file.originFileObj;
+
+        
+
+        if (file) {
+            const previewUrl = URL.createObjectURL(file);
+
+            const current = form.getFieldValue('trackings');
+
+            console.log('current', current);
+
+            // const trackings = Array.isArray(current) ? current : [];
+
+            // trackings[index] = {
+            // ...trackings[index],
+            // photo: previewUrl,
+            // file: file,
+            // };
+
+            current[index].photo = previewUrl
+            current[index].file = file
+
+            form.setFieldValue('trackings', current);
+
+            console.log(form.getFieldValue('trackings'))
+        }
+    };
+
+    const uploadButton = (
+        <button style={{ border: 0, background: 'none' }} type="button">
+        {loading ? <LoadingOutlined /> : <PlusOutlined />}
+        <div style={{ marginTop: 0, fontSize: 10,  }}>Upload</div>
+        </button>
+    );
+
 
     useEffect(() => {
         if(slug){
@@ -410,14 +550,14 @@ const AddRetur: React.FC = () => {
             <Form
                 layout={formLayout}
                 form={form}
-                initialValues={{ layout: formLayout }}
+                initialValues={{ layout: formLayout, trackings: [] }}
                 style={{ maxWidth: '100%' }}
                 onFinish={handleSubmit}
                 disabled={loading}
             >
                 <div className="flex gap-4">
                     <div className="flex flex-col flex-1">
-
+                        <Form.Item name="order_id" hidden />
                         <Form.Item label="Nomor Pesanan" name="order_number" rules={[{ required: true, message: 'Please input nomor pesanan!' }]}>
                             <AutoComplete
                                 options={optionItem}
@@ -516,6 +656,115 @@ const AddRetur: React.FC = () => {
                     
                 </div> 
 
+                <Divider orientation="left">Delivery Tracking</Divider>
+
+                <Form.List name="trackings">
+                {(fields, { add, remove }) => (
+                    <>
+                    {fields.map(({ key, name, ...restField }) => (
+                        <Space
+                        key={key}
+                        align="center"
+                        style={{ display: 'flex', marginBottom: 8 }}
+                        >
+
+                        <Form.Item
+                            {...restField}
+                            name={[name, 'is_current']}
+                            valuePropName="checked"
+                            >
+                            <Radio
+                                checked={form.getFieldValue(['trackings', name, 'is_current'])}
+                                onChange={() => {
+                                const trackings = form.getFieldValue('trackings') || [];
+
+                                const newTrackings = trackings.map((item: any, index: number) => ({
+                                    ...item,
+                                    is_current: index === name, // 🔥 hanya yang dipilih true
+                                }));
+
+                                form.setFieldsValue({ trackings: newTrackings });
+                                }}
+                            >
+                                Jadikan status saat ini
+                            </Radio>
+                        </Form.Item>
+                        
+                        {/* 📸 PHOTO */}
+                        <Form.Item
+                            {...restField}
+                            name={[name, 'photo']}
+                            valuePropName="fileList"
+                            getValueFromEvent={(e) => {
+                                if (Array.isArray(e)) return e;
+                                return e?.fileList;
+                            }}
+                            
+                            >
+                            <Upload
+                                name="avatar"
+                                listType="picture-card"
+                                className="avatar-uploader"
+                                showUploadList={false}
+                                action=""
+                                style={{ width: 60, height: 60 }}
+                                onChange={(info) => {
+                                    const file = info.file.originFileObj;
+
+                                    if (file) {
+                                        const previewUrl = URL.createObjectURL(file);
+
+                                        const trackings = form.getFieldValue('trackings') || [];
+
+                                        if (!trackings[name]) trackings[name] = {};
+
+                                        trackings[name].preview = previewUrl; // ✅ simpan preview terpisah
+
+                                        form.setFieldsValue({ trackings });
+                                    }
+                                }}
+                            >
+                                {form.getFieldValue(['trackings', name, 'preview']) ? (
+                                <img draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover' }} src={form.getFieldValue(['trackings', name, 'preview'])} alt="avatar"  />
+                                ) : (
+                                uploadButton
+                                )}
+                            </Upload>
+                        </Form.Item>
+
+                        {/* 📝 DESCRIPTION */}
+                        <Form.Item
+                            {...restField}
+                            name={[name, 'description']}
+                            rules={[{ required: true, message: 'Isi deskripsi!' }]}
+                        >
+                            <Input placeholder="Deskripsi tracking" />
+                        </Form.Item>
+
+                        {/* 📅 DATE */}
+                        <Form.Item
+                            {...restField}
+                            name={[name, 'date']}
+                            rules={[{ required: true, message: 'Pilih tanggal!' }]}
+                        >
+                            <DatePicker showTime />
+                        </Form.Item>
+
+                        {/* ❌ DELETE */}
+                        <Form.Item><DeleteOutlined onClick={() => remove(name)} /></Form.Item>
+                        </Space>
+                    ))}
+
+                    {/* ➕ ADD BUTTON */}
+                    <Form.Item>
+                        <Button type="dashed" onClick={() => add()} icon={<PlusOutlined />}>
+                        Tambah Tracking
+                        </Button>
+                    </Form.Item>
+                    </>
+                )}
+                </Form.List>
+
 
                 <Form.Item className="mt-2">
                         <Button type="link" href="/transaction/retur" loading={loading} >Batal</Button>
@@ -523,7 +772,12 @@ const AddRetur: React.FC = () => {
                 </Form.Item>
             </Form>
             
-           
+           <style jsx>{`
+                :global(.avatar-uploader .ant-upload) {
+                    width: 50px !important;
+                    height: 50px !important;
+                }
+            `}</style>
         </DashboardLayout>
     );
 }

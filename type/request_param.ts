@@ -28,4 +28,5 @@ export type NewRequestParam = {
     group?: string|null,
     orderBy?: any,
     type?: string,
+    request_column_relation?: string[],
 }

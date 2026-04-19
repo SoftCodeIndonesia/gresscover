@@ -35,7 +35,7 @@ const { RangePicker } = DatePicker;
 const ReturPage: React.FC = () => {
     const [requestParam, setRequestParam] = useState<NewRequestParam>({
         table: 'retur',
-        request_column: ["retur_id","retur_number", "delivery_number", "status", "delivery_fee", "type"],
+        request_column: ["retur_id","retur_number", "delivery_number", "status", "delivery_fee", "type", "status_pengiriman"],
         limit: 10,
         page: 1,
 
@@ -135,6 +135,13 @@ const ReturPage: React.FC = () => {
                 {text: 'Proses Pengembalian', value: 'proses pengembalian'},
                 {text: 'Selesai', value: 'selesai'},
             ],
+        },
+        {
+            title: 'Status Pengiriman',
+            dataIndex: 'status_pengiriman',
+            key: 'status_pengiriman',
+            render: (_: any, record: Retur, index: number) => <p>{record.status_pengiriman || 'Tidak Ada Keterangan'}</p>,
+            
         },
         {
             title: 'Dibuat Tgl',

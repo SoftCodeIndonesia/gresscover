@@ -19,3 +19,9 @@ body {
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.ant-table-row-level-1 td {
+    background: #fafafa;
+    font-size: 13px;
+    color: #666;
+}
