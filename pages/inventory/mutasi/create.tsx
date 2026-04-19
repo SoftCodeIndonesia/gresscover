@@ -318,7 +318,7 @@ const CreateMutation = () => {
                 newData[index].unit_max_multiplier = item.unit?.max_value ?? 1;
                 newData[index].key = `index_${index}${item.inventory_id}${item.location_id}${item.item.product_id}`
 
-                const dataChildren:TableInventory[] = item.item.children.map((value: Item, index: number) => {
+                const dataChildren:TableInventory[] = (item.item.children || []).map((value: Item, index: number) => {
                     return {
                         key: `${value.product_id}`, 
                         product_name: value.name, 
