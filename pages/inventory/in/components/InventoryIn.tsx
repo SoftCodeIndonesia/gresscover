@@ -433,7 +433,6 @@ const MovementInContent: React.FC = () => {
 
     return (
         <div>
-            <Title level={2}>Daftar Barang Masuk</Title>
             <Space className="gap-3">
                 <Button icon={<ReloadOutlined/>} type="default" onClick={() => fetch(requestParam)} >Reload</Button>
                 <Button icon={<PlusOutlined/>} type="primary" href="/inventory/in/add" onClick={() => {
