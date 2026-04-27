@@ -522,7 +522,16 @@ const AddRetur: React.FC = () => {
         if(retur_id == undefined){
             form.setFieldsValue({
                 status: 'proses pengembalian',
-                type_retur: 'pengembalian'
+                type_retur: 'pengembalian',
+                trackings: [
+                    {
+                        track_id: '',
+                        description: 'Menunggu pembeli pengirim barang',
+                        date: dayjs(),
+                        is_current: true,
+                        preview: '',
+                    }
+                ]
             })
         }else{
             setSlug(retur_id);

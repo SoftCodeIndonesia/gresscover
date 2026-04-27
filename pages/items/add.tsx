@@ -51,6 +51,7 @@ const AddItem = () => {
     const inputRef = useRef<InputRef>(null);
 
     const [item_id, setItemId] = useState<string|null>();
+    const [fileLists, setFileLists] = useState({});
 
     const onNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setName(event.target.value);
@@ -129,7 +130,7 @@ const AddItem = () => {
         if(fileList.length > 0){
             fileList.forEach((image) => {
                 if(!image.url){
-                    formData.append('photos[]', image.originFileObj as Blob);
+                    formData.append('photos[0][]', image.originFileObj as Blob);
                 }
             });
             
@@ -143,10 +144,40 @@ const AddItem = () => {
             formData.append('item_id', id as string);
         }
 
+        (values.children || []).forEach((element: any, index: number) => {
+            
+            formData.append(`children[${index}][name]`, element.name);
+
+            if(element.barcode){
+                formData.append(`children[${index}][barcode]`, element.barcode);
+            }
+
+            formData.append(`children[${index}][category_id]`, values.category_id ?? null);
+            formData.append(`children[${index}][cost]`, element.cost);
+            formData.append(`children[${index}][price]`, element.price);
+            formData.append(`children[${index}][sku]`, element.sku);
+            formData.append(`children[${index}][min_quantity]`, `${element.min_quantity || 1}`);
+            formData.append(`children[${index}][unit_id]`, element.unit_id);
+            formData.append(`children[${index}][unit_name]`, units.filter((value: ItemUnit) =>value.type_id == element.unit_id)[0].name);
+            formData.append(`children[${index}][quantity]`, "0");
+
+            if(element.parent_id != undefined){
+                formData.append(`children[${index}][parent_id]`, element.parent_id);
+            }
+
+            if(element.photo.length > 0){
+                if(!element.photo.url){
+                    formData.append(`children[${index}][photos]`, element.photo[0].originFileObj as Blob);
+                }
+            }
+            
+            formData.append(`children[${index}][item_id]`, `${element.item_id}`);
+        });
+
         setLoading(true)
         try {
             
-            const response = await axiosInstance.post("/itemsss", formData, {
+            const response = await axiosInstance.post("/items", formData, {
                 headers: {
                     "Content-Type": 'multipart/form-data',
                 }
@@ -421,9 +452,9 @@ const AddItem = () => {
                                 <Image
                                 wrapperStyle={{ display: 'none' }}
                                 preview={{
-                                visible: previewOpen,
-                                onVisibleChange: (visible) => setPreviewOpen(visible),
-                                afterOpenChange: (visible) => !visible && setPreviewImage(''),
+                                    visible: previewOpen,
+                                    onVisibleChange: (visible) => setPreviewOpen(visible),
+                                    afterOpenChange: (visible) => !visible && setPreviewImage(''),
                                 }}
                                 src={previewImage}
                                 />
@@ -508,18 +539,26 @@ const AddItem = () => {
                                 options={units.map((data) => ({value: data.type_id, label: data.name}))}
                             />
                         </Form.Item>
+                        <Form.Item className="flex-1 mb-0" label="SKU Induk" name="sku_induk">
+                        <AutoComplete
+                                    showSearch
+                                    value={form.getFieldValue('sku_induk')}
+                                    options={optionItem}
+                                    filterOption={false}
+                                    // style={{ width: 530 }}
+                                    onSelect={(value, option) => onSelectItem(value, option)}
+                                    onSearch={fetchItems}
+                                    placeholder="Cari/Pilih SKU Induk"
+                                />
+                        </Form.Item>
                     
                     </div>
                     
-                    {/* <Form.List name="children">
+                    {/* {<Form.List name="children">
                         {(fields, { add, remove }) => (
                             <div className="my-5">
                                 <div className="flex justify-between items-center mb-2">
                                     <Title level={4}>Varian</Title>
-
-                                    <Button type="dashed" onClick={() => add()}>
-                                        + Tambah Varian
-                                    </Button>
                                 </div>
 
                                 <Card title="Edit Sekaligus" className="mb-4">
@@ -588,40 +627,44 @@ const AddItem = () => {
                                             />
                                         </Form.Item>
 
-                                        <Button
-                                            type="primary"
-                                            disabled={form.getFieldValue('children').length == 0}
-                                            onClick={() => {
-                                                const children = form.getFieldValue('children') || [];
+                                        <Form.Item>
+                                            <Button
+                                                type="primary"
+                                                disabled={form.getFieldValue('children').length == 0}
+                                                onClick={() => {
+                                                    const children = form.getFieldValue('children') || [];
 
-                                                const updated = children.map((item: any) => ({
-                                                    ...item,
-                                                    cost: bulkCost ?? item.cost,
-                                                    quantity: bulkQty ?? item.quantity,
-                                                    price: bulkPrice ?? item.price,
-                                                    min_quantity: bulkMinQty ?? item.min_quantity,
-                                                    unit_id: bulkUnitId ?? item.unit_id,
-                                                }));
+                                                    const updated = children.map((item: any) => ({
+                                                        ...item,
+                                                        cost: bulkCost ?? item.cost,
+                                                        quantity: bulkQty ?? item.quantity,
+                                                        price: bulkPrice ?? item.price,
+                                                        min_quantity: bulkMinQty ?? item.min_quantity,
+                                                        unit_id: bulkUnitId ?? item.unit_id,
+                                                    }));
 
-                                                form.setFieldValue('children', updated);
-                                            }}
-                                        >
-                                            Terapkan ke Semua
-                                        </Button>
-                                        <Button
-                                            type="default"
-                                            disabled={form.getFieldValue('children').length == 0}
-                                            onClick={() => {
-                                                setBulkCost(0);
-                                                setBulkPrice(0);
-                                                setBulkQty(0);
-                                                setMinQty(0);
-                                                setUnitId('');
-                                                setUnitname('');
-                                            }}
-                                        >
-                                            Reset Semua
-                                        </Button>
+                                                    form.setFieldValue('children', updated);
+                                                }}
+                                            >
+                                                Terapkan ke Semua
+                                            </Button>
+                                        </Form.Item>
+                                        <Form.Item>
+                                            <Button
+                                                type="default"
+                                                disabled={form.getFieldValue('children').length == 0}
+                                                onClick={() => {
+                                                    setBulkCost(0);
+                                                    setBulkPrice(0);
+                                                    setBulkQty(0);
+                                                    setMinQty(0);
+                                                    setUnitId('');
+                                                    setUnitname('');
+                                                }}
+                                            >
+                                                Reset Semua
+                                            </Button>
+                                        </Form.Item>
 
 
 
@@ -640,46 +683,60 @@ const AddItem = () => {
                                                 <Form.Item
                                                 {...field}
                                                 name={[field.name, 'photo']}
-                                                valuePropName="fileList"
-                                                getValueFromEvent={(e) => {
-                                                    if (Array.isArray(e)) return e;
-                                                    return e?.fileList;
-                                                }}
-                                                
+                                                style={{ marginBottom: 0 }}
                                                 >
                                                 <Upload
-                                                    name="avatar"
                                                     listType="picture-card"
-                                                    className="avatar-uploader"
-                                                    showUploadList={false}
-                                                    action=""
-                                                    style={{ width: 60, height: 60 }}
-                                                    onChange={(info) => {
-                                                        const file = info.file.originFileObj;
+                                                    fileList={fileLists[field.name] || []}
+                                                    beforeUpload={() => false} // ⛔ prevent auto upload
+                                                    maxCount={1}
+                                                    onChange={({ fileList }) => {
+                                                    // ✅ update UI
+                                                    setFileLists(prev => ({
+                                                        ...prev,
+                                                        [field.name]: fileList
+                                                    }));
 
-                                                        if (file) {
-                                                            const previewUrl = URL.createObjectURL(file);
+                                                    // ✅ sync ke Form
+                                                    const children = form.getFieldValue('children') || [];
 
-                                                            const childrens = form.getFieldValue('children') || [];
+                                                    if (!children[field.name]) children[field.name] = {};
 
-                                                            if (!childrens[field.name]) childrens[field.name] = {};
+                                                    children[field.name].photo = fileList;
 
-                                                            childrens[field.name].preview = previewUrl; // ✅ simpan preview terpisah
+                                                    form.setFieldsValue({ children });
+                                                    }}
+                                                    onRemove={() => {
+                                                        // ✅ update UI
+                                                        setFileLists(prev => ({
+                                                            ...prev,
+                                                            [field.name]: []
+                                                        }));
 
-                                                            form.setFieldsValue({ childrens });
+                                                        // ✅ sync ke Form
+                                                        const children = form.getFieldValue('children') || [];
+
+                                                        if (children[field.name]) {
+                                                            children[field.name].photo = null;
                                                         }
+
+                                                        console.log('children', children);
+
+                                                        form.setFieldsValue({ children });
+                                                    }}
+                                                    showUploadList={{
+                                                    showRemoveIcon: true,
+                                                    showPreviewIcon: true,
                                                     }}
                                                 >
-                                                    {form.getFieldValue(['children', field.name, 'preview']) ? (
-                                                    <img draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover' }} src={form.getFieldValue(['children', field.name, 'preview'])} alt="avatar"  />
-                                                    ) : (
+                                                    {(fileLists[field.name]?.length || 0) < 1 && (
                                                     <button style={{ border: 0, background: 'none' }} type="button">
                                                         <PlusOutlined />
-                                                        <div style={{ marginTop: 0, fontSize: 10, }}>Upload</div>
+                                                        <div style={{ fontSize: 10 }}>Upload</div>
                                                     </button>
                                                     )}
                                                 </Upload>
-                                            </Form.Item>
+                                                </Form.Item>
                                             )
                                         },
                                         {
@@ -721,14 +778,16 @@ const AddItem = () => {
                                         },
                                         {
                                             title: "Satuan",
+                                            width: 200,
                                             render: (_, field) => (
                                                 <Form.Item
                                                     {...field}
                                                     name={[field.name, "unit_id"]}
                                                     noStyle
+                                                    
                                                 >
                                                     <Select
-                                
+                                                        style={{width: '100%'}}
                                                         showSearch
                                                         placeholder="Pilih Satuan"
                                                         filterOption={(input, option) =>
@@ -785,19 +844,6 @@ const AddItem = () => {
                                             ),
                                         },
                                         {
-                                            title: "Qty",
-                                            render: (_, field) => (
-                                                <Form.Item
-                                                    {...field}
-                                                    name={[field.name, "quantity"]}
-                                                    initialValue={1}
-                                                    noStyle
-                                                >
-                                                    <Input type="number" />
-                                                </Form.Item>
-                                            ),
-                                        },
-                                        {
                                             title: "Action",
                                             render: (_, field) => (
                                                 <Button
@@ -810,10 +856,11 @@ const AddItem = () => {
                                             ),
                                         },
                                     ]}
+                                    footer={() => <Button type="text" onClick={add} className="text-blue-400">+ Tambah Varian</Button>}
                                 />
                             </div>
                         )}
-                    </Form.List> */}
+                    </Form.List> } */}
 
                     <Form.Item className="my-5">
                             <Button type="link" href="/items" loading={loading} >Batal</Button>
@@ -824,12 +871,12 @@ const AddItem = () => {
 
             </div> }
 
-            <style jsx>{`
+            {/* <style jsx>{`
                 :global(.avatar-uploader .ant-upload) {
                     width: 50px !important;
                     height: 50px !important;
                 }
-            `}</style>
+            `}</style> */}
         </DashboardLayout>
     );   
 }
